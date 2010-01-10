@@ -3242,9 +3242,13 @@ void Unit::_UpdateSpells( uint32 time )
             ++i;
     }
 
+    WorldPacket data(SMSG_AURA_UPDATE, 50);
+    data.append(GetPackGUID());
     for (VisibleAuraMap::iterator itr = m_visibleAuras.begin(); itr != m_visibleAuras.end(); ++itr)
         if (itr->second->IsNeedClientUpdate())
-            itr->second->ClientUpdate();
+            itr->second->ConstructAuraInfo(data);
+
+    SendMessageToSet(&data, true);
 
     _DeleteRemovedAuras();
 
@@ -3977,16 +3981,12 @@ inline void Unit::RemoveAuraFromStack(AuraMap::iterator &iter, AuraRemoveMode re
         RemoveOwnedAura(iter, removeMode);
 }
 
-void Unit::RemoveAurasDueToSpellByDispel(Aura * aura, Unit *dispeller)
+void Unit::RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit *dispeller)
 {
-    if (aura->IsRemoved())
-        return;
-
-    uint32 spellId = aura->GetId();
-
     for (AuraMap::iterator iter = m_ownedAuras.lower_bound(spellId); iter != m_ownedAuras.upper_bound(spellId);)
     {
-        if (aura == iter->second)
+        Aura * aura = iter->second;
+        if (aura->GetCasterGUID() == casterGUID)
         {
             if (aura->GetSpellProto()->AttributesEx7 & SPELL_ATTR_EX7_DISPEL_CHARGES)
                 aura->DropCharge();
@@ -4039,16 +4039,12 @@ void Unit::RemoveAurasDueToSpellByDispel(Aura * aura, Unit *dispeller)
     }
 }
 
-void Unit::RemoveAurasDueToSpellBySteal(Aura * aura, Unit *stealer)
+void Unit::RemoveAurasDueToSpellBySteal(uint32 spellId, uint64 casterGUID, Unit *stealer)
 {
-    if (aura->IsRemoved())
-        return;
-
-    uint32 spellId = aura->GetId();
-
     for (AuraMap::iterator iter = m_ownedAuras.lower_bound(spellId); iter != m_ownedAuras.upper_bound(spellId);)
     {
-        if (aura == iter->second)
+        Aura * aura = iter->second;
+        if (aura->GetCasterGUID() == casterGUID)
         {
             int32 damage[MAX_SPELL_EFFECTS];
             int32 baseDamage[MAX_SPELL_EFFECTS];
