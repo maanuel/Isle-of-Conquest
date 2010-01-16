@@ -851,7 +851,7 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
 
 void WorldSession::SendAddonsInfo()
 {
-    unsigned char addonPublicKey[256] =
+    uint8 addonPublicKey[256] =
     {
         0xC3, 0x5B, 0x50, 0x84, 0xB9, 0x3E, 0x32, 0x42, 0x8C, 0xD0, 0xC7, 0x48, 0xFA, 0x0E, 0x5D, 0x54,
         0x5A, 0xA3, 0x0E, 0x14, 0xBA, 0x9E, 0x0D, 0xB9, 0x5D, 0x8B, 0xEE, 0xB6, 0x84, 0x93, 0x45, 0x75,
@@ -885,8 +885,8 @@ void WorldSession::SendAddonsInfo()
             data << uint8(usepk);
             if (usepk)                                      // if CRC is wrong, add public key (client need it)
             {
-                sLog.outError("ADDON: CRC (0x%x) for addon %s is wrong (does not match expected %x), sending pubkey",
-                    itr->Name, itr->CRC, STANDARD_ADDON_CRC);
+                sLog.outError("ADDON: CRC (0x%x) for addon %s is wrong (does not match expected 0x%x), sending pubkey",
+                    itr->CRC, itr->Name.c_str(), STANDARD_ADDON_CRC);
 
                 data.append(addonPublicKey, sizeof(addonPublicKey));
             }
