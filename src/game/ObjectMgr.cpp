@@ -4697,6 +4697,7 @@ void ObjectMgr::LoadWaypointScripts()
         QueryResult *query = WorldDatabase.PQuery("SELECT * FROM waypoint_scripts WHERE id = %u", itr->first);
         if(!query || !query->GetRowCount())
             sLog.outErrorDb("There is no waypoint which links to the waypoint script %u", itr->first);
+        delete query;
     }
 }
 
@@ -8941,11 +8942,11 @@ void ObjectMgr::LoadCreatureClassLevelStats()
         stats.BaseMana = fields[5].GetUInt32();
         stats.BaseArmor = fields[6].GetUInt32();
 
-        if (stats.Level > MAX_LEVEL)
+        if (stats.Level > STRONG_MAX_LEVEL)
         {
             sLog.outErrorDb("Creature base stats for class %u has invalid level %u (max is %u) - set to %u",
-                stats.Class, stats.Level, MAX_LEVEL, DEFAULT_MAX_LEVEL);
-            stats.Level = DEFAULT_MAX_LEVEL;
+                stats.Class, stats.Level, STRONG_MAX_LEVEL, STRONG_MAX_LEVEL);
+            stats.Level = STRONG_MAX_LEVEL;
         }
 
         if (!stats.Class || ((1 << (stats.Class - 1)) & CLASSMASK_ALL_CREATURES) == 0)

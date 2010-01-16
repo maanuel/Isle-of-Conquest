@@ -3252,13 +3252,9 @@ void Unit::_UpdateSpells( uint32 time )
             ++i;
     }
 
-    WorldPacket data(SMSG_AURA_UPDATE, 50);
-    data.append(GetPackGUID());
     for (VisibleAuraMap::iterator itr = m_visibleAuras.begin(); itr != m_visibleAuras.end(); ++itr)
         if (itr->second->IsNeedClientUpdate())
-            itr->second->ConstructAuraInfo(data);
-
-    SendMessageToSet(&data, true);
+            itr->second->ClientUpdate();
 
     _DeleteRemovedAuras();
 

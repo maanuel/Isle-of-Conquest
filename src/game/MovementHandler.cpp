@@ -585,32 +585,70 @@ void WorldSession::HandleChangeSeatsOnControlledVehicle(WorldPacket &recv_data)
     if(!GetPlayer()->GetVehicle())
         return;
 
-    if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_PREV_SEAT)
+    switch (recv_data.GetOpcode())
     {
+    case CMSG_REQUEST_VEHICLE_PREV_SEAT:
         GetPlayer()->ChangeSeat(-1, false);
-        return;
-    }
-    else if(recv_data.GetOpcode() == CMSG_REQUEST_VEHICLE_NEXT_SEAT)
-    {
+        break;
+    case CMSG_REQUEST_VEHICLE_NEXT_SEAT:
         GetPlayer()->ChangeSeat(-1, true);
-        return;
+        break;
+    case CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE:
+        {
+            uint64 guid;        // current vehicle guid
+            if(!recv_data.readPackGUID(guid))
+                return;
+
+            ReadMovementInfo(recv_data, &GetPlayer()->GetVehicleBase()->m_movementInfo);
+
+            uint64 accessory;        //  accessory guid
+            if(!recv_data.readPackGUID(accessory))
+                return;
+
+            int8 seatId;
+            recv_data >> seatId;
+
+            if(!accessory)
+                GetPlayer()->ChangeSeat(-1, seatId > 0); // prev/next
+            else if(Unit *vehUnit = ObjectAccessor::GetUnit(*GetPlayer(), accessory))
+                if(Vehicle *vehicle = vehUnit->GetVehicleKit())
+                    if(vehicle->HasEmptySeat(seatId))
+                        GetPlayer()->EnterVehicle(vehicle, seatId);
+        }
+        break;
     }
-    else if(recv_data.GetOpcode() == CMSG_CHANGE_SEATS_ON_CONTROLLED_VEHICLE)
-        ReadMovementInfo(recv_data, &GetPlayer()->GetVehicleBase()->m_movementInfo);
+}
 
+void WorldSession::HandleEnterPlayerVehicle(WorldPacket &data)
+{
+    // Read guid
     uint64 guid;
-    if(!recv_data.readPackGUID(guid))
-        return;
+    data >> guid;
 
-    int8 seatId;
-    recv_data >> seatId;
+    if(Player* pl=ObjectAccessor::FindPlayer(guid))
+    {
+        if (!pl->GetVehicleKit())
+            return;
+        if (!pl->IsInRaidWith(_player))
+            return;
+        if(!pl->IsWithinDistInMap(_player,INTERACTION_DISTANCE))
+            return;
+        _player->EnterVehicle(pl);
+    }
+}
 
-    if(!guid)
-        GetPlayer()->ChangeSeat(-1, seatId > 0); // prev/next
-    else if(Unit *vehUnit = ObjectAccessor::GetUnit(*GetPlayer(), guid))
-        if(Vehicle *vehicle = vehUnit->GetVehicleKit())
-            if(vehicle->HasEmptySeat(seatId))
-                GetPlayer()->EnterVehicle(vehicle, seatId);
+void WorldSession::HandleEjectPasenger(WorldPacket &data)
+{
+    if(data.GetOpcode()==CMSG_EJECT_PASSENGER)
+    {
+        if(Vehicle* Vv= _player->GetVehicleKit())
+        {
+            uint64 guid;
+            data >> guid;
+            if(Player* Pl=ObjectAccessor::FindPlayer(guid))
+                Pl->ExitVehicle();
+        }
+    }
 }
 
 void WorldSession::HandleRequestVehicleExit(WorldPacket &recv_data)
