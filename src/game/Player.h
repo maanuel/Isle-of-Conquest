@@ -970,7 +970,7 @@ class TRINITY_DLL_SPEC Player : public Unit, public GridObject<Player>
         explicit Player (WorldSession *session);
         ~Player ( );
 
-        void CleanupsBeforeDelete();
+        void CleanupsBeforeDelete(bool finalCleanup = true);
 
         static UpdateMask updateVisualBits;
         static void InitVisibleBits();
@@ -1002,7 +1002,7 @@ class TRINITY_DLL_SPEC Player : public Unit, public GridObject<Player>
 
         void Update( uint32 time );
 
-        static bool BuildEnumData( QueryResult * result,  WorldPacket * p_data );
+        static bool BuildEnumData( QueryResult_AutoPtr result,  WorldPacket * p_data );
 
         void SetInWater(bool apply);
 
@@ -1377,7 +1377,7 @@ class TRINITY_DLL_SPEC Player : public Unit, public GridObject<Player>
         bool LoadFromDB(uint32 guid, SqlQueryHolder *holder);
         bool isBeingLoaded() const { return GetSession()->PlayerLoading();}
 
-        bool MinimalLoadFromDB(QueryResult *result, uint32 guid);
+        bool MinimalLoadFromDB(QueryResult_AutoPtr result, uint32 guid);
         static bool   LoadValuesArrayFromDB(Tokens& data,uint64 guid);
         static uint32 GetUInt32ValueFromArray(Tokens const& data, uint16 index);
         static float  GetFloatValueFromArray(Tokens const& data, uint16 index);
@@ -1596,7 +1596,7 @@ class TRINITY_DLL_SPEC Player : public Unit, public GridObject<Player>
         void RemoveCategoryCooldown(uint32 cat);
         void RemoveArenaSpellCooldowns();
         void RemoveAllSpellCooldown();
-        void _LoadSpellCooldowns(QueryResult *result);
+        void _LoadSpellCooldowns(QueryResult_AutoPtr result);
         void _SaveSpellCooldowns();
         void SetLastPotionId(uint32 item_id) { m_lastPotionId = item_id; }
         void UpdatePotionCooldown(Spell* spell = NULL);
@@ -1893,7 +1893,7 @@ class TRINITY_DLL_SPEC Player : public Unit, public GridObject<Player>
         uint32 GetArenaPoints() { return GetUInt32Value(PLAYER_FIELD_ARENA_CURRENCY); }
         void ModifyHonorPoints( int32 value );
         void ModifyArenaPoints( int32 value );
-        uint32 GetMaxPersonalArenaRatingRequirement();
+        uint32 GetMaxPersonalArenaRatingRequirement(uint32 minarenaslot);
 
         //End of PvP System
 
@@ -2326,27 +2326,27 @@ Spell * m_spellModTakingSpell;
         /***                   LOAD SYSTEM                     ***/
         /*********************************************************/
 
-        void _LoadActions(QueryResult *result, bool startup);
-        void _LoadAuras(QueryResult *result, uint32 timediff);
+        void _LoadActions(QueryResult_AutoPtr result, bool startup);
+        void _LoadAuras(QueryResult_AutoPtr result, uint32 timediff);
         void _LoadGlyphAuras();
-        void _LoadBoundInstances(QueryResult *result);
-        void _LoadInventory(QueryResult *result, uint32 timediff);
-        void _LoadMailInit(QueryResult *resultUnread, QueryResult *resultDelivery);
+        void _LoadBoundInstances(QueryResult_AutoPtr result);
+        void _LoadInventory(QueryResult_AutoPtr result, uint32 timediff);
+        void _LoadMailInit(QueryResult_AutoPtr resultUnread, QueryResult_AutoPtr resultDelivery);
         void _LoadMail();
         void _LoadMailedItems(Mail *mail);
-        void _LoadQuestStatus(QueryResult *result);
-        void _LoadDailyQuestStatus(QueryResult *result);
-        void _LoadGroup(QueryResult *result);
-        void _LoadSkills(QueryResult *result);
-        void _LoadSpells(QueryResult *result);
-        void _LoadFriendList(QueryResult *result);
-        bool _LoadHomeBind(QueryResult *result);
-        void _LoadDeclinedNames(QueryResult *result);
-        void _LoadArenaTeamInfo(QueryResult *result);
-        void _LoadEquipmentSets(QueryResult *result);
-        void _LoadBGData(QueryResult* result);
-        void _LoadGlyphs(QueryResult *result);
-        void _LoadTalents(QueryResult *result);
+        void _LoadQuestStatus(QueryResult_AutoPtr result);
+        void _LoadDailyQuestStatus(QueryResult_AutoPtr result);
+        void _LoadGroup(QueryResult_AutoPtr result);
+        void _LoadSkills(QueryResult_AutoPtr result);
+        void _LoadSpells(QueryResult_AutoPtr result);
+        void _LoadFriendList(QueryResult_AutoPtr result);
+        bool _LoadHomeBind(QueryResult_AutoPtr result);
+        void _LoadDeclinedNames(QueryResult_AutoPtr result);
+        void _LoadArenaTeamInfo(QueryResult_AutoPtr result);
+        void _LoadEquipmentSets(QueryResult_AutoPtr result);
+        void _LoadBGData(QueryResult_AutoPtr result);
+        void _LoadGlyphs(QueryResult_AutoPtr result);
+        void _LoadTalents(QueryResult_AutoPtr result);
 
         /*********************************************************/
         /***                   SAVE SYSTEM                     ***/
@@ -2590,7 +2590,7 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
 {
     SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
     if (!spellInfo) return 0;
-    int32 totalpct = 0;
+    float totalmul = 1.0f;
     int32 totalflat = 0;
 
     // Drop charges for triggering spells instead of triggered ones
@@ -2620,12 +2620,12 @@ template <class T> T Player::ApplySpellMod(uint32 spellId, SpellModOp op, T &bas
             if( mod->op==SPELLMOD_CASTING_TIME  && basevalue >= T(10000) && mod->value <= -100)
                 continue;
 
-            totalpct += mod->value;
+            totalmul *= 1.0f + (float)mod->value / 100.0f;
         }
 
         DropModCharge(mod, spell);
     }
-    float diff = (float)basevalue*(float)totalpct/100.0f + (float)totalflat;
+    float diff = (float)basevalue * (totalmul - 1.0f) + (float)totalflat;
     basevalue = T((float)basevalue + diff);
     return T(diff);
 }

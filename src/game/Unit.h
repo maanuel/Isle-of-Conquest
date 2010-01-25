@@ -48,13 +48,9 @@ enum SpellInterruptFlags
     //SPELL_INTERRUPT_UNK             = 0x20                // unk, 564 of 727 spells having this spell start with "Glyph"
 };
 
+// See SpellAuraInterruptFlags for other values definitions
 enum SpellChannelInterruptFlags
 {
-    CHANNEL_FLAG_DAMAGE      = 0x0002,
-    CHANNEL_FLAG_MOVEMENT    = 0x0008,
-    CHANNEL_FLAG_TURNING     = 0x0010,
-    CHANNEL_FLAG_DAMAGE2     = 0x0080,
-    CHANNEL_FLAG_ONLY_IN_WATER = 0x0100,
     CHANNEL_FLAG_DELAY       = 0x4000
 };
 
@@ -1101,7 +1097,7 @@ class TRINITY_DLL_SPEC Unit : public WorldObject
         void AddToWorld();
         void RemoveFromWorld();
 
-        void CleanupsBeforeDelete();                        // used in ~Creature/~Player (or before mass creature delete to remove cross-references to already deleted units)
+        void CleanupsBeforeDelete(bool finalCleanup = true);                        // used in ~Creature/~Player (or before mass creature delete to remove cross-references to already deleted units)
 
         DiminishingLevels GetDiminishing(DiminishingGroup  group);
         void IncrDiminishing(DiminishingGroup group);
@@ -1426,6 +1422,7 @@ class TRINITY_DLL_SPEC Unit : public WorldObject
 
         void NearTeleportTo(float x, float y, float z, float orientation, bool casting = false);
         virtual bool SetPosition(float x, float y, float z, float ang, bool teleport = false);
+        // returns true if unit's position really changed
         bool SetPosition(const Position &pos, bool teleport = false) { return SetPosition(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation(), teleport); }
 
         void KnockbackFrom(float x, float y, float speedXY, float speedZ);
@@ -1535,10 +1532,9 @@ class TRINITY_DLL_SPEC Unit : public WorldObject
 
         // aura apply/remove helpers - you should better not use these
         void _AddAura(UnitAura * aura, Unit * caster);
-        AuraApplication * __ApplyAura(Aura * aura);
-        void __UnapplyAura(AuraApplicationMap::iterator &i);
-        bool _ApplyAuraEffect(Aura * aura, uint8 effIndex);
-        void _UnapplyAuraEffect(AuraApplication * aurApp, uint8 effIndex, AuraRemoveMode removeMode);
+        AuraApplication * _CreateAuraApplication(Aura * aura, uint8 effMask);
+        void _ApplyAuraEffect(Aura * aura, uint8 effIndex);
+        void _ApplyAura(AuraApplication * aurApp, uint8 effMask);
         void _UnapplyAura(AuraApplicationMap::iterator &i, AuraRemoveMode removeMode);
         void _UnapplyAura(AuraApplication * aurApp, AuraRemoveMode removeMode);
         void _RemoveNoStackAuraApplicationsDueToAura(Aura * aura);
@@ -1823,7 +1819,7 @@ class TRINITY_DLL_SPEC Unit : public WorldObject
                                                             // redefined in Creature
         bool IsImmunedToDamage(SpellSchoolMask meleeSchoolMask);
         bool IsImmunedToDamage(SpellEntry const* spellInfo);
-        virtual bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index, bool checkMechanic=true) const;
+        virtual bool IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const;
                                                             // redefined in Creature
         uint32 CalcNotIgnoreDamageRedunction( uint32 damage, SpellSchoolMask damageSchoolMask);
         uint32 CalcArmorReducedDamage(Unit* pVictim, const uint32 damage, SpellEntry const *spellInfo, WeaponAttackType attackType=MAX_ATTACK);

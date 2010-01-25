@@ -640,10 +640,6 @@ void Spell::SpellDamageSchoolDmg(uint32 effect_idx)
                         // Eviscerate and Envenom Bonus Damage (item set effect)
                         if (m_caster->HasAura(SPELL_EVISCERATE_AND_ENVENOM_BONUS_DAMAGE_37169))
                             damage += combo*40;
-
-                        // Apply spell mods
-                        if (Player* modOwner = m_caster->GetSpellModOwner())
-                            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_DAMAGE, damage);
                     }
                 }
                 break;
@@ -2362,6 +2358,9 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
                 pet->CastSpell(pet, 28305, true);
             return;
         }
+        // Empower Rune Weapon
+        case 53258:
+            return; // skip, hack-added in spell effect
     }
 
     // normal case
@@ -2598,8 +2597,7 @@ void Spell::EffectApplyAura(uint32 i)
     if (!m_spellAura)
         return;
     assert (unitTarget == m_spellAura->GetOwner());
-    if (!m_spellAura->IsRemoved())
-        m_spellAura->ApplyEffectForTargets(i);
+    m_spellAura->_ApplyEffectForTargets(i);
 }
 
 void Spell::EffectApplyAreaAura(uint32 i)
@@ -2607,8 +2605,7 @@ void Spell::EffectApplyAreaAura(uint32 i)
     if (!m_spellAura)
         return;
     assert (unitTarget == m_spellAura->GetOwner());
-    if (!m_spellAura->IsRemoved())
-        m_spellAura->ApplyEffectForTargets(i);
+    m_spellAura->_ApplyEffectForTargets(i);
 }
 
 void Spell::EffectUnlearnSpecialization( uint32 i )
@@ -2680,7 +2677,18 @@ void Spell::EffectSendEvent(uint32 EffectIndex)
     we do not handle a flag dropping or clicking on flag in battleground by sendevent system
     */
     sLog.outDebug("Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->EffectMiscValue[EffectIndex], m_spellInfo->Id);
-    m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[EffectIndex], m_caster, focusObject);
+
+    Object *pTarget;
+    if (focusObject)
+        pTarget = focusObject;
+    else if (unitTarget)
+        pTarget = unitTarget;
+    else if (gameObjTarget)
+        pTarget = gameObjTarget;
+    else
+        pTarget = NULL;
+
+    m_caster->GetMap()->ScriptsStart(sEventScripts, m_spellInfo->EffectMiscValue[EffectIndex], m_caster, pTarget);
 }
 
 void Spell::EffectPowerBurn(uint32 i)
@@ -3109,6 +3117,9 @@ void Spell::EffectPersistentAA(uint32 i)
             modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_RADIUS, radius);
 
         Unit *caster = m_caster->GetEntry() == WORLD_TRIGGER ? m_originalCaster : m_caster;
+        // Caster not in world, might be spell triggered from aura removal
+        if (!caster->IsInWorld())
+            return;
         DynamicObject* dynObj = new DynamicObject;
         if(!dynObj->Create(objmgr.GenerateLowGuid(HIGHGUID_DYNAMICOBJECT), caster, m_spellInfo->Id, m_targets.m_dstPos, radius, false))
         {
@@ -3126,10 +3137,10 @@ void Spell::EffectPersistentAA(uint32 i)
             assert(false);
             return;
         }
+        m_spellAura->_RegisterForTargets();
     }
     assert(m_spellAura->GetDynobjOwner());
-    if (!m_spellAura->IsRemoved())
-        m_spellAura->ApplyEffectForTargets(i);
+    m_spellAura->_ApplyEffectForTargets(i);
 }
 
 void Spell::EffectEnergize(uint32 i)
@@ -3866,6 +3877,9 @@ void Spell::EffectAddFarsight(uint32 i)
 
     float radius = GetSpellRadiusForFriend(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
     int32 duration = GetSpellDuration(m_spellInfo);
+    // Caster not in world, might be spell triggered from aura removal
+    if (!m_caster->IsInWorld())
+        return;
     DynamicObject* dynObj = new DynamicObject;
     if(!dynObj->Create(objmgr.GenerateLowGuid(HIGHGUID_DYNAMICOBJECT), m_caster, m_spellInfo->Id, m_targets.m_dstPos, radius, true))
     {
@@ -7238,11 +7252,30 @@ void Spell::EffectActivateRune(uint32  eff_idx)
     if(plr->getClass() != CLASS_DEATH_KNIGHT)
         return;
 
-    for (uint32 j = 0; j < MAX_RUNES; ++j)
+    // needed later
+    m_runesState = ((Player*)m_caster)->GetRunesState();
+
+    uint32 count = damage;
+    if (count == 0) count = 1;
+    for(uint32 j = 0; j < MAX_RUNES && count > 0; ++j)
     {
         if(plr->GetRuneCooldown(j) && plr->GetCurrentRune(j) == RuneType(m_spellInfo->EffectMiscValue[eff_idx]))
         {
             plr->SetRuneCooldown(j, 0);
+            --count;
+        }
+    }
+    // Empower rune weapon
+    if (m_spellInfo->Id == 47568)
+    {
+        // Need to do this just once
+        if (eff_idx != 0)
+            return;
+
+        for(uint32 i = 0; i < MAX_RUNES; ++i)
+        {
+            if(plr->GetRuneCooldown(i) && (plr->GetCurrentRune(i) == RUNE_FROST ||  plr->GetCurrentRune(i) == RUNE_DEATH))
+                plr->SetRuneCooldown(i, 0);
         }
     }
 }

@@ -125,7 +125,7 @@ bool Group::Create(const uint64 &guid, const char * name)
     return true;
 }
 
-bool Group::LoadGroupFromDB(const uint64 &leaderGuid, QueryResult *result, bool loadMembers)
+bool Group::LoadGroupFromDB(const uint64 &leaderGuid, QueryResult_AutoPtr result, bool loadMembers)
 {
     if(isBGGroup())
         return false;
@@ -144,10 +144,7 @@ bool Group::LoadGroupFromDB(const uint64 &leaderGuid, QueryResult *result, bool 
 
     // group leader not exist
     if(!objmgr.GetPlayerNameByGUID(m_leaderGuid, m_leaderName))
-    {
-        if(!external) delete result;
         return false;
-    }
 
     m_groupType  = (*result)[13].GetBool() ? GROUPTYPE_RAID : GROUPTYPE_NORMAL;
 
@@ -172,7 +169,6 @@ bool Group::LoadGroupFromDB(const uint64 &leaderGuid, QueryResult *result, bool 
 
     for (int i=0; i<TARGETICONCOUNT; ++i)
         m_targetIcons[i] = (*result)[5+i].GetUInt64();
-    if(!external) delete result;
 
     if(loadMembers)
     {
@@ -184,7 +180,6 @@ bool Group::LoadGroupFromDB(const uint64 &leaderGuid, QueryResult *result, bool 
         {
             LoadMemberFromDB((*result)[0].GetUInt32(), (*result)[2].GetUInt8(), (*result)[1].GetBool());
         } while( result->NextRow() );
-        delete result;
         // group too small
         if(GetMembersCount() < 2)
             return false;
@@ -737,14 +732,14 @@ void Group::CountRollVote(const uint64& playerGUID, const uint64& Guid, uint32 N
     {
         case ROLL_PASS:                                     // Player choose pass
         {
-            SendLootRoll(0, playerGUID, 0, ROLL_PASS, *roll);
+            SendLootRoll(0, playerGUID, 128, ROLL_PASS, *roll);
             ++roll->totalPass;
             itr->second = PASS;
         }
         break;
         case ROLL_NEED:                                     // player choose Need
         {
-            SendLootRoll(0, playerGUID, 0, ROLL_NEED, *roll);
+            SendLootRoll(0, playerGUID, 0, 0, *roll);
             ++roll->totalNeed;
             itr->second = NEED;
         }

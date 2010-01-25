@@ -110,7 +110,14 @@ SpellMgr::SpellMgr()
             case TARGET_UNIT_PARTY_CASTER:
             case TARGET_UNIT_RAID_CASTER:
             case TARGET_UNIT_VEHICLE:
-            case TARGET_UNIT_PASSENGER:
+            case TARGET_UNIT_PASSENGER_0:
+            case TARGET_UNIT_PASSENGER_1:
+            case TARGET_UNIT_PASSENGER_2:
+            case TARGET_UNIT_PASSENGER_3:
+            case TARGET_UNIT_PASSENGER_4:
+            case TARGET_UNIT_PASSENGER_5:
+            case TARGET_UNIT_PASSENGER_6:
+            case TARGET_UNIT_PASSENGER_7:
                 SpellTargetType[i] = TARGET_TYPE_UNIT_CASTER;
                 break;
             case TARGET_UNIT_MINIPET:
@@ -122,6 +129,7 @@ SpellMgr::SpellMgr()
             case TARGET_UNIT_PARTY_TARGET:
             case TARGET_UNIT_CLASS_TARGET:
             case TARGET_UNIT_CHAINHEAL:
+            case TARGET_UNIT_UNK_92:
                 SpellTargetType[i] = TARGET_TYPE_UNIT_TARGET;
                 break;
             case TARGET_UNIT_NEARBY_ENEMY:
@@ -196,6 +204,7 @@ SpellMgr::SpellMgr()
             case TARGET_DEST_DEST_RIGHT:
             case TARGET_DEST_DEST_LEFT:
             case TARGET_DEST_DEST_RANDOM:
+            case TARGET_DEST_DEST_RANDOM_DIR_DIST:
                 SpellTargetType[i] = TARGET_TYPE_DEST_DEST;
                 break;
             case TARGET_DST_DB:
@@ -464,12 +473,8 @@ AuraState GetSpellAuraState(SpellEntry const * spellInfo)
     return AURA_STATE_NONE;
 }
 
-SpellSpecific GetSpellSpecific(uint32 spellId)
+SpellSpecific GetSpellSpecific(SpellEntry const * spellInfo)
 {
-    SpellEntry const *spellInfo = sSpellStore.LookupEntry(spellId);
-    if(!spellInfo)
-        return SPELL_SPECIFIC_NORMAL;
-
     switch(spellInfo->SpellFamilyName)
     {
         case SPELLFAMILY_GENERIC:
@@ -550,8 +555,6 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
         }
         case SPELLFAMILY_WARRIOR:
         {
-            if (spellInfo->SpellFamilyFlags[0] & 0x10000)
-                return SPELL_SPECIFIC_BATTLE_SHOUT;
             if (spellInfo->SpellFamilyFlags[1] & 0x000080)
                 return SPELL_SPECIFIC_POSITIVE_SHOUT;
             if (spellInfo->Id == 12292) // Death Wish
@@ -604,9 +607,6 @@ SpellSpecific GetSpellSpecific(uint32 spellId)
         {
             if (IsSealSpell(spellInfo))
                 return SPELL_SPECIFIC_SEAL;
-
-            if (spellInfo->SpellFamilyFlags[0] & 0x00000002)
-                return SPELL_SPECIFIC_BLESSING_OF_MIGHT;
 
             if (spellInfo->SpellFamilyFlags[0] & 0x11010002)
                 return SPELL_SPECIFIC_BLESSING;
@@ -680,17 +680,11 @@ bool IsSingleFromSpellSpecificPerCaster(SpellSpecific spellSpec1,SpellSpecific s
         case SPELL_SPECIFIC_STING:
         case SPELL_SPECIFIC_CURSE:
         case SPELL_SPECIFIC_ASPECT:
-        case SPELL_SPECIFIC_BATTLE_SHOUT:
         case SPELL_SPECIFIC_POSITIVE_SHOUT:
         case SPELL_SPECIFIC_JUDGEMENT:
         case SPELL_SPECIFIC_WARLOCK_CORRUPTION:
-            return spellSpec1==spellSpec2;
-        case SPELL_SPECIFIC_BLESSING_OF_MIGHT:
-            return spellSpec2==SPELL_SPECIFIC_BLESSING
-            || spellSpec2 == SPELL_SPECIFIC_BLESSING_OF_MIGHT;
         case SPELL_SPECIFIC_BLESSING:
-            return spellSpec2==SPELL_SPECIFIC_BLESSING_OF_MIGHT
-            || spellSpec2==SPELL_SPECIFIC_BLESSING;
+            return spellSpec1==spellSpec2;
         default:
             return false;
     }
@@ -713,6 +707,7 @@ bool IsSingleFromSpellSpecificPerTarget(SpellSpecific spellSpec1, SpellSpecific 
         case SPELL_SPECIFIC_WARRIOR_ENRAGE:
         case SPELL_SPECIFIC_MAGE_ARCANE_BRILLANCE:
         case SPELL_SPECIFIC_PRIEST_DIVINE_SPIRIT:
+        case SPELL_SPECIFIC_POSITIVE_SHOUT:
             return spellSpec1==spellSpec2;
         case SPELL_SPECIFIC_FOOD:
             return spellSpec2==SPELL_SPECIFIC_FOOD
@@ -734,15 +729,6 @@ bool IsSingleFromSpellSpecificPerTarget(SpellSpecific spellSpec1, SpellSpecific 
             return spellSpec2==SPELL_SPECIFIC_BATTLE_ELIXIR
                 || spellSpec2==SPELL_SPECIFIC_GUARDIAN_ELIXIR
                 || spellSpec2==SPELL_SPECIFIC_FLASK_ELIXIR;
-        case SPELL_SPECIFIC_BLESSING_OF_MIGHT:
-            return spellSpec2==SPELL_SPECIFIC_BATTLE_SHOUT;
-        case SPELL_SPECIFIC_BATTLE_SHOUT:
-            return spellSpec2==SPELL_SPECIFIC_BLESSING_OF_MIGHT
-                || spellSpec2==SPELL_SPECIFIC_POSITIVE_SHOUT
-                || spellSpec2==SPELL_SPECIFIC_BATTLE_SHOUT;
-        case SPELL_SPECIFIC_POSITIVE_SHOUT:
-            return spellSpec2==SPELL_SPECIFIC_BATTLE_SHOUT
-            || spellSpec2==SPELL_SPECIFIC_POSITIVE_SHOUT;
         default:
             return false;
     }
@@ -1013,7 +999,7 @@ bool IsSingleTargetSpell(SpellEntry const *spellInfo)
     if ( spellInfo->AttributesEx5 & SPELL_ATTR_EX5_SINGLE_TARGET_SPELL )
         return true;
 
-    switch(GetSpellSpecific(spellInfo->Id))
+    switch(GetSpellSpecific(spellInfo))
     {
         case SPELL_SPECIFIC_JUDGEMENT:
             return true;
@@ -1033,13 +1019,13 @@ bool IsSingleTargetSpells(SpellEntry const *spellInfo1, SpellEntry const *spellI
         return true;
 
     // TODO - need found Judgements rule
-    SpellSpecific spec1 = GetSpellSpecific(spellInfo1->Id);
+    SpellSpecific spec1 = GetSpellSpecific(spellInfo1);
     // spell with single target specific types
     switch(spec1)
     {
         case SPELL_SPECIFIC_JUDGEMENT:
         case SPELL_SPECIFIC_MAGE_POLYMORPH:
-            if(GetSpellSpecific(spellInfo2->Id) == spec1)
+            if(GetSpellSpecific(spellInfo2) == spec1)
                 return true;
             break;
         default:
@@ -1111,7 +1097,7 @@ void SpellMgr::LoadSpellTargetPositions()
     uint32 count = 0;
 
     //                                                0   1           2                  3                  4                  5
-    QueryResult *result = WorldDatabase.Query("SELECT id, target_map, target_position_x, target_position_y, target_position_z, target_orientation FROM spell_target_position");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT id, target_map, target_position_x, target_position_y, target_position_z, target_orientation FROM spell_target_position");
     if( !result )
     {
 
@@ -1216,8 +1202,6 @@ void SpellMgr::LoadSpellTargetPositions()
         }
     }
 
-    delete result;
-
     sLog.outString();
     sLog.outString( ">> Loaded %u spell teleport coordinates", count );
 }
@@ -1247,7 +1231,7 @@ void SpellMgr::LoadSpellProcEvents()
     uint32 count = 0;
 
     //                                                0      1           2                3                 4                 5                 6          7       8        9             10
-    QueryResult *result = WorldDatabase.Query("SELECT entry, SchoolMask, SpellFamilyName, SpellFamilyMask0, SpellFamilyMask1, SpellFamilyMask2, procFlags, procEx, ppmRate, CustomChance, Cooldown FROM spell_proc_event");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, SchoolMask, SpellFamilyName, SpellFamilyMask0, SpellFamilyMask1, SpellFamilyMask2, procFlags, procEx, ppmRate, CustomChance, Cooldown FROM spell_proc_event");
     if( !result )
     {
         barGoLink bar( 1 );
@@ -1301,8 +1285,6 @@ void SpellMgr::LoadSpellProcEvents()
         ++count;
     } while( result->NextRow() );
 
-    delete result;
-
     sLog.outString();
     if (customProc)
         sLog.outString( ">> Loaded %u extra spell proc event conditions + %u custom",  count, customProc );
@@ -1315,7 +1297,7 @@ void SpellMgr::LoadSpellBonusess()
     mSpellBonusMap.clear();                             // need for reload case
     uint32 count = 0;
     //                                                0      1             2          3         4
-    QueryResult *result = WorldDatabase.Query("SELECT entry, direct_bonus, dot_bonus, ap_bonus, ap_dot_bonus FROM spell_bonus_data");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, direct_bonus, dot_bonus, ap_bonus, ap_dot_bonus FROM spell_bonus_data");
     if( !result )
     {
         barGoLink bar( 1 );
@@ -1349,8 +1331,6 @@ void SpellMgr::LoadSpellBonusess()
         mSpellBonusMap[entry] = sbe;
         ++count;
     } while( result->NextRow() );
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u extra spell bonus data",  count);
@@ -1492,7 +1472,7 @@ void SpellMgr::LoadSpellElixirs()
     uint32 count = 0;
 
     //                                                0      1
-    QueryResult *result = WorldDatabase.Query("SELECT entry, mask FROM spell_elixir");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, mask FROM spell_elixir");
     if( !result )
     {
 
@@ -1529,10 +1509,56 @@ void SpellMgr::LoadSpellElixirs()
         ++count;
     } while( result->NextRow() );
 
-    delete result;
-
     sLog.outString();
     sLog.outString( ">> Loaded %u spell elixir definitions", count );
+}
+
+void SpellMgr::LoadSpellStackMasks()
+{
+    mSpellStackMasks.clear();                                  // need for reload case
+
+    uint32 count = 0;
+
+    //                                                0      1
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT id, mask FROM spell_stack_masks");
+    if( !result )
+    {
+
+        barGoLink bar( 1 );
+
+        bar.step();
+
+        sLog.outString();
+        sLog.outString( ">> Loaded %u spell stacking masks definitions", count );
+        return;
+    }
+
+    barGoLink bar( result->GetRowCount() );
+
+    do
+    {
+        Field *fields = result->Fetch();
+
+        bar.step();
+
+        uint32 id = fields[0].GetUInt32();
+        uint8 mask = fields[1].GetUInt32();
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(id);
+
+        if (!spellInfo)
+        {
+            sLog.outErrorDb("Spell %u listed in `spell_stack_masks` does not exist", id);
+            continue;
+        }
+
+        mSpellStackMasks[id] = mask;
+
+        ++count;
+    } while( result->NextRow() );
+
+    sLog.outString();
+    sLog.outString( ">> Loaded %u spell stacking masks definitions", count );
 }
 
 void SpellMgr::LoadSpellThreats()
@@ -1542,7 +1568,7 @@ void SpellMgr::LoadSpellThreats()
     uint32 count = 0;
 
     //                                                0      1
-    QueryResult *result = WorldDatabase.Query("SELECT entry, Threat FROM spell_threat");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, Threat FROM spell_threat");
     if (!result)
     {
 
@@ -1576,8 +1602,6 @@ void SpellMgr::LoadSpellThreats()
 
         ++count;
     } while (result->NextRow());
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u aggro generating spells", count );
@@ -1780,7 +1804,7 @@ void SpellMgr::LoadSpellLearnSpells()
     mSpellLearnSpells.clear();                              // need for reload case
 
     //                                                  0      1        2
-    QueryResult *result = WorldDatabase.Query("SELECT entry, SpellID, Active FROM spell_learn_spell");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, SpellID, Active FROM spell_learn_spell");
     if (!result)
     {
         barGoLink bar(1);
@@ -1829,8 +1853,6 @@ void SpellMgr::LoadSpellLearnSpells()
 
         ++count;
     } while (result->NextRow());
-
-    delete result;
 
     // search auto-learned spells and add its to map also for use in unlearn spells/talents
     uint32 dbc_count = 0;
@@ -1891,7 +1913,7 @@ void SpellMgr::LoadSpellScriptTarget()
 
     uint32 count = 0;
 
-    QueryResult *result = WorldDatabase.Query("SELECT entry,type,targetEntry FROM spell_script_target");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry,type,targetEntry FROM spell_script_target");
 
     if (!result)
     {
@@ -1993,8 +2015,6 @@ void SpellMgr::LoadSpellScriptTarget()
         ++count;
     } while (result->NextRow());
 
-    delete result;
-
     // Check all spells
     for (uint32 i = 1; i < sSpellStore.GetNumRows(); ++i)
     {
@@ -2051,7 +2071,7 @@ void SpellMgr::LoadSpellPetAuras()
     uint32 count = 0;
 
     //                                                  0       1       2    3
-    QueryResult *result = WorldDatabase.Query("SELECT spell, effectId, pet, aura FROM spell_pet_auras");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT spell, effectId, pet, aura FROM spell_pet_auras");
     if (!result)
     {
         barGoLink bar(1);
@@ -2108,8 +2128,6 @@ void SpellMgr::LoadSpellPetAuras()
 
         ++count;
     } while (result->NextRow());
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u spell pet auras", count );
@@ -2391,7 +2409,7 @@ void SpellMgr::LoadSpellAreas()
     uint32 count = 0;
 
     //                                                  0     1         2              3               4           5          6        7       8
-    QueryResult *result = WorldDatabase.Query("SELECT spell, area, quest_start, quest_start_active, quest_end, aura_spell, racemask, gender, autocast FROM spell_area");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT spell, area, quest_start, quest_start_active, quest_end, aura_spell, racemask, gender, autocast FROM spell_area");
 
     if (!result)
     {
@@ -2582,8 +2600,6 @@ void SpellMgr::LoadSpellAreas()
 
         ++count;
     } while(result->NextRow());
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u spell area requirements", count );
@@ -2997,23 +3013,12 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
     if (auraSpell)                               // not have expected aura
         if (!player || auraSpell > 0 && !player->HasAura(auraSpell) || auraSpell < 0 && player->HasAura(-auraSpell))
             return false;
-
-    // Extra conditions
+    
+    // Extra conditions -- leaving the possibility add extra conditions...
     switch(spellId)
     {
         case SPELL_RESTRICTED_FLIGHT_AREA_58600: // No fly Zone - Dalaran (Krasus Landing exception)
-            if (!player || player->GetAreaId() == 4564 || !player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY)
-                || player->HasAura(44795))
-                return false;
-            break;
-        case SPELL_RESTRICTED_FLIGHT_AREA_58730: // No fly Zone - Wintergrasp
-            if (!player || !player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY)
-                || player->HasAura(45472) || player->HasAura(44795))
-                return false;
-            break;
-        case SPELL_ESSENCE_OF_WINTERGRASP_58045: // Essence of Wintergrasp - Wintergrasp
-        case SPELL_ESSENCE_OF_WINTERGRASP_57940: // Essence of Wintergrasp - Northrend
-            if (!player || player->GetTeamId() != sWorld.getState(WORLDSTATE_WINTERGRASP_CONTROLING_FACTION))
+            if (!player || player->GetAreaId() == 4564 || !player->HasAuraType(SPELL_AURA_MOD_INCREASE_MOUNTED_FLIGHT_SPEED) && !player->HasAuraType(SPELL_AURA_FLY) || player->HasAura(44795))
                 return false;
             break;
     }
@@ -3025,11 +3030,18 @@ bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32
 
 bool SpellMgr::CanAurasStack(SpellEntry const *spellInfo_1, SpellEntry const *spellInfo_2, bool sameCaster) const
 {
-    SpellSpecific spellSpec_1 = GetSpellSpecific(spellInfo_1->Id);
-    SpellSpecific spellSpec_2 = GetSpellSpecific(spellInfo_2->Id);
+    SpellSpecific spellSpec_1 = GetSpellSpecific(spellInfo_1);
+    SpellSpecific spellSpec_2 = GetSpellSpecific(spellInfo_2);
     if (spellSpec_1 && spellSpec_2)
         if (IsSingleFromSpellSpecificPerTarget(spellSpec_1, spellSpec_2)
             || sameCaster && IsSingleFromSpellSpecificPerCaster(spellSpec_1, spellSpec_2))
+            return false;
+
+    // Stacking Checks by family masks
+    uint32 spellSpecMask_1 = GetSpellStackMask(spellInfo_1->Id);
+    uint32 spellSpecMask_2 = GetSpellStackMask(spellInfo_2->Id);
+    if (spellSpecMask_1 && spellSpecMask_2)
+        if ((spellSpecMask_1 & spellSpecMask_2) != 0)
             return false;
 
     if(spellInfo_1->SpellFamilyName != spellInfo_2->SpellFamilyName)
@@ -3139,7 +3151,7 @@ void SpellMgr::LoadSpellEnchantProcData()
     uint32 count = 0;
 
     //                                                  0         1           2         3
-    QueryResult *result = WorldDatabase.Query("SELECT entry, customChance, PPMChance, procEx FROM spell_enchant_proc_data");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, customChance, PPMChance, procEx FROM spell_enchant_proc_data");
     if (!result)
     {
         barGoLink bar(1);
@@ -3178,8 +3190,6 @@ void SpellMgr::LoadSpellEnchantProcData()
         ++count;
     } while(result->NextRow());
 
-    delete result;
-
     sLog.outString();
     sLog.outString( ">> Loaded %u enchant proc data definitions", count);
 }
@@ -3189,7 +3199,7 @@ void SpellMgr::LoadSpellRequired()
     mSpellsReqSpell.clear();                                   // need for reload case
     mSpellReq.clear();                                         // need for reload case
 
-    QueryResult *result = WorldDatabase.Query("SELECT spell_id, req_spell from spell_required");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT spell_id, req_spell from spell_required");
 
     if (!result)
     {
@@ -3216,8 +3226,6 @@ void SpellMgr::LoadSpellRequired()
         mSpellReq[spell_id] = spell_req;
         ++rows;
     } while (result->NextRow());
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u spell required records", rows );
@@ -3831,6 +3839,29 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->AttributesEx5 |= SPELL_ATTR_EX5_START_PERIODIC_AT_APPLY;
             count++;
             break;
+        case 41013:     // Parasitic Shadowfiend Passive
+            spellInfo->EffectApplyAuraName[0] = 4; // proc debuff, and summon infinite fiends
+            count++;
+            break;
+        case 27892:     // To Anchor 1
+        case 27928:     // To Anchor 1
+        case 27935:     // To Anchor 1
+        case 27915:     // Anchor to Skulls
+        case 27931:     // Anchor to Skulls
+        case 27937:     // Anchor to Skulls
+            spellInfo->rangeIndex = 13;
+            count++;
+            break;
+        case 62374:     // Pursued
+            spellInfo->MaxAffectedTargets = 1;
+            spellInfo->EffectImplicitTargetB[0] = TARGET_UNIT_AREA_ENTRY_SRC;
+            spellInfo->EffectImplicitTargetB[1] = TARGET_UNIT_AREA_ENTRY_SRC;
+            count++;
+            break;
+        case 13810:     // Frost Trap Aura
+            spellInfo->Effect[1] = 0;
+            count++;
+            break;
         default:
             break;
         }
@@ -3942,7 +3973,7 @@ void SpellMgr::LoadSpellLinked()
     uint32 count = 0;
 
     //                                                0              1             2
-    QueryResult *result = WorldDatabase.Query("SELECT spell_trigger, spell_effect, type FROM spell_linked_spell");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT spell_trigger, spell_effect, type FROM spell_linked_spell");
     if (!result)
     {
         barGoLink bar(1);
@@ -4002,8 +4033,6 @@ void SpellMgr::LoadSpellLinked()
 
         ++count;
     } while( result->NextRow() );
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %u linked spells", count );

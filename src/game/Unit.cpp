@@ -63,7 +63,7 @@ float baseMoveSpeed[MAX_MOVE_TYPE] =
 {
     2.5f,                  // MOVE_WALK
     7.0f,                  // MOVE_RUN
-    3.0f,                  // MOVE_RUN_BACK
+    2.5f,                  // MOVE_RUN_BACK
     4.722222f,             // MOVE_SWIM
     4.5f,                  // MOVE_SWIM_BACK
     3.141594f,             // MOVE_TURN_RATE
@@ -74,7 +74,7 @@ float baseMoveSpeed[MAX_MOVE_TYPE] =
 float playerBaseMoveSpeed[MAX_MOVE_TYPE] = {
     2.5f,                  // MOVE_WALK
     7.0f,                  // MOVE_RUN
-    3.0f,                  // MOVE_RUN_BACK
+    2.5f,                  // MOVE_RUN_BACK
     4.722222f,             // MOVE_SWIM
     4.5f,                  // MOVE_SWIM_BACK
     3.141594f,             // MOVE_TURN_RATE
@@ -1090,8 +1090,10 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
 
     SpellSchoolMask damageSchoolMask = SpellSchoolMask(damageInfo->schoolMask);
     uint32 crTypeMask = pVictim->GetCreatureTypeMask();
-    // Check spell crit chance
-    //bool crit = isSpellCrit(pVictim, spellInfo, damageSchoolMask, attackType);
+
+    if (damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL)
+        damage = CalcArmorReducedDamage(pVictim, damage, spellInfo, attackType);
+
     bool blocked = false;
     // Per-school calc
     switch (spellInfo->DmgClass)
@@ -1167,9 +1169,6 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
         }
         break;
     }
-
-    if (damageSchoolMask & SPELL_SCHOOL_MASK_NORMAL)
-        damage = CalcArmorReducedDamage(pVictim, damage, spellInfo, attackType);
 
     // only from players
     if (GetTypeId() == TYPEID_PLAYER)
@@ -3579,8 +3578,11 @@ void Unit::_AddAura(UnitAura * aura, Unit * caster)
     }
 }
 
-AuraApplication * Unit::__ApplyAura(Aura * aura)
+// creates aura application instance and registers it in lists
+// aura application effects are handled separately to prevent aura list corruption
+AuraApplication * Unit::_CreateAuraApplication(Aura * aura, uint8 effMask)
 {
+    // can't apply aura on unit which is going to be deleted - to not create a memory leak
     assert(!m_cleanupDone);
     // aura musn't be removed
     assert(!aura->IsRemoved());
@@ -3595,9 +3597,7 @@ AuraApplication * Unit::__ApplyAura(Aura * aura)
 
     Unit * caster = aura->GetCaster();
 
-    // Add all pointers to lists here to prevent possible pointer invalidation on spellcast/auraapply/auraremove
-
-    AuraApplication * aurApp = new AuraApplication(this, caster, aura);
+    AuraApplication * aurApp = new AuraApplication(this, caster, aura, effMask);
     m_appliedAuras.insert(AuraApplicationMap::value_type(aurId, aurApp));
 
     if(aurSpellInfo->AuraInterruptFlags)
@@ -3606,35 +3606,72 @@ AuraApplication * Unit::__ApplyAura(Aura * aura)
         AddInterruptMask(aurSpellInfo->AuraInterruptFlags);
     }
 
-    AuraState aState = GetSpellAuraState(aura->GetSpellProto());
-    if(aState)
+    if(AuraState aState = GetSpellAuraState(aura->GetSpellProto()))
         m_auraStateAuras.insert(AuraStateAurasMap::value_type(aState, aurApp));
 
     aura->_ApplyForTarget(this, caster, aurApp);
-
-    _RemoveNoStackAurasDueToAura(aura);
-
-    // Update target aura state flag
-    if(aState)
-        ModifyAuraState(aState, true);
-
-    // Sitdown on apply aura req seated
-    if (aurSpellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED && !IsSitState())
-        SetStandState(UNIT_STAND_STATE_SIT);
-
-    aura->HandleAuraSpecificMods(aurApp, caster, true);
-
-    if (aurApp->GetRemoveMode())
-        return NULL;
-
     return aurApp;
 }
 
-void Unit::__UnapplyAura(AuraApplicationMap::iterator &i)
+void Unit::_ApplyAuraEffect(Aura * aura, uint8 effIndex)
+{
+    assert(aura);
+    assert(aura->HasEffect(effIndex));
+    AuraApplication * aurApp = aura->GetApplicationOfTarget(GetGUID());
+    assert(aurApp);
+    if (!aurApp->GetEffectMask())
+        _ApplyAura(aurApp, 1<<effIndex);
+    else
+        aurApp->_HandleEffect(effIndex, true);
+}
+
+// handles effects of aura application
+// should be done after registering aura in lists
+void Unit::_ApplyAura(AuraApplication * aurApp, uint8 effMask)
+{
+    Aura * aura = aurApp->GetBase();
+
+    _RemoveNoStackAurasDueToAura(aura);
+
+    if (aurApp->GetRemoveMode())
+        return;
+
+    // Update target aura state flag
+    if(AuraState aState = GetSpellAuraState(aura->GetSpellProto()))
+        ModifyAuraState(aState, true);
+
+    if (aurApp->GetRemoveMode())
+        return;
+
+    // Sitdown on apply aura req seated
+    if (aura->GetSpellProto()->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_SEATED && !IsSitState())
+        SetStandState(UNIT_STAND_STATE_SIT);
+
+    Unit * caster = aura->GetCaster();
+
+    if (aurApp->GetRemoveMode())
+        return;
+
+    aura->HandleAuraSpecificMods(aurApp, caster, true);
+
+    // apply effects of the aura
+    for (uint8 i = 0 ; i < MAX_SPELL_EFFECTS; ++i)
+    {
+        if (effMask & 1<<i && (!aurApp->GetRemoveMode()))
+            aurApp->_HandleEffect(i, true);
+    }
+}
+
+// removes aura application from lists and unapplies effects
+void Unit::_UnapplyAura(AuraApplicationMap::iterator &i, AuraRemoveMode removeMode)
 {
     AuraApplication * aurApp = i->second;
+    assert(aurApp);
+    assert(!aurApp->GetRemoveMode());
     assert(aurApp->GetTarget() == this);
+    aurApp->SetRemoveMode(removeMode);
     Aura * aura = aurApp->GetBase();
+    sLog.outDebug("Aura %u now is remove mode %d", aura->GetId(), removeMode);
 
     // dead loop is killing the server probably
     assert(m_removedAurasCount < 0xFFFFFFFF);
@@ -3701,42 +3738,6 @@ void Unit::__UnapplyAura(AuraApplicationMap::iterator &i)
     // only way correctly remove all auras from list
     //if(removedAuras != m_removedAurasCount) new aura may be added
         i = m_appliedAuras.begin();
-}
-
-bool Unit::_ApplyAuraEffect(Aura * aura, uint8 effIndex)
-{
-    // check if aura has requested effect - should always do
-    assert(aura);
-    assert(aura->HasEffect(effIndex));
-    AuraApplication * aurApp = aura->GetApplicationOfTarget(GetGUID());
-    if (!aurApp)
-    {
-        // real aura apply
-        aurApp = __ApplyAura(aura);
-        if (!aurApp)
-            return false;
-    }
-    // add effect to unit
-    aurApp->_HandleEffect(effIndex, true);
-    return true;
-}
-
-// Not implemented - afaik there should be no way to remove effects separately
-void Unit::_UnapplyAuraEffect(AuraApplication * aurApp, uint8 effIndex, AuraRemoveMode removeMode)
-{
-    assert(aurApp);
-    assert(aurApp->HasEffect(effIndex));
-    _UnapplyAura(aurApp, removeMode);
-}
-
-void Unit::_UnapplyAura(AuraApplicationMap::iterator &i, AuraRemoveMode removeMode)
-{
-    AuraApplication * aurApp = i->second;
-    assert(aurApp);
-    assert(!aurApp->GetRemoveMode());
-    aurApp->SetRemoveMode(removeMode);
-    sLog.outDebug("Aura %u now is remove mode %d", aurApp->GetBase()->GetId(), removeMode);
-    __UnapplyAura(i);
 }
 
 void Unit::_UnapplyAura(AuraApplication * aurApp, AuraRemoveMode removeMode)
@@ -3885,6 +3886,7 @@ void Unit::RemoveOwnedAura(AuraMap::iterator &i, AuraRemoveMode removeMode)
         ++m_auraUpdateIterator;
 
     m_ownedAuras.erase(i);
+    m_removedAuras.push_back(aura);
 
     // Unregister single target aura
     if (aura->IsSingleTarget())
@@ -4367,7 +4369,16 @@ void Unit::RemoveAllAurasOnDeath()
     {
         Aura const * aura = iter->second->GetBase();
         if (!aura->IsPassive() && !aura->IsDeathPersistent())
-            RemoveAura(iter, AURA_REMOVE_BY_DEATH);
+            _UnapplyAura(iter, AURA_REMOVE_BY_DEATH);
+        else
+            ++iter;
+    }
+
+    for (AuraMap::iterator iter = m_ownedAuras.begin(); iter != m_ownedAuras.end();)
+    {
+        Aura * aura = iter->second;
+        if (!aura->IsPassive() && !aura->IsDeathPersistent())
+            RemoveOwnedAura(iter, AURA_REMOVE_BY_DEATH);
         else
             ++iter;
     }
@@ -4541,6 +4552,8 @@ bool Unit::HasAuraTypeWithValue(AuraType auratype, uint32 value) const
 
 bool Unit::HasNegativeAuraWithInterruptFlag(uint32 flag)
 {
+    if (!(m_interruptMask & flag))
+        return false;
     for (AuraApplicationList::iterator iter = m_interruptableAuras.begin(); iter != m_interruptableAuras.end(); ++iter)
     {
         if (!(*iter)->IsPositive() && (*iter)->GetBase()->GetSpellProto()->AuraInterruptFlags & flag)
@@ -6726,6 +6739,20 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                         return false;
 
                     triggered_spell_id = 31803;
+                    // On target with 5 stacks of Holy Vengeance direct damage is done
+                    if (Aura * aur = pVictim->GetAura(triggered_spell_id, GetGUID()))
+                    {
+                        if (aur->GetStackAmount() == 5)
+                        {
+                            aur->RefreshDuration();
+                            CastSpell(pVictim, 42463, true);
+                            return true;
+                        }
+                    }
+
+                    // Only Autoattack can stack debuff
+                    if (procFlag & PROC_FLAG_SUCCESSFUL_MELEE_SPELL_HIT)
+                        return false;
                     break;
                 }
                 // Seal of Corruption
@@ -6735,6 +6762,20 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                         return false;
 
                     triggered_spell_id = 53742;
+                    // On target with 5 stacks of Blood Corruption direct damage is done
+                    if (Aura * aur = pVictim->GetAura(triggered_spell_id, GetGUID()))
+                    {
+                        if (aur->GetStackAmount() == 5)
+                        {
+                            aur->RefreshDuration();
+                            CastSpell(pVictim, 53739, true);
+                            return true;
+                        }
+                    }
+
+                    // Only Autoattack can stack debuff
+                    if (procFlag & PROC_FLAG_SUCCESSFUL_MELEE_SPELL_HIT)
+                        return false;
                     break;
                 }
                 // Spiritual Attunement
@@ -6768,7 +6809,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                         chance = 15.0f;
                     }
                     // Judgement (any)
-                    else if (GetSpellSpecific(procSpell->Id) == SPELL_SPECIFIC_JUDGEMENT)
+                    else if (GetSpellSpecific(procSpell) == SPELL_SPECIFIC_JUDGEMENT)
                     {
                         triggered_spell_id = 40472;
                         chance = 50.0f;
@@ -9007,7 +9048,7 @@ void Unit::ModifyAuraState(AuraState flag, bool apply)
                 PlayerSpellMap const& sp_list = ((Player*)this)->GetSpellMap();
                 for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
                 {
-                    if (itr->second->state == PLAYERSPELL_REMOVED) continue;
+                    if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
                     SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                     if (!spellInfo || !IsPassiveSpell(itr->first)) continue;
                     if (spellInfo->CasterAuraState == flag)
@@ -10743,9 +10784,10 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
     for (int i=0;i<3;++i)
     {
         // State/effect immunities applied by aura expect full spell immunity
-        // However function also check for mechanic, so ignore that for now
-        if (IsImmunedToSpellEffect(spellInfo, i, false))
-            return true;
+        // Ignore effects with mechanic, they are supposed to be checked separately
+        if (!spellInfo->EffectMechanic[i])
+            if (IsImmunedToSpellEffect(spellInfo, i))
+                return true;
     }
 
     if (spellInfo->Id != 42292 && spellInfo->Id !=59752)
@@ -10761,7 +10803,7 @@ bool Unit::IsImmunedToSpell(SpellEntry const* spellInfo)
     return false;
 }
 
-bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index, bool checkMechanic) const
+bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index) const
 {
     if (!spellInfo)
         return false;
@@ -10772,15 +10814,12 @@ bool Unit::IsImmunedToSpellEffect(SpellEntry const* spellInfo, uint32 index, boo
         if (itr->type == effect)
             return true;
 
-    if (checkMechanic)
+    if (uint32 mechanic = spellInfo->EffectMechanic[index])
     {
-        if (uint32 mechanic = spellInfo->EffectMechanic[index])
-        {
-            SpellImmuneList const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
-            for (SpellImmuneList::const_iterator itr = mechanicList.begin(); itr != mechanicList.end(); ++itr)
-                if (itr->type == spellInfo->EffectMechanic[index])
-                    return true;
-        }
+        SpellImmuneList const& mechanicList = m_spellImmune[IMMUNITY_MECHANIC];
+        for (SpellImmuneList::const_iterator itr = mechanicList.begin(); itr != mechanicList.end(); ++itr)
+            if (itr->type == spellInfo->EffectMechanic[index])
+                return true;
     }
 
     if (uint32 aura = spellInfo->EffectApplyAuraName[index])
@@ -11952,7 +11991,7 @@ bool Unit::CanHaveThreatList() const
 
 float Unit::ApplyTotalThreatModifier(float fThreat, SpellSchoolMask schoolMask)
 {
-    if (!HasAuraType(SPELL_AURA_MOD_THREAT))
+    if (!HasAuraType(SPELL_AURA_MOD_THREAT) || fThreat < 0)
         return fThreat;
 
     SpellSchools school = GetFirstSchoolInMask(schoolMask);
@@ -12962,7 +13001,7 @@ void Unit::RemoveFromWorld()
     }
 }
 
-void Unit::CleanupsBeforeDelete()
+void Unit::CleanupsBeforeDelete(bool finalCleanup)
 {
     if (IsInWorld())
         RemoveFromWorld();
@@ -12972,7 +13011,10 @@ void Unit::CleanupsBeforeDelete()
     //A unit may be in removelist and not in world, but it is still in grid
     //and may have some references during delete
     RemoveAllAuras();
-    m_cleanupDone = true;
+
+    if (finalCleanup)
+        m_cleanupDone = true;
+
     InterruptNonMeleeSpells(true);
     m_Events.KillAllEvents(false);                      // non-delatable (currently casted spells) will not deleted now but it will deleted at call in Map::RemoveAllObjectsInRemoveList
     CombatStop();
@@ -13828,7 +13870,15 @@ void Unit::SetStandState(uint8 state)
 
 bool Unit::IsPolymorphed() const
 {
-    return GetSpellSpecific(getTransForm())==SPELL_SPECIFIC_MAGE_POLYMORPH;
+    uint32 transformId = getTransForm();
+    if (!transformId)
+        return false;
+
+    const SpellEntry *spellInfo=sSpellStore.LookupEntry(transformId);
+    if (!spellInfo)
+        return false;
+
+    return GetSpellSpecific(spellInfo)==SPELL_SPECIFIC_MAGE_POLYMORPH;
 }
 
 void Unit::SetDisplayId(uint32 modelId)
@@ -15681,6 +15731,11 @@ void Unit::EnterVehicle(Vehicle *vehicle, int8 seatId)
         ((Player*)this)->StopCastingBindSight();
         ((Player*)this)->Unmount();
         ((Player*)this)->RemoveAurasByType(SPELL_AURA_MOUNTED);
+
+        // drop flag at invisible in bg
+        if(((Player*)this)->InBattleGround())
+            if(BattleGround *bg = ((Player*)this)->GetBattleGround())
+                bg->EventPlayerDroppedFlag((Player*)this);
     }
 
     assert(!m_vehicle);
@@ -15943,7 +15998,7 @@ bool Unit::SetPosition(float x, float y, float z, float orientation, bool telepo
     if ((relocated || turn) && IsVehicle())
         GetVehicleKit()->RelocatePassengers(x,y,z,orientation);
 
-    return true;
+    return (relocated || turn);
 }
 
 void Unit::SendThreatListUpdate()

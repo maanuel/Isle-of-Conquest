@@ -535,7 +535,7 @@ void AchievementMgr::SaveToDB()
     }
 }
 
-void AchievementMgr::LoadFromDB(QueryResult *achievementResult, QueryResult *criteriaResult)
+void AchievementMgr::LoadFromDB(QueryResult_AutoPtr achievementResult, QueryResult_AutoPtr criteriaResult)
 {
     if(achievementResult)
     {
@@ -553,7 +553,6 @@ void AchievementMgr::LoadFromDB(QueryResult *achievementResult, QueryResult *cri
             ca.date = time_t(fields[1].GetUInt64());
             ca.changed = false;
         } while(achievementResult->NextRow());
-        delete achievementResult;
     }
 
     if(criteriaResult)
@@ -583,7 +582,6 @@ void AchievementMgr::LoadFromDB(QueryResult *achievementResult, QueryResult *cri
             progress.date    = date;
             progress.changed = false;
         } while(criteriaResult->NextRow());
-        delete criteriaResult;
     }
 
 }
@@ -628,8 +626,7 @@ void AchievementMgr::SendAchievementEarned(AchievementEntry const* achievement)
         Trinity::LocalizedPacketDo<Trinity::AchievementChatBuilder> say_do(say_builder);
         Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::AchievementChatBuilder> > say_worker(GetPlayer(),sWorld.getConfig(CONFIG_LISTEN_RANGE_SAY),say_do);
         TypeContainerVisitor<Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::AchievementChatBuilder> >, WorldTypeMapContainer > message(say_worker);
-        CellLock<GridReadGuard> cell_lock(cell, p);
-        cell_lock->Visit(cell_lock, message, *GetPlayer()->GetMap(), *GetPlayer(), sWorld.getConfig(CONFIG_LISTEN_RANGE_SAY));
+        cell.Visit(p, message, *GetPlayer()->GetMap(), *GetPlayer(), sWorld.getConfig(CONFIG_LISTEN_RANGE_SAY));
     }
 
     WorldPacket data(SMSG_ACHIEVEMENT_EARNED, 8+4+8);
@@ -1195,23 +1192,48 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 SetCriteriaProgress(achievementCriteria, 1);
                 break;
             }
+            case ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+            {
+                // miscvalue1 = itemid
+                // miscvalue2 = itemSlot
+                if (!miscvalue1)
+                    continue;
+
+                if (miscvalue2 != achievementCriteria->equip_epic_item.itemSlot)
+                    continue;
+
+                ItemPrototype const *pProto = objmgr.GetItemPrototype(miscvalue1);
+                if (!pProto || pProto->Quality != ITEM_QUALITY_EPIC)
+                    continue;
+
+                // check item level via achievement_criteria_data
+                AchievementCriteriaDataSet const* data = achievementmgr.GetCriteriaDataSet(achievementCriteria);
+                if (!data || !data->Meets(GetPlayer(), 0, pProto->ItemLevel))
+                    continue;
+
+                SetCriteriaProgress(achievementCriteria, 1);
+                break;
+            }
+
             case ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
             case ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
             {
                 // miscvalue1 = itemid
                 // miscvalue2 = diced value
-                if(!miscvalue1)
+                if (!miscvalue1)
                     continue;
-                if(miscvalue2 != achievementCriteria->roll_greed_on_loot.rollValue)
+                if (miscvalue2 != achievementCriteria->roll_greed_on_loot.rollValue)
                     continue;
-                ItemPrototype const *pProto = objmgr.GetItemPrototype( miscvalue1 );
 
-                uint32 requiredItemLevel = 0;
-                if (achievementCriteria->ID == 2412 || achievementCriteria->ID == 2358)
-                    requiredItemLevel = 185;
-
-                if(!pProto || pProto->ItemLevel <requiredItemLevel)
+                ItemPrototype const *pProto = objmgr.GetItemPrototype(miscvalue1);
+                if (!pProto)
                     continue;
+
+                // check item level via achievement_criteria_data
+                AchievementCriteriaDataSet const* data = achievementmgr.GetCriteriaDataSet(achievementCriteria);
+                if (!data || !data->Meets(GetPlayer(), 0, pProto->ItemLevel))
+                    continue;
+
                 SetCriteriaProgress(achievementCriteria, 1, PROGRESS_ACCUMULATE);
                 break;
             }
@@ -1380,7 +1402,6 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
             case ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_TEAM_RATING:
             case ACHIEVEMENT_CRITERIA_TYPE_REACH_TEAM_RATING:
             case ACHIEVEMENT_CRITERIA_TYPE_OWN_RANK:
-            case ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM:
             case ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS:
             case ACHIEVEMENT_CRITERIA_TYPE_MONEY_FROM_VENDORS:
             case ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL:
@@ -1502,6 +1523,8 @@ bool AchievementMgr::IsCompletedCriteria(AchievementCriteriaEntry const* achieve
             return progress->counter >= achievementCriteria->gain_exalted_reputation.numberOfExaltedFactions;
         case ACHIEVEMENT_CRITERIA_TYPE_VISIT_BARBER_SHOP:
             return progress->counter >= achievementCriteria->visit_barber.numberOfVisits;
+        case ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+            return progress->counter >= 1;
         case ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
         case ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
             return progress->counter >= achievementCriteria->roll_greed_on_loot.count;
@@ -1937,7 +1960,7 @@ void AchievementGlobalMgr::LoadAchievementCriteriaData()
 {
     m_criteriaDataMap.clear();                              // need for reload case
 
-    QueryResult *result = WorldDatabase.Query("SELECT criteria_id, type, value1, value2 FROM achievement_criteria_data");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT criteria_id, type, value1, value2 FROM achievement_criteria_data");
 
     if(!result)
     {
@@ -1987,8 +2010,6 @@ void AchievementGlobalMgr::LoadAchievementCriteriaData()
         // counting data by and data types
         ++count;
     } while(result->NextRow());
-
-    delete result;
 
     // post loading checks
     for (uint32 entryId = 0; entryId < sAchievementCriteriaStore.GetNumRows(); ++entryId)
@@ -2061,7 +2082,7 @@ void AchievementGlobalMgr::LoadAchievementCriteriaData()
 
 void AchievementGlobalMgr::LoadCompletedAchievements()
 {
-    QueryResult *result = CharacterDatabase.Query("SELECT achievement FROM character_achievement GROUP BY achievement");
+    QueryResult_AutoPtr result = CharacterDatabase.Query("SELECT achievement FROM character_achievement GROUP BY achievement");
 
     if(!result)
     {
@@ -2091,8 +2112,6 @@ void AchievementGlobalMgr::LoadCompletedAchievements()
         m_allCompletedAchievements.insert(achievement_id);
     } while(result->NextRow());
 
-    delete result;
-
     sLog.outString();
     sLog.outString(">> Loaded %lu realm completed achievements.",(unsigned long)m_allCompletedAchievements.size());
 }
@@ -2102,7 +2121,7 @@ void AchievementGlobalMgr::LoadRewards()
     m_achievementRewards.clear();                           // need for reload case
 
     //                                                0      1        2        3     4       5        6
-    QueryResult *result = WorldDatabase.Query("SELECT entry, title_A, title_H, item, sender, subject, text FROM achievement_reward");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, title_A, title_H, item, sender, subject, text FROM achievement_reward");
 
     if(!result)
     {
@@ -2203,8 +2222,6 @@ void AchievementGlobalMgr::LoadRewards()
 
     } while (result->NextRow());
 
-    delete result;
-
     sLog.outString();
     sLog.outString( ">> Loaded %u achievement rewards", count );
 }
@@ -2213,7 +2230,7 @@ void AchievementGlobalMgr::LoadRewardLocales()
 {
     m_achievementRewardLocales.clear();                       // need for reload case
 
-    QueryResult *result = WorldDatabase.Query("SELECT entry,subject_loc1,text_loc1,subject_loc2,text_loc2,subject_loc3,text_loc3,subject_loc4,text_loc4,subject_loc5,text_loc5,subject_loc6,text_loc6,subject_loc7,text_loc7,subject_loc8,text_loc8 FROM locales_achievement_reward");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry,subject_loc1,text_loc1,subject_loc2,text_loc2,subject_loc3,text_loc3,subject_loc4,text_loc4,subject_loc5,text_loc5,subject_loc6,text_loc6,subject_loc7,text_loc7,subject_loc8,text_loc8 FROM locales_achievement_reward");
 
     if (!result)
     {
@@ -2272,8 +2289,6 @@ void AchievementGlobalMgr::LoadRewardLocales()
             }
         }
     } while (result->NextRow());
-
-    delete result;
 
     sLog.outString();
     sLog.outString( ">> Loaded %lu achievement reward locale strings", (unsigned long)m_achievementRewardLocales.size() );

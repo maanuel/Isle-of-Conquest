@@ -1,4 +1,4 @@
-/* Copyright (C) 2008 - 2009 Trinity <http://www.trinitycore.org/>
+/* Copyright (C) 2008 - 2010 Trinity <http://www.trinitycore.org/>
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -42,6 +42,7 @@ const DoorData doorData[] =
     {181119,    BOSS_GOTHIK,    DOOR_TYPE_PASSAGE,  0},
     {181119,    BOSS_HORSEMEN,  DOOR_TYPE_ROOM,     BOUNDARY_NE},
     {181225,    BOSS_SAPPHIRON, DOOR_TYPE_PASSAGE,  BOUNDARY_W},
+    {181228,    BOSS_KELTHUZAD, DOOR_TYPE_ROOM,     BOUNDARY_S},
     {0,         0,              DOOR_TYPE_ROOM,     0}, // EOF
 };
 
@@ -115,6 +116,9 @@ struct TRINITY_DLL_DECL instance_naxxramas : public InstanceData
     uint64 uiBaron;
     uint64 uiSir;
 
+    uint64 uiThaddius;
+    uint64 uiFeugen;
+    uint64 uiStalagg;
 
     void OnCreatureCreate(Creature* pCreature, bool add)
     {
@@ -126,6 +130,9 @@ struct TRINITY_DLL_DECL instance_naxxramas : public InstanceData
             case 16065: uiLady = pCreature->GetGUID(); return;
             case 30549: uiBaron = pCreature->GetGUID(); return;
             case 16063: uiSir = pCreature->GetGUID(); return;
+            case 15928: uiThaddius = pCreature->GetGUID(); return;
+            case 15930: uiFeugen = pCreature->GetGUID(); return;
+            case 15929: uiStalagg = pCreature->GetGUID(); return;
         }
 
         AddMinion(pCreature, add);
@@ -180,6 +187,12 @@ struct TRINITY_DLL_DECL instance_naxxramas : public InstanceData
             return uiBaron;
         if (id == DATA_SIR)
             return uiSir;
+        if (id == DATA_THADDIUS)
+            return uiThaddius;
+        if (id == DATA_FEUGEN)
+            return uiFeugen;
+        if (id == DATA_STALAGG)
+            return uiStalagg;
         return 0;
     }
 

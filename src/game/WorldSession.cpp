@@ -566,7 +566,7 @@ void WorldSession::LoadGlobalAccountData()
     );
 }
 
-void WorldSession::LoadAccountData(QueryResult* result, uint32 mask)
+void WorldSession::LoadAccountData(QueryResult_AutoPtr result, uint32 mask)
 {
     for (uint32 i = 0; i < NUM_ACCOUNT_DATA_TYPES; ++i)
         if (mask & (1 << i))
@@ -598,8 +598,6 @@ void WorldSession::LoadAccountData(QueryResult* result, uint32 mask)
         m_accountData[type].Data = fields[2].GetCppString();
 
     } while (result->NextRow());
-
-    delete result;
 }
 
 void WorldSession::SetAccountData(AccountDataType type, time_t time_, std::string data)
@@ -648,7 +646,7 @@ void WorldSession::LoadTutorialsData()
     for (int aX = 0 ; aX < 8 ; ++aX )
         m_Tutorials[ aX ] = 0;
 
-    QueryResult *result = CharacterDatabase.PQuery("SELECT tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7 FROM character_tutorial WHERE account = '%u'", GetAccountId());
+    QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT tut0,tut1,tut2,tut3,tut4,tut5,tut6,tut7 FROM character_tutorial WHERE account = '%u'", GetAccountId());
 
     if(result)
     {
@@ -660,10 +658,7 @@ void WorldSession::LoadTutorialsData()
                 m_Tutorials[iI] = fields[iI].GetUInt32();
         }
         while( result->NextRow() );
-
-        delete result;
     }
-
     m_TutorialsChanged = false;
 }
 
@@ -682,12 +677,9 @@ void WorldSession::SaveTutorialsData()
 
     uint32 Rows=0;
     // it's better than rebuilding indexes multiple times
-    QueryResult *result = CharacterDatabase.PQuery("SELECT count(*) AS r FROM character_tutorial WHERE account = '%u'", GetAccountId());
+    QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT count(*) AS r FROM character_tutorial WHERE account = '%u'", GetAccountId());
     if(result)
-    {
         Rows = result->Fetch()[0].GetUInt32();
-        delete result;
-    }
 
     if (Rows)
     {
@@ -833,10 +825,32 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
 
             addonInfo >> enabled >> crc >> unk1;
 
-            sLog.outDebug("ADDON: Name: %s, Enabled: 0x%x, CRC: 0x%x, Unknown2: 0x%x", addonName.c_str(), enabled, crc, unk1);
+            sLog.outDetail("ADDON: Name: %s, Enabled: 0x%x, CRC: 0x%x, Unknown2: 0x%x", addonName.c_str(), enabled, crc, unk1);
+
+            AddonInfo addon(addonName, enabled, crc, 2, true);
+
+            SavedAddon const* savedAddon = sAddonMgr.GetAddonInfo(addonName);
+            if (savedAddon)
+            {
+                bool match = true;
+
+                if (addon.CRC != savedAddon->CRC)
+                    match = false;
+
+                if (!match)
+                    sLog.outDetail("ADDON: %s was known, but didn't match known CRC (0x%x)!", addon.Name.c_str(), savedAddon->CRC);
+                else
+                    sLog.outDetail("ADDON: %s was known, CRC is correct (0x%x)", addon.Name.c_str(), savedAddon->CRC);
+            }
+            else
+            {
+                sAddonMgr.SaveAddon(addon);
+
+                sLog.outDetail("ADDON: %s (0x%x) was not known, saving...", addon.Name.c_str(), addon.CRC);
+            }
 
             // TODO: Find out when to not use CRC/pubkey, and other possible states.
-            m_addonsList.push_back(AddonInfo(addonName, enabled, crc, 2, true));
+            m_addonsList.push_back(addon);
         }
 
         uint32 currentTime;
@@ -844,7 +858,7 @@ void WorldSession::ReadAddonsInfo(WorldPacket &data)
         sLog.outDebug("ADDON: CurrentTime: %u", currentTime);
 
         if(addonInfo.rpos() != addonInfo.size())
-            sLog.outDebug("packet under read!");
+            sLog.outDebug("packet under-read!");
     }
     else
         sLog.outError("Addon packet uncompress error!");
@@ -886,7 +900,7 @@ void WorldSession::SendAddonsInfo()
             data << uint8(usepk);
             if (usepk)                                      // if CRC is wrong, add public key (client need it)
             {
-                sLog.outError("ADDON: CRC (0x%x) for addon %s is wrong (does not match expected 0x%x), sending pubkey",
+                sLog.outDetail("ADDON: CRC (0x%x) for addon %s is wrong (does not match expected 0x%x), sending pubkey",
                     itr->CRC, itr->Name.c_str(), STANDARD_ADDON_CRC);
 
                 data.append(addonPublicKey, sizeof(addonPublicKey));
@@ -913,6 +927,7 @@ void WorldSession::SendAddonsInfo()
         uint32
         string (16 bytes)
         string (16 bytes)
+        uint32
         uint32
     }*/
 

@@ -88,6 +88,14 @@ IF(DO_MYSQL)
     ADD_DEFINITIONS(-DDO_MYSQL)
 ENDIF(DO_MYSQL)
 
+if(DO_SCRIPTS)
+    message("* With Trinity Scripts")
+    ADD_DEFINITIONS(-DDO_SCRIPTS)
+    add_definitions(-D_TRINITY_SCRIPT_CONFIG='"${CONF_DIR}/trinitycore.conf"')
+else (DO_SCRIPTS)
+    message("* Without Trinity Scripts")
+endif(DO_SCRIPTS)
+
 message("-- Miscellaneus options:")
 
 if(DO_CLI)

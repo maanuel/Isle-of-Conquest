@@ -33,29 +33,31 @@ class AuraEffect;
 class Aura;
 class DynamicObject;
 
+// update aura target map every 500 ms instead of every update - reduce amount of grid searcher calls
+#define UPDATE_TARGET_MAP_INTERVAL 500
+
 class AuraApplication
 {
-    friend AuraApplication * Unit::__ApplyAura(Aura * aura);
-    friend void Unit::__UnapplyAura(AuraApplicationMap::iterator &i);
-    friend bool Unit::_ApplyAuraEffect(Aura * aura, uint8 effIndex);
+    friend void Unit::_ApplyAura(AuraApplication * aurApp, uint8 effMask);
+    friend void Unit::_UnapplyAura(AuraApplicationMap::iterator &i, AuraRemoveMode removeMode);
+    friend void Unit::_ApplyAuraEffect(Aura * aura, uint8 effIndex);
+    friend AuraApplication * Unit::_CreateAuraApplication(Aura * aura, uint8 effMask);
     private:
         Unit * const m_target;
         Aura * const m_base;
         uint8 m_slot;                                   // Aura slot on unit
         uint8 m_flags;                                  // Aura info flag
+        uint8 m_effectsToApply;                         // Used only at spell hit to determine which effect should be applied
         AuraRemoveMode m_removeMode:8;                  // Store info for know remove aura reason
         bool m_needClientUpdate:1;
         bool m_isNeedManyNegativeEffects:1;
-        bool m_canBeRemoved:1;                            // used only in aura list update of Aura
 
-        explicit AuraApplication(Unit * target, Unit * caster, Aura * base);
+        explicit AuraApplication(Unit * target, Unit * caster, Aura * base, uint8 effMask);
         void _Remove();
     private:
         bool _CheckPositive(Unit * caster) const;
         void _HandleEffect(uint8 effIndex, bool apply);
     public:
-        bool _CanBeRemoved() const {return m_canBeRemoved;}
-        void _SetCanBeRemoved(bool val) {m_canBeRemoved = val;}
 
         Unit * GetTarget() const { return m_target; }
         Aura * GetBase() const { return m_base; }
@@ -65,6 +67,7 @@ class AuraApplication
         uint8 GetEffectMask() const { return m_flags & (AFLAG_EFF_INDEX_0 | AFLAG_EFF_INDEX_1 | AFLAG_EFF_INDEX_2); }
         bool HasEffect(uint8 effect) const { assert(effect < MAX_SPELL_EFFECTS);  return m_flags & (1<<effect); }
         bool IsPositive() const { return m_flags & AFLAG_POSITIVE; }
+        uint8 GetEffectsToApply() const { return m_effectsToApply; }
 
         void SetRemoveMode(AuraRemoveMode mode) { m_removeMode = mode; }
         AuraRemoveMode GetRemoveMode() const {return m_removeMode;}
@@ -103,11 +106,12 @@ class TRINITY_DLL_SPEC Aura
         void _Remove(AuraRemoveMode removeMode);
         virtual void Remove(AuraRemoveMode removeMode = AURA_REMOVE_BY_DEFAULT) = 0;
 
-        virtual void UpdateTargetMapForEffect(Unit * caster, uint8 effIndex) = 0;
-        void UpdateTargetMap(Unit * caster);
+        virtual void FillTargetMap(std::map<Unit *, uint8> & targets, Unit * caster) = 0;
+        void UpdateTargetMap(Unit * caster, bool apply = true);
 
-        void ApplyForTargets() {Unit * caster = GetCaster(); UpdateTargetMap(caster);}
-        void ApplyEffectForTargets(uint8 effIndex) {Unit * caster = GetCaster(); UpdateTargetMapForEffect(caster, effIndex);}
+        void _RegisterForTargets() {Unit * caster = GetCaster(); UpdateTargetMap(caster, false);}
+        void ApplyForTargets() {Unit * caster = GetCaster(); UpdateTargetMap(caster, true);}
+        void _ApplyEffectForTargets(uint8 effIndex);
 
         void UpdateOwner(uint32 diff, WorldObject * owner);
         void Update(uint32 diff, Unit * caster);
@@ -172,6 +176,7 @@ class TRINITY_DLL_SPEC Aura
         int32 m_maxDuration;                                // Max aura duration
         int32 m_duration;                                   // Current time
         int32 m_timeCla;                                    // Timer for power per sec calcultion
+        int32 m_updateTargetMapInterval;                    // Timer for UpdateTargetMapOfEffect
 
         uint8 const m_casterLevel;                          // Aura level (store caster level for correct show level dep amount)
         uint8 m_procCharges;                                // Aura charges (0 for infinite)
@@ -198,7 +203,7 @@ class TRINITY_DLL_SPEC UnitAura : public Aura
 
         void Remove(AuraRemoveMode removeMode = AURA_REMOVE_BY_DEFAULT);
 
-        void UpdateTargetMapForEffect(Unit * caster, uint8 effIndex);
+        void FillTargetMap(std::map<Unit *, uint8> & targets, Unit * caster);
 
         // Allow Apply Aura Handler to modify and access m_AuraDRGroup
         void SetDiminishGroup(DiminishingGroup group) { m_AuraDRGroup = group; }
@@ -216,6 +221,6 @@ class TRINITY_DLL_SPEC DynObjAura : public Aura
     public:
         void Remove(AuraRemoveMode removeMode = AURA_REMOVE_BY_DEFAULT);
 
-        void UpdateTargetMapForEffect(Unit * caster, uint8 effIndex);
+        void FillTargetMap(std::map<Unit *, uint8> & targets, Unit * caster);
 };
 #endif

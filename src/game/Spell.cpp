@@ -516,13 +516,12 @@ WorldObject* Spell::FindCorpseUsing()
     Trinity::WorldObjectSearcher<T> searcher(m_caster, result, u_check);
 
     TypeContainerVisitor<Trinity::WorldObjectSearcher<T>, GridTypeMapContainer > grid_searcher(searcher);
-    CellLock<GridReadGuard> cell_lock(cell, p);
-    cell_lock->Visit(cell_lock, grid_searcher, *m_caster->GetMap(), *m_caster, max_range);
+    cell.Visit(p, grid_searcher, *m_caster->GetMap(), *m_caster, max_range);
 
     if (!result)
     {
         TypeContainerVisitor<Trinity::WorldObjectSearcher<T>, WorldTypeMapContainer > world_searcher(searcher);
-        cell_lock->Visit(cell_lock, world_searcher, *m_caster->GetMap(), *m_caster, max_range);
+        cell.Visit(p, world_searcher, *m_caster->GetMap(), *m_caster, max_range);
     }
 
     return result;
@@ -1293,12 +1292,11 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask, bool 
 
         if( !m_caster->IsFriendlyTo(unit) )
         {
-            // reset damage to 0 if target has Invisibility or Vanish aura (_only_ vanish, not stealth) and isn't visible for caster
+            // reset damage to 0 if target has Invisibility and isn't visible for caster
             // I do not think this is a correct way to fix it. Sanctuary effect should make all delayed spells invalid
             // for delayed spells ignore not visible explicit target
             if(m_spellInfo->speed > 0.0f && unit == m_targets.getUnitTarget()
-                && (unit->m_invisibilityMask || m_caster->m_invisibilityMask
-                || unit->HasAuraTypeWithFamilyFlags(SPELL_AURA_MOD_STEALTH, SPELLFAMILY_ROGUE, SPELLFAMILYFLAG_ROGUE_VANISH))
+                && (unit->m_invisibilityMask || m_caster->m_invisibilityMask)
                 && !m_caster->canSeeOrDetect(unit, true))
             {
                 // that was causing CombatLog errors
@@ -1405,6 +1403,7 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit *unit, const uint32 effectMask, bool 
                     if(aurSpellInfo->SpellFamilyFlags[1] & 0x000020)
                         m_caster->CastSpell(unit, 41637, true, NULL, NULL, m_originalCasterGUID);
                 }
+                m_spellAura->_RegisterForTargets();
             }
         }
     }
@@ -1865,9 +1864,16 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                     if(Unit *vehicle = m_caster->GetVehicleBase())
                         AddUnitTarget(vehicle, i);
                     break;
-                case TARGET_UNIT_PASSENGER:
+                case TARGET_UNIT_PASSENGER_0:
+                case TARGET_UNIT_PASSENGER_1:
+                case TARGET_UNIT_PASSENGER_2:
+                case TARGET_UNIT_PASSENGER_3:
+                case TARGET_UNIT_PASSENGER_4:
+                case TARGET_UNIT_PASSENGER_5:
+                case TARGET_UNIT_PASSENGER_6:
+                case TARGET_UNIT_PASSENGER_7:
                     if(m_caster->GetTypeId() == TYPEID_UNIT && ((Creature*)m_caster)->IsVehicle())
-                        if(Unit *unit = m_caster->GetVehicleKit()->GetPassenger(1)) // maybe not right
+                        if(Unit *unit = m_caster->GetVehicleKit()->GetPassenger(cur - TARGET_UNIT_PASSENGER_0))
                             AddUnitTarget(unit, i);
                     break;
             }
@@ -1905,6 +1911,7 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
                 case TARGET_UNIT_TARGET_RAID:
                 case TARGET_UNIT_TARGET_PARTY:
                 case TARGET_UNIT_MINIPET:
+                case TARGET_UNIT_UNK_92:
                     AddUnitTarget(target, i);
                     break;
                 case TARGET_UNIT_PARTY_TARGET:
@@ -2091,7 +2098,7 @@ void Spell::SelectEffectTargets(uint32 i, uint32 cur)
 
             float dist;
             dist = GetSpellRadiusForFriend(sSpellRadiusStore.LookupEntry(m_spellInfo->EffectRadiusIndex[i]));
-            if (cur == TARGET_DEST_DEST_RANDOM)
+            if (cur == TARGET_DEST_DEST_RANDOM || cur == TARGET_DEST_DEST_RANDOM_DIR_DIST)
                 dist *= rand_norm();
 
             // must has dst, no need to set flag
@@ -2936,25 +2943,24 @@ void Spell::cast(bool skipCheck)
 
     // CAST SPELL
     SendSpellCooldown();
-    //SendCastResult(castResult);
-    SendSpellGo();                                          // we must send smsg_spell_go packet before m_castItem delete in TakeCastItem()...
 
-    if(m_customAttr & SPELL_ATTR_CU_CHARGE)
+    for (uint32 i = 0; i < 3; ++i)
     {
-        for (uint32 i = 0; i < 3; ++i)
+        switch(m_spellInfo->Effect[i])
         {
-            switch(m_spellInfo->Effect[i])
-            {
-                case SPELL_EFFECT_CHARGE:
-                case SPELL_EFFECT_JUMP:
-                case SPELL_EFFECT_JUMP2:
-                case SPELL_EFFECT_LEAP_BACK:
-                    HandleEffects(NULL,NULL,NULL,i);
-                    m_effectMask |= (1<<i);
-                    break;
-            }
+            case SPELL_EFFECT_CHARGE:
+            case SPELL_EFFECT_JUMP:
+            case SPELL_EFFECT_JUMP2:
+            case SPELL_EFFECT_LEAP_BACK:
+            case SPELL_EFFECT_ACTIVATE_RUNE:
+                HandleEffects(NULL,NULL,NULL,i);
+                m_effectMask |= (1<<i);
+                break;
         }
     }
+
+    // we must send smsg_spell_go packet before m_castItem delete in TakeCastItem()...
+    SendSpellGo();                                          
 
     // Okay, everything is prepared. Now we need to distinguish between immediate and evented delayed spells
     if (m_spellInfo->speed > 0.0f && !IsChanneledSpell(m_spellInfo) || m_spellInfo->Id == 14157)
@@ -3370,11 +3376,24 @@ void Spell::finish(bool ok)
 
     if (IsMeleeAttackResetSpell())
     {
-        m_caster->resetAttackTimer(BASE_ATTACK);
-        if(m_caster->haveOffhandWeapon())
-            m_caster->resetAttackTimer(OFF_ATTACK);
-        if(!(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_RESET_AUTOSHOT))
-            m_caster->resetAttackTimer(RANGED_ATTACK);
+        bool found = false;
+        Unit::AuraEffectList const& vIgnoreReset = m_caster->GetAuraEffectsByType(SPELL_AURA_IGNORE_MELEE_RESET);
+        for (Unit::AuraEffectList::const_iterator i = vIgnoreReset.begin(); i != vIgnoreReset.end(); ++i)
+        {
+            if ((*i)->IsAffectedOnSpell(m_spellInfo))
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            m_caster->resetAttackTimer(BASE_ATTACK);
+            if(m_caster->haveOffhandWeapon())
+                m_caster->resetAttackTimer(OFF_ATTACK);
+            if(!(m_spellInfo->AttributesEx2 & SPELL_ATTR_EX2_NOT_RESET_AUTOSHOT))
+                m_caster->resetAttackTimer(RANGED_ATTACK);
+        }
     }
 
     // potions disabled by client, send event "not in combat" if need
@@ -3495,7 +3514,7 @@ void Spell::SendSpellStart()
 
     //sLog.outDebug("Sending SMSG_SPELL_START id=%u", m_spellInfo->Id);
 
-    uint32 castFlags = CAST_FLAG_UNKNOWN1;
+    uint32 castFlags = CAST_FLAG_UNKNOWN_2;
     if(m_spellInfo->Attributes & SPELL_ATTR_REQ_AMMO)
         castFlags |= CAST_FLAG_AMMO;
     if ((m_caster->GetTypeId() == TYPEID_PLAYER ||
@@ -3504,7 +3523,7 @@ void Spell::SendSpellStart()
         castFlags |= CAST_FLAG_POWER_LEFT_SELF;
 
     if(m_spellInfo->runeCostID && m_spellInfo->powerType == POWER_RUNE)
-        castFlags |= CAST_FLAG_UNKNOWN10;
+        castFlags |= CAST_FLAG_UNKNOWN_19;
 
     WorldPacket data(SMSG_SPELL_START, (8+8+4+4+2));
     if(m_CastItem)
@@ -3526,7 +3545,7 @@ void Spell::SendSpellStart()
     if ( castFlags & CAST_FLAG_AMMO )
         WriteAmmoToPacket(&data);
 
-    if ( castFlags & CAST_FLAG_UNKNOWN21 )
+    if ( castFlags & CAST_FLAG_UNKNOWN_23 )
     {
         data << uint32(0);
         data << uint32(0);
@@ -3543,11 +3562,11 @@ void Spell::SendSpellGo()
 
     //sLog.outDebug("Sending SMSG_SPELL_GO id=%u", m_spellInfo->Id);
 
-    uint32 castFlags = CAST_FLAG_UNKNOWN3;
+    uint32 castFlags = CAST_FLAG_UNKNOWN_9;
 
     // triggered spells with spell visual != 0
     if((m_IsTriggeredSpell && !IsAutoRepeatRangedSpell(m_spellInfo)) || m_triggeredByAuraSpell)
-        castFlags |= CAST_FLAG_UNKNOWN0;
+        castFlags |= CAST_FLAG_PENDING;
 
     if(m_spellInfo->Attributes & SPELL_ATTR_REQ_AMMO)
         castFlags |= CAST_FLAG_AMMO;                        // arrows/bullets visual
@@ -3556,10 +3575,20 @@ void Spell::SendSpellGo()
         && m_spellInfo->powerType != POWER_HEALTH )
         castFlags |= CAST_FLAG_POWER_LEFT_SELF; // should only be sent to self, but the current messaging doesn't make that possible
 
-    if((m_caster->GetTypeId() == TYPEID_PLAYER) && (m_caster->getClass() == CLASS_DEATH_KNIGHT) && m_spellInfo->runeCostID && m_spellInfo->powerType == POWER_RUNE)
+    if((m_caster->GetTypeId() == TYPEID_PLAYER) 
+        && (m_caster->getClass() == CLASS_DEATH_KNIGHT) 
+        && m_spellInfo->runeCostID 
+        && m_spellInfo->powerType == POWER_RUNE)
     {
-        castFlags |= CAST_FLAG_UNKNOWN10;                   // same as in SMSG_SPELL_START
-        castFlags |= CAST_FLAG_UNKNOWN7;                    // rune cooldowns list
+        castFlags |= CAST_FLAG_UNKNOWN_19;                   // same as in SMSG_SPELL_START
+        castFlags |= CAST_FLAG_RUNE_LIST;                    // rune cooldowns list
+        castFlags |= CAST_FLAG_UNKNOWN_9;                    // ??
+    }
+
+    if (IsSpellHaveEffect(m_spellInfo, SPELL_EFFECT_ACTIVATE_RUNE))
+    {
+        castFlags |= CAST_FLAG_RUNE_LIST;                    // rune cooldowns list
+        castFlags |= CAST_FLAG_UNKNOWN_19;                   // same as in SMSG_SPELL_START
     }
 
     WorldPacket data(SMSG_SPELL_GO, 50);                    // guess size
@@ -3582,7 +3611,7 @@ void Spell::SendSpellGo()
     if(castFlags & CAST_FLAG_POWER_LEFT_SELF)
         data << uint32(m_caster->GetPower((Powers)m_spellInfo->powerType));
 
-    if ( castFlags & CAST_FLAG_UNKNOWN7 )                   // rune cooldowns list
+    if ( castFlags & CAST_FLAG_RUNE_LIST )                   // rune cooldowns list
     {
         uint8 v1 = m_runesState;
         uint8 v2 = ((Player*)m_caster)->GetRunesState();
@@ -3597,7 +3626,7 @@ void Spell::SendSpellGo()
         }
     }
 
-    if ( castFlags & CAST_FLAG_UNKNOWN4 )                   // unknown wotlk
+    if ( castFlags & CAST_FLAG_UNKNOWN_18 )                   // unknown wotlk
     {
         data << float(0);
         data << uint32(0);
@@ -3606,7 +3635,7 @@ void Spell::SendSpellGo()
     if ( castFlags & CAST_FLAG_AMMO )
         WriteAmmoToPacket(&data);
 
-    if ( castFlags & CAST_FLAG_UNKNOWN5 )                   // unknown wotlk
+    if ( castFlags & CAST_FLAG_UNKNOWN_20 )                   // unknown wotlk
     {
         data << uint32(0);
         data << uint32(0);
@@ -4168,13 +4197,6 @@ void Spell::TakeRunePower()
     if(!src || (src->NoRuneCost() && src->NoRunicPowerGain()))
         return;
 
-    // Freezing Fog makes Howling Blast cost no runes
-    if (m_caster->HasAura(59052) && m_spellInfo->SpellFamilyFlags[1] & 0x2)
-    {
-        m_caster->RemoveAurasDueToSpell(59052, m_caster->GetGUID());
-        return;
-    }
-
     m_runesState = plr->GetRunesState();                    // store previous state
 
     int32 runeCost[NUM_RUNE_TYPES];                         // blood, frost, unholy, death
@@ -4182,6 +4204,8 @@ void Spell::TakeRunePower()
     for (uint32 i = 0; i < RUNE_DEATH; ++i)
     {
         runeCost[i] = src->RuneCost[i];
+        if(Player* modOwner = m_caster->GetSpellModOwner())
+            modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_COST, runeCost[i], this);
     }
 
     runeCost[RUNE_DEATH] = 0;                               // calculated later
@@ -5683,9 +5707,8 @@ SpellCastResult Spell::CheckItems()
         Trinity::GameObjectSearcher<Trinity::GameObjectFocusCheck> checker(m_caster, ok, go_check);
 
         TypeContainerVisitor<Trinity::GameObjectSearcher<Trinity::GameObjectFocusCheck>, GridTypeMapContainer > object_checker(checker);
-        CellLock<GridReadGuard> cell_lock(cell, p);
         Map& map = *m_caster->GetMap();
-        cell_lock->Visit(cell_lock, object_checker, map, *m_caster, map.GetVisibilityDistance());
+        cell.Visit(p, object_checker, map, *m_caster, map.GetVisibilityDistance());
 
         if(!ok)
             return SPELL_FAILED_REQUIRES_SPELL_FOCUS;

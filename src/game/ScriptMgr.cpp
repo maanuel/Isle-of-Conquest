@@ -23,7 +23,6 @@ Config TScriptConfig;
 
 void FillSpellSummary();
 void LoadOverridenSQLData();
-void LoadOverridenDBCData();
 
 void ScriptMgr::LoadDatabase()
 {
@@ -110,8 +109,6 @@ void ScriptMgr::ScriptsInit(char const* cfg_file)
 
     outstring_log(">> Load Overriden SQL Data.");
     LoadOverridenSQLData();
-    outstring_log(">> Load Overriden DBC Data.");
-    LoadOverridenDBCData();
 }
 
 //*********************************
@@ -234,7 +231,7 @@ void Script::RegisterSelf()
     }
     else if(Name.find("example") == std::string::npos)
     {
-        error_db_log("CRASH ALERT! TrinityScript: RegisterSelf, but script named %s does not have ScriptName assigned in database.",(this)->Name.c_str());
+        error_db_log("TrinityScript: RegisterSelf, but script named %s does not have ScriptName assigned in database.",(this)->Name.c_str());
         delete this;
     }
 }

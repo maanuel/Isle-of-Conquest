@@ -137,6 +137,7 @@ class TRINITY_DLL_SPEC ChatHandler
         bool HandleCharacterLevelCommand(const char* args);
         bool HandleCharacterRenameCommand(const char * args);
         bool HandleCharacterReputationCommand(const char* args);
+        bool HandleCharacterTitlesCommand(const char* args);
 
         bool HandleDebugAnimCommand(const char* args);
         bool HandleDebugArenaCommand(const char * args);
@@ -264,8 +265,8 @@ class TRINITY_DLL_SPEC ChatHandler
         bool HandleLookupTaxiNodeCommand(const char * args);
         bool HandleLookupTeleCommand(const char * args);
         bool HandleLookupMapCommand(const char* args);
+        bool HandleLookupTitleCommand(const char * args);
 
-        bool HandleModifyKnownTitlesCommand(const char* args);
         bool HandleModifyHPCommand(const char* args);
         bool HandleModifyManaCommand(const char* args);
         bool HandleModifyRageCommand(const char* args);
@@ -420,6 +421,7 @@ class TRINITY_DLL_SPEC ChatHandler
         bool HandleReloadSpellThreatsCommand(const char* args);
         bool HandleReloadSpellPetAurasCommand(const char* args);
         bool HandleReloadSpellDisabledCommand(const char* args);
+        bool HandleReloadSpellStackMasksCommand(const char* args);
         bool HandleReloadAuctionsCommand(const char* args);
         bool HandleReloadWpScriptsCommand(const char* args);
 
@@ -459,6 +461,11 @@ class TRINITY_DLL_SPEC ChatHandler
         bool HandleTeleGroupCommand(const char* args);
         bool HandleTeleNameCommand(const char* args);
 
+        bool HandleTitlesAddCommand(const char* args);
+        bool HandleTitlesCurrentCommand(const char* args);
+        bool HandleTitlesRemoveCommand(const char* args);
+        bool HandleTitlesSetMaskCommand(const char* args);
+
         bool HandleUnBanAccountCommand(const char* args);
         bool HandleUnBanCharacterCommand(const char* args);
         bool HandleUnBanIPCommand(const char* args);
@@ -470,13 +477,6 @@ class TRINITY_DLL_SPEC ChatHandler
         bool HandleWpEventCommand(const char* args);
         bool HandleWpShowCommand(const char* args);
         bool HandleReloadAllPaths(const char *args);
-
-        bool HandleWintergraspStatusCommand(const char *args);
-        bool HandleWintergraspStartCommand(const char *args);
-        bool HandleWintergraspStopCommand(const char *args);
-        bool HandleWintergraspEnableCommand(const char *args);
-        bool HandleWintergraspSwitchTeamCommand(const char *args);
-        bool HandleWintergraspTimerCommand(const char *args);
 
         bool HandleHelpCommand(const char* args);
         bool HandleCommandsCommand(const char* args);
@@ -606,8 +606,8 @@ class TRINITY_DLL_SPEC ChatHandler
         GameObject* GetObjectGlobalyWithGuidOrNearWithDbGuid(uint32 lowguid,uint32 entry);
 
         // Utility methods for commands
-        bool LookupPlayerSearchCommand(QueryResult* result, int32 limit);
-        bool HandleBanListHelper(QueryResult* result);
+        bool LookupPlayerSearchCommand(QueryResult_AutoPtr result, int32 limit);
+        bool HandleBanListHelper(QueryResult_AutoPtr result);
         bool HandleBanHelper(BanMode mode,char const* args);
         bool HandleBanInfoHelper(uint32 accountid, char const* accountname);
         bool HandleUnBanHelper(BanMode mode,char const* args);
