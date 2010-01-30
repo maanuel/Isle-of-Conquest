@@ -1305,8 +1305,8 @@ void World::SetInitialWorldSettings()
     sLog.outString("Loading Game Object Templates...");   // must be after LoadPageTexts
     objmgr.LoadGameobjectInfo();
 
-    sLog.outString("Loading Spell Chain Data...");
-    spellmgr.LoadSpellChains();
+    sLog.outString("Loading Spell Rank Data...");
+    spellmgr.LoadSpellRanks();
 
     sLog.outString("Loading Spell Required Data...");
     spellmgr.LoadSpellRequired();
@@ -1315,7 +1315,7 @@ void World::SetInitialWorldSettings()
     spellmgr.LoadSpellElixirs();
 
     sLog.outString("Loading Spell Learn Skills...");
-    spellmgr.LoadSpellLearnSkills();                        // must be after LoadSpellChains
+    spellmgr.LoadSpellLearnSkills();                        // must be after LoadSpellRanks
 
     sLog.outString("Loading Spell Learn Spells...");
     spellmgr.LoadSpellLearnSpells();
@@ -1548,6 +1548,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading GM tickets...");
     objmgr.LoadGMTickets();
+
+    sLog.outString("Loading client addons...");
+    sAddonMgr.LoadFromDB();
 
     ///- Handle outdated emails (delete/return)
     sLog.outString("Returning old mails...");
