@@ -286,8 +286,6 @@ UpdateMask Player::updateVisualBits;
 
 Player::Player (WorldSession *session): Unit(), m_achievementMgr(this), m_reputationMgr(this)
 {
-    m_isSaved = false;
-
     m_speakTime = 0;
     m_speakCount = 0;
 
@@ -2025,6 +2023,12 @@ void Player::RegenerateAll()
 
     Regenerate(POWER_MANA);
 
+    // Runes act as cooldowns, and they don't need to send any data
+    if(getClass() == CLASS_DEATH_KNIGHT)
+        for (uint32 i = 0; i < MAX_RUNES; ++i)
+            if(uint32 cd = GetRuneCooldown(i))
+                SetRuneCooldown(i, (cd > m_regenTimer) ? cd - m_regenTimer : 0);
+
     if (m_regenTimerCount >= 2000)
     {
         // Not in combat or they have regeneration
@@ -2038,9 +2042,6 @@ void Player::RegenerateAll()
         if (getClass() == CLASS_DEATH_KNIGHT)
             Regenerate(POWER_RUNIC_POWER);
 
-        if(getClass() == CLASS_DEATH_KNIGHT)
-            Regenerate(POWER_RUNE);
-
         m_regenTimerCount -= 2000;
     }
 
@@ -2049,11 +2050,6 @@ void Player::RegenerateAll()
 
 void Player::Regenerate(Powers power)
 {
-    if (power == POWER_RUNE)
-        for (uint32 i = 0; i < MAX_RUNES; ++i)
-            if (uint8 cd = GetRuneCooldown(i))           // if we have cooldown, reduce it...
-                SetRuneCooldown(i, cd - 1);              // ... by 2 sec (because update is every 2 sec)
-
     uint32 maxValue = GetMaxPower(power);
     if (!maxValue)
         return;
@@ -17084,15 +17080,12 @@ bool Player::_LoadHomeBind(QueryResult_AutoPtr result)
 void Player::SaveToDB()
 {
     // delay auto save at any saves (manual, in code, or autosave)
-    m_isSaved = true;
-
     m_nextSave = sWorld.getConfig(CONFIG_INTERVAL_SAVE);
 
     //lets allow only players in world to be saved
     if (IsBeingTeleportedFar())
     {
         ScheduleDelayedOperation(DELAYED_SAVE_PLAYER);
-        m_isSaved = false;
         return;
     }
 
@@ -17226,7 +17219,6 @@ void Player::SaveToDB()
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
         pet->SavePetToDB(PET_SAVE_AS_CURRENT);
-    m_isSaved = false;
 }
 
 // fast save function for item/money cheating preventing - save only inventory and money state
@@ -21789,6 +21781,21 @@ void Player::UpdateCharmedAI()
         GetMotionMaster()->MoveChase(target);
         Attack(target, true);
     }
+}
+
+uint32 Player::GetRuneBaseCooldown(uint8 index)
+{
+    uint8 rune = GetBaseRune(index);
+    uint32 cooldown = RUNE_COOLDOWN;
+
+    AuraEffectList const& regenAura = GetAuraEffectsByType(SPELL_AURA_MOD_POWER_REGEN_PERCENT);
+    for(AuraEffectList::const_iterator i = regenAura.begin();i != regenAura.end(); ++i)
+    {
+        if((*i)->GetMiscValue() == POWER_RUNE && (*i)->GetMiscValueB() == rune)
+            cooldown = cooldown*(100-(*i)->GetAmount())/100;
+    }
+
+    return cooldown;
 }
 
 void Player::RemoveRunesByAuraEffect(AuraEffect const * aura)

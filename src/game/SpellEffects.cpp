@@ -1518,6 +1518,17 @@ void Spell::EffectDummy(uint32 i)
                     }
                     return;
                 }
+                case 31687: // Summon Water Elemental
+                {
+                    if (!unitTarget)
+                        return;
+
+                    // Glyph of Eternal Water
+                    if (unitTarget->HasAura(70937))
+                        unitTarget->CastSpell(unitTarget, 70908, true);
+                    else 
+                        unitTarget->CastSpell(unitTarget, 70907, true);
+                }
             }
             break;
         case SPELLFAMILY_WARRIOR:
@@ -6825,7 +6836,15 @@ void Spell::EffectPlayerPull(uint32 i)
     if(!unitTarget)
         return;
 
-    unitTarget->GetMotionMaster()->MoveJump(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), float(damage ? damage : unitTarget->GetDistance2d(m_caster)), float(m_spellInfo->EffectMiscValue[i])/10);
+    float speedZ;
+    if(m_spellInfo->EffectMiscValue[i])
+        speedZ = float(m_spellInfo->EffectMiscValue[i])/10;
+    else if(m_spellInfo->EffectMiscValueB[i])
+        speedZ = float(m_spellInfo->EffectMiscValueB[i])/10;
+    else
+        speedZ = 10.0f;
+    float speedXY = m_caster->GetExactDist2d(unitTarget) * 10.0f / speedZ;
+    unitTarget->GetMotionMaster()->MoveJump(m_caster->GetPositionX(), m_caster->GetPositionY(), m_caster->GetPositionZ(), speedXY, speedZ);
 }
 
 void Spell::EffectDispelMechanic(uint32 i)
