@@ -862,7 +862,7 @@ enum TrinityStrings
     LANG_COMMAND_LIST_FREEZE            = 5005,
     LANG_COMMAND_FROZEN_PLAYERS         = 5006,
     LANG_INSTANCE_RAID_GROUP_ONLY       = 5007,
-    //LANG_INSTANCE_NOT_AS_GHOST        = 5008,
+    LANG_INSTANCE_CLOSED                = 5008,
     LANG_COMMAND_PLAYED_TO_ALL          = 5009,
     LANG_NPCINFO_LINKGUID               = 5010,
     LANG_TELEPORTED_TO_BY_CONSOLE       = 5011,
@@ -877,7 +877,9 @@ enum TrinityStrings
     LANG_MOUNTABLE                      = 5019,
     LANG_NPCINFO_PHASEMASK              = 5020,
     LANG_NPCINFO_ARMOR                  = 5021,
-    // Room for more Trinity strings      5022-9999
+    LANG_CHANNEL_NOT_PUBLIC             = 5022,
+    LANG_CHANNEL_PUBLIC_CHANGED         = 5023,
+    // Room for more Trinity strings      5024-9999
     // Used for GM Announcements
     LANG_GM_BROADCAST                    = 6613,
     LANG_GM_NOTIFY                       = 6614,

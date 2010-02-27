@@ -19,6 +19,7 @@
  */
 
 #include "Channel.h"
+#include "Chat.h"
 #include "ObjectMgr.h"
 #include "SocialMgr.h"
 #include "World.h"
@@ -53,7 +54,7 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
         //load not built in channel if saved
         std::string _name(name);
         CharacterDatabase.escape_string(_name);
-        QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT m_name, m_team, m_announce, m_moderate, m_password, BannedList FROM channels WHERE m_name = '%s' AND m_team = '%u'", _name.c_str(), m_Team);
+        QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT m_name, m_team, m_announce, m_moderate, m_public, m_password, BannedList FROM channels WHERE m_name = '%s' AND m_team = '%u'", _name.c_str(), m_Team);
         if (result)//load
         {
             Field *fields = result->Fetch();
@@ -61,8 +62,9 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
             uint32 db_team = fields[1].GetUInt32();
             m_announce = fields[2].GetBool();
             m_moderate = fields[3].GetBool();
-            m_password  = fields[4].GetString();
-            const char* db_BannedList = fields[5].GetString();
+            m_public = fields[4].GetBool();
+            m_password  = fields[5].GetString();
+            const char* db_BannedList = fields[6].GetString();
 
             m_IsSaved = true;
 
@@ -84,8 +86,8 @@ Channel::Channel(const std::string& name, uint32 channel_id, uint32 Team)
         else // save
         {
             // _name is already escaped at this point.
-            if (CharacterDatabase.PExecute("INSERT INTO channels (m_name, m_team, m_announce, m_moderate, m_password) "
-                "VALUES ('%s', '%u', '1', '0', '')", _name.c_str(), m_Team))
+            if (CharacterDatabase.PExecute("INSERT INTO channels (m_name, m_team, m_announce, m_moderate, m_public, m_password) "
+                "VALUES ('%s', '%u', '1', '0', '1', '')", _name.c_str(), m_Team))
             {
                 sLog.outDebug("New Channel(%s) saved", name.c_str());
                 m_IsSaved = true;
@@ -360,10 +362,19 @@ void Channel::UnBan(uint64 good, const char *badname)
 
 void Channel::Password(uint64 p, const char *pass)
 {
+    std::string plName;
     uint32 sec = 0;
     Player *plr = objmgr.GetPlayer(p);
     if(plr)
         sec = plr->GetSession()->GetSecurity();
+
+    ChatHandler chat(plr);
+
+    if(!m_public && sec <= SEC_MODERATOR)
+    {
+        chat.PSendSysMessage(LANG_CHANNEL_NOT_PUBLIC);
+        return;
+    }
 
     if(!IsOn(p))
     {

@@ -6752,7 +6752,7 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage, AuraEffect* trigger
                         return false;
 
                     // heal amount
-                    basepoints0 = triggerAmount*damage/100;
+                    basepoints0 = triggerAmount*(std::min(damage,GetMaxHealth() - GetHealth()))/100;
                     target = this;
 
                     if(basepoints0)
@@ -11697,26 +11697,7 @@ bool Unit::canDetectStealthOf(Unit const* target, float distance) const
 void Unit::SetVisibility(UnitVisibility x)
 {
     m_Visibility = x;
-
-    if(IsInWorld())
-    {
-        Map *m = GetMap();
-        CellPair p(Trinity::ComputeCellPair(GetPositionX(), GetPositionY()));
-        Cell cell(p);
-
-        if(GetTypeId() == TYPEID_PLAYER)
-        {
-            m->UpdatePlayerVisibility((Player*)this, cell, p);
-            m->UpdateObjectsVisibilityFor((Player*)this, cell, p);
-        }
-        else
-            m->UpdateObjectVisibility(this, cell, p);
-
-        AddToNotify(NOTIFY_AI_RELOCATION);
-    }
-
-    if (x == VISIBILITY_GROUP_STEALTH)
-        DestroyForNearbyPlayers();
+    UpdateObjectVisibility();
 }
 
 void Unit::UpdateSpeed(UnitMoveType mtype, bool forced)
@@ -13034,7 +13015,6 @@ void Unit::AddToWorld()
     if (!IsInWorld())
     {
         WorldObject::AddToWorld();
-        SetToNotify();
     }
 }
 
@@ -14539,14 +14519,6 @@ bool Unit::HandleAuraRaidProcFromCharge(AuraEffect* triggeredByAura)
 }
 /*-----------------------TRINITY-----------------------------*/
 
-void Unit::SetToNotify()
-{
-    if (GetTypeId() == TYPEID_PLAYER)
-        AddToNotify(NOTIFY_VISIBILITY_CHANGED | NOTIFY_AI_RELOCATION | NOTIFY_PLAYER_VISIBILITY);
-    else
-        AddToNotify(NOTIFY_VISIBILITY_CHANGED | NOTIFY_AI_RELOCATION);
-}
-
 void Unit::Kill(Unit *pVictim, bool durabilityLoss)
 {
     // Prevent killing unit twice (and giving reward from kill twice)
@@ -14809,7 +14781,7 @@ void Unit::SetStunned(bool apply)
         SetUInt64Value(UNIT_FIELD_TARGET, 0);
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
         CastStop();
-        AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
+//        AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
 
         // Creature specific
         if (GetTypeId() != TYPEID_PLAYER)
@@ -14839,7 +14811,7 @@ void Unit::SetStunned(bool apply)
             data << uint32(0);
             SendMessageToSet(&data,true);
 
-            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
+//            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
         }
     }
 }
@@ -14848,7 +14820,7 @@ void Unit::SetRooted(bool apply)
 {
     if (apply)
     {
-        AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
+//        AddUnitMovementFlag(MOVEMENTFLAG_ROOT);
 
         WorldPacket data(SMSG_FORCE_MOVE_ROOT, 10);
         data.append(GetPackGUID());
@@ -14867,7 +14839,7 @@ void Unit::SetRooted(bool apply)
             data << (uint32)2;
             SendMessageToSet(&data,true);
 
-            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
+//            RemoveUnitMovementFlag(MOVEMENTFLAG_ROOT);
         }
     }
 }
@@ -15213,8 +15185,8 @@ Unit *Unit::GetVehicleBase() const
 Creature *Unit::GetVehicleCreatureBase() const
 {
     Unit *veh = GetVehicleBase();
-    if (veh->GetTypeId() == TYPEID_UNIT)
-        return (Creature*)veh;
+    if (veh && veh->GetTypeId() == TYPEID_UNIT)
+        return dynamic_cast<Creature*>(veh);
     return NULL;
 }
 
@@ -15481,6 +15453,19 @@ void Unit::SetPhaseMask(uint32 newPhaseMask, bool update)
         if (m_SummonSlot[i])
             if (Creature *summon = GetMap()->GetCreature(m_SummonSlot[i]))
                 summon->SetPhaseMask(newPhaseMask,true);
+}
+
+void Unit::UpdateObjectVisibility(bool forced)
+{
+    if (!forced)
+        AddToNotify(NOTIFY_VISIBILITY_CHANGED);
+    else
+    {
+        WorldObject::UpdateObjectVisibility(true);
+        // call MoveInLineOfSight for nearby creatures
+        Trinity::AIRelocationNotifier notifier(*this);
+        VisitNearbyObject(GetMap()->GetVisibilityDistance(), notifier);
+    }
 }
 
 void Unit::KnockbackFrom(float x, float y, float speedXY, float speedZ)

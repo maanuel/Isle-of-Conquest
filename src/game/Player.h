@@ -868,6 +868,17 @@ struct InstancePlayerBind
     InstancePlayerBind() : save(NULL), perm(false) {}
 };
 
+enum DungeonStatusFlag
+{
+    DUNGEON_STATUSFLAG_NORMAL = 0x01,
+    DUNGEON_STATUSFLAG_HEROIC = 0x02,
+
+    RAID_STATUSFLAG_10MAN_NORMAL = 0x01,
+    RAID_STATUSFLAG_25MAN_NORMAL = 0x02,
+    RAID_STATUSFLAG_10MAN_HEROIC = 0x04,
+    RAID_STATUSFLAG_25MAN_HEROIC = 0x08
+};
+
 struct AccessRequirement
 {
     uint8  levelMin;
@@ -881,6 +892,7 @@ struct AccessRequirement
     std::string questFailedText;
     uint32 heroicQuest;
     std::string heroicQuestFailedText;
+    uint8  status;
 };
 
 class PlayerTaxi
@@ -2168,8 +2180,10 @@ class Player : public Unit, public GridObject<Player>
         bool IsVisibleInGridForPlayer(Player const* pl) const;
         bool IsVisibleGloballyFor(Player* pl) const;
 
-        void UpdateVisibilityOf(WorldObject* target);
         void SendInitialVisiblePackets(Unit* target);
+        void UpdateObjectVisibility(bool forced = true);
+        void UpdateVisibilityForPlayer();
+        void UpdateVisibilityOf(WorldObject* target);
 
         template<class T>
             void UpdateVisibilityOf(T* target, UpdateData& data, std::set<Unit*>& visibleNow);

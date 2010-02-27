@@ -51,6 +51,7 @@ UPDATE `gameobject_template` SET `scriptname`='go_inconspicuous_landmark' WHERE 
 UPDATE `gameobject_template` SET `ScriptName`='go_soulwell' WHERE `entry` IN (181621,193169);
 UPDATE `gameobject_template` SET `scriptname`='go_tadpole_cage' WHERE `entry`=187373;
 UPDATE `gameobject_template` SET `ScriptName`='go_dragonflayer_cage' WHERE entry IN (186566,186567,186568,186569,186570,186571,186572,186573,186574,186575);
+UPDATE `gameobject_template` SET `ScriptName`='go_black_cage' WHERE `entry`=195310;
 
 /* GUARD */
 UPDATE `creature_template` SET `ScriptName`='guard_azuremyst' WHERE `entry`=18038;
@@ -401,6 +402,7 @@ UPDATE `creature_template` SET `ScriptName`='npc_bonker_togglevolt' WHERE `entry
 UPDATE `creature_template` SET `ScriptName`='npc_fezzix_geartwist' WHERE `entry`=25849;
 UPDATE `creature_template` SET `scriptname`='npc_trapped_mammoth_calf' WHERE `entry`=25850;
 UPDATE `item_template` SET `scriptname`='item_dehta_trap_smasher' WHERE `entry`=35228;
+UPDATE `creature_template` SET `ScriptName`='npc_magmoth_crusher' WHERE `entry`=25434;
 
 /* BURNING STEPPES */
 UPDATE `creature_template` SET `ScriptName`='npc_ragged_john' WHERE `entry`=9563;
@@ -724,7 +726,9 @@ UPDATE `creature_template` SET `ScriptName`='npc_apothecary_hanes' WHERE `entry`
 
 /* ICECROWN */
 UPDATE `creature_template` SET `ScriptName`='npc_arete' WHERE `entry`=29344;
-UPDATE `creature_template` SET `ScriptName`='valiant_challenge' WHERE `entry`=33518;
+UPDATE `creature_template` SET `ScriptName`='npc_dame_evniki_kapsalis' WHERE `entry`=34885;
+UPDATE `creature_template` SET `ScriptName`='npc_squire_david' WHERE `entry`=33447;
+UPDATE `creature_template` SET `ScriptName`='npc_argent_valiant' WHERE `entry`=33448;
 
 /* IRONFORGE */
 UPDATE `creature_template` SET `ScriptName`='npc_royal_historian_archesonus' WHERE `entry`=8879;
@@ -1412,6 +1416,7 @@ UPDATE `creature_template` SET `ScriptName`='npc_korrak_bloodrager' WHERE `entry
 UPDATE `creature_template` SET `ScriptName`='npc_yggdras' WHERE `entry`=30014;
 UPDATE `creature_template` SET `ScriptName`='npc_released_offspring_harkoa' WHERE `entry`=28526;
 UPDATE `creature_template` SET `ScriptName`='npc_stinkbeard' WHERE `entry`=30017;
+UPDATE `creature_template` SET `ScriptName`= 'npc_crusade_recruit' WHERE `entry`=28090;
 
 /* ZUL'FARRAK */
 UPDATE `creature_template` SET `ScriptName`='npc_sergeant_bly' WHERE `entry`=7604;
@@ -1447,10 +1452,6 @@ UPDATE `creature_template` SET `ScriptName`='mob_ohgan' WHERE `entry`=14988;
 /* EOF */
 
 UPDATE `creature_template` SET `ScriptName` = 'npc_skywing' WHERE `entry`=22424;
-
-DELETE FROM areatrigger_scripts WHERE `entry`=4156;
-INSERT INTO areatrigger_scripts VALUES
-   (4156,'at_naxxramas_frostwyrm_wing');
 
 DELETE FROM areatrigger_scripts WHERE `entry`=3066;
 INSERT INTO areatrigger_scripts VALUES

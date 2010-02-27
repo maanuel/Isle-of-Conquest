@@ -2374,8 +2374,7 @@ void Player::SetGameMaster(bool on)
         getHostilRefManager().setOnlineOfflineState(true);
     }
 
-    //ObjectAccessor::UpdateVisibilityForPlayer(this);
-    SetToNotify();
+    UpdateObjectVisibility();
 }
 
 void Player::SetGMVisible(bool on)
@@ -4446,8 +4445,7 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     sOutdoorPvPMgr.HandlePlayerResurrects(this, newzone);
 
     // update visibility
-    //ObjectAccessor::UpdateVisibilityForPlayer(this);
-    SetToNotify();
+    UpdateObjectVisibility();
 
     if(!applySickness)
         return;
@@ -16980,6 +16978,30 @@ bool Player::Satisfy(AccessRequirement const *ar, uint32 target_map, bool report
         if(!mapEntry)
             return false;
 
+        bool closed = false;
+
+        switch(mapEntry->IsRaid() ? GetRaidDifficulty() : GetDungeonDifficulty())
+        {
+            case DUNGEON_DIFFICULTY_NORMAL:
+                closed = (ar->status & DUNGEON_STATUSFLAG_NORMAL) == 0;
+                break;
+            case DUNGEON_DIFFICULTY_HEROIC:
+                closed = (ar->status & DUNGEON_STATUSFLAG_HEROIC) == 0;
+                break;
+            case RAID_DIFFICULTY_10MAN_HEROIC:
+                closed = (ar->status & RAID_STATUSFLAG_10MAN_HEROIC) == 0;
+                break;
+            case RAID_DIFFICULTY_25MAN_HEROIC:
+                closed = (ar->status & RAID_STATUSFLAG_25MAN_HEROIC) == 0;
+                break;
+        }
+
+        if (closed)
+        {
+            GetSession()->SendAreaTriggerMessage(GetSession()->GetTrinityString(LANG_INSTANCE_CLOSED));
+            return false;
+        }
+
         bool isNormalTargetMap = mapEntry->IsRaid()
             ? (GetRaidDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
             : (GetDungeonDifficulty() == DUNGEON_DIFFICULTY_NORMAL);
@@ -20098,6 +20120,27 @@ template void Player::UpdateVisibilityOf(Creature*      target, UpdateData& data
 template void Player::UpdateVisibilityOf(Corpse*        target, UpdateData& data, std::set<Unit*>& visibleNow);
 template void Player::UpdateVisibilityOf(GameObject*    target, UpdateData& data, std::set<Unit*>& visibleNow);
 template void Player::UpdateVisibilityOf(DynamicObject* target, UpdateData& data, std::set<Unit*>& visibleNow);
+
+void Player::UpdateObjectVisibility(bool forced)
+{
+    if (!forced)
+        AddToNotify(NOTIFY_VISIBILITY_CHANGED);
+    else
+    {
+        Unit::UpdateObjectVisibility(true);
+        // updates visibility of all objects around point of view for current player
+        Trinity::VisibleNotifier notifier(*this);
+        m_seer->VisitNearbyObject(GetMap()->GetVisibilityDistance(), notifier);
+        notifier.SendToSelf();   // send gathered data
+    }
+}
+
+void Player::UpdateVisibilityForPlayer()
+{
+    Trinity::VisibleNotifier notifier(*this);
+    m_seer->VisitNearbyObject(GetMap()->GetVisibilityDistance(), notifier);
+    notifier.SendToSelf();   // send gathered data
+}
 
 void Player::InitPrimaryProfessions()
 {
