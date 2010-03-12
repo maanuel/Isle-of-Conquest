@@ -1395,7 +1395,7 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
             uint32 heal = uint32(caster->SpellHealingBonus(caster, GetSpellProto(), uint32(new_damage * multiplier), DOT, GetBase()->GetStackAmount()));
 
             int32 gain = caster->DealHeal(caster, heal, GetSpellProto());
-            caster->getHostilRefManager().threatAssist(caster, gain * 0.5f, GetSpellProto());
+            caster->getHostileRefManager().threatAssist(caster, gain * 0.5f, GetSpellProto());
             break;
         }
         case SPELL_AURA_PERIODIC_HEALTH_FUNNEL: // only three spells
@@ -1470,7 +1470,7 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
                 if( BattleGround *bg = caster->ToPlayer()->GetBattleGround() )
                     bg->UpdatePlayerScore(caster->ToPlayer(), SCORE_HEALING_DONE, gain);
 
-            target->getHostilRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
+            target->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
 
             bool haveCastItem = GetBase()->GetCastItemGUID() != 0;
 
@@ -1631,7 +1631,7 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
             int32 gain = target->ModifyPower(power,amount);
 
             if(caster)
-                target->getHostilRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
+                target->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
             break;
         }
         case SPELL_AURA_PERIODIC_ENERGIZE:
@@ -1659,7 +1659,7 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
             int32 gain = target->ModifyPower(power,amount);
 
             if(caster)
-                target->getHostilRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
+                target->getHostileRefManager().threatAssist(caster, float(gain) * 0.5f, GetSpellProto());
             break;
         }
         case SPELL_AURA_POWER_BURN_MANA:
@@ -2385,20 +2385,20 @@ void AuraEffect::HandleShapeshiftBoosts(Unit * target, bool apply) const
         if (spellId)
         {
             if(target->GetTypeId() == TYPEID_PLAYER)
-                ((Player *)target)->RemoveSpellCooldown(spellId);
+                target->ToPlayer()->RemoveSpellCooldown(spellId);
             target->CastSpell(target, spellId, true, NULL, this );
         }
 
         if (spellId2)
         {
             if(target->GetTypeId() == TYPEID_PLAYER)
-                ((Player *)target)->RemoveSpellCooldown(spellId2);
+                target->ToPlayer()->RemoveSpellCooldown(spellId2);
             target->CastSpell(target, spellId2, true, NULL, this);
         }
 
         if(target->GetTypeId() == TYPEID_PLAYER)
         {
-            const PlayerSpellMap& sp_list = ((Player *)target)->GetSpellMap();
+            const PlayerSpellMap& sp_list = target->ToPlayer()->GetSpellMap();
             for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
             {
                 if(itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
@@ -2886,7 +2886,7 @@ void AuraEffect::HandleAuraModShapeshift(AuraApplication const * aurApp, uint8 m
                 // Stance mastery + Tactical mastery (both passive, and last have aura only in defense stance, but need apply at any stance switch)
                 if(target->GetTypeId() == TYPEID_PLAYER)
                 {
-                    PlayerSpellMap const& sp_list = ((Player *)target)->GetSpellMap();
+                    PlayerSpellMap const& sp_list = target->ToPlayer()->GetSpellMap();
                     for (PlayerSpellMap::const_iterator itr = sp_list.begin(); itr != sp_list.end(); ++itr)
                     {
                         if(itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
@@ -3189,7 +3189,7 @@ void AuraEffect::HandleFeignDeath(AuraApplication const * aurApp, uint8 mode, bo
         if(GetCasterGUID()==target->GetGUID() && target->GetCurrentSpell(CURRENT_GENERIC_SPELL))
             target->FinishSpell(CURRENT_GENERIC_SPELL, false);
         target->InterruptNonMeleeSpells(true);
-        target->getHostilRefManager().deleteReferences();
+        target->getHostileRefManager().deleteReferences();
     }
     else
     {
@@ -3727,7 +3727,7 @@ void AuraEffect::HandleAuraModTotalThreat(AuraApplication const * aurApp, uint8 
     if (!caster || !caster->isAlive())
         return;
 
-    target->getHostilRefManager().addTempThreat(GetAmount(), apply);
+    target->getHostileRefManager().addTempThreat(GetAmount(), apply);
 }
 
 void AuraEffect::HandleModTaunt(AuraApplication const * aurApp, uint8 mode, bool apply) const
@@ -5834,7 +5834,7 @@ void AuraEffect::HandleAuraDummy(AuraApplication const * aurApp, uint8 mode, boo
                     {
                         // Play part 1
                         if(apply)
-                            target->PlayDirectSound(14970, (Player *)target);
+                            target->PlayDirectSound(14970, target->ToPlayer());
                         // continue in 58205
                         else
                             target->CastSpell(target, 58205, true);
@@ -5846,10 +5846,10 @@ void AuraEffect::HandleAuraDummy(AuraApplication const * aurApp, uint8 mode, boo
                     {
                         // Play part 2
                         if(apply)
-                            target->PlayDirectSound(14971, (Player *)target);
+                            target->PlayDirectSound(14971, target->ToPlayer());
                         // Play part 3
                         else
-                            target->PlayDirectSound(14972, (Player *)target);
+                            target->PlayDirectSound(14972, target->ToPlayer());
                     }
                     break;
             }

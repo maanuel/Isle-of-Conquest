@@ -2323,7 +2323,7 @@ void Player::SetInWater(bool apply)
     // remove auras that need water/land
     RemoveAurasWithInterruptFlags(apply ? AURA_INTERRUPT_FLAG_NOT_ABOVEWATER : AURA_INTERRUPT_FLAG_NOT_UNDERWATER);
 
-    getHostilRefManager().updateThreatTables();
+    getHostileRefManager().updateThreatTables();
 }
 
 void Player::SetGameMaster(bool on)
@@ -2337,13 +2337,13 @@ void Player::SetGameMaster(bool on)
         if (Pet* pet = GetPet())
         {
             pet->setFaction(35);
-            pet->getHostilRefManager().setOnlineOfflineState(false);
+            pet->getHostileRefManager().setOnlineOfflineState(false);
         }
 
         RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         ResetContestedPvP();
 
-        getHostilRefManager().setOnlineOfflineState(false);
+        getHostileRefManager().setOnlineOfflineState(false);
         CombatStopWithPets();
 
         SetPhaseMask(PHASEMASK_ANYWHERE,false);             // see and visible in all phases
@@ -2361,7 +2361,7 @@ void Player::SetGameMaster(bool on)
         if (Pet* pet = GetPet())
         {
             pet->setFaction(getFaction());
-            pet->getHostilRefManager().setOnlineOfflineState(true);
+            pet->getHostileRefManager().setOnlineOfflineState(true);
         }
 
         // restore FFA PvP Server state
@@ -2371,7 +2371,7 @@ void Player::SetGameMaster(bool on)
         // restore FFA PvP area state, remove not allowed for GM mounts
         UpdateArea(m_areaUpdateId);
 
-        getHostilRefManager().setOnlineOfflineState(true);
+        getHostileRefManager().setOnlineOfflineState(true);
     }
 
     UpdateObjectVisibility();
@@ -6404,7 +6404,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor, bool pvpt
 
         if( uVictim->GetTypeId() == TYPEID_PLAYER )
         {
-            Player *pVictim = (Player *)uVictim;
+            Player *pVictim = uVictim->ToPlayer();
 
             if( GetTeam() == pVictim->GetTeam() && !sWorld.IsFFAPvPRealm() )
                 return false;
@@ -6459,9 +6459,7 @@ bool Player::RewardHonor(Unit *uVictim, uint32 groupsize, float honor, bool pvpt
         }
         else
         {
-            Creature *cVictim = (Creature *)uVictim;
-
-            if (!cVictim->isRacialLeader())
+            if (!uVictim->ToCreature()->isRacialLeader())
                 return false;
 
             honor = 100;                                    // ??? need more info
@@ -7919,10 +7917,10 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
             uint32 lootid =  go->GetGOInfo()->GetLootId();
 
             //TODO: fix this big hack
-            if((go->GetEntry() == BG_AV_OBJECTID_MINE_N || go->GetEntry() == BG_AV_OBJECTID_MINE_S))
-                if( BattleGround *bg = GetBattleGround())
-                    if(bg->GetTypeID() == BATTLEGROUND_AV)
-                        if(!(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(go->GetEntry(),GetTeam())))
+            if ((go->GetEntry() == BG_AV_OBJECTID_MINE_N || go->GetEntry() == BG_AV_OBJECTID_MINE_S))
+                if (BattleGround *bg = GetBattleGround())
+                    if (bg->GetTypeID() == BATTLEGROUND_AV)
+                        if (!(((BattleGroundAV*)bg)->PlayerCanDoMineQuest(go->GetEntry(),GetTeam())))
                         {
                             SendLootRelease(guid);
                             return;
@@ -7930,15 +7928,70 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
 
             if (lootid)
             {
-                sLog.outDebug("       if(lootid)");
                 loot->clear();
-                loot->FillLoot(lootid, LootTemplates_Gameobject, this, false, false, go->GetLootMode());
+
+                Group* group = GetGroup();
+                bool groupRules = (group && go->GetGOInfo()->type == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules);
+
+                // check current RR player and get next if necessary
+                if (groupRules) 
+                    group->UpdateLooterGuid(go, true);
+
+                loot->FillLoot(lootid, LootTemplates_Gameobject, this, !groupRules, false, go->GetLootMode());
+
+                // get next RR player (for next loot)
+                if (groupRules)
+                    group->UpdateLooterGuid(go);
             }
 
             if (loot_type == LOOT_FISHING)
                 go->getFishLoot(loot,this);
 
+            if (go->GetGOInfo()->type == GAMEOBJECT_TYPE_CHEST && go->GetGOInfo()->chest.groupLootRules)
+            {
+                if (Group* group = GetGroup())
+                {
+                    switch (group->GetLootMethod())
+                    {
+                        case GROUP_LOOT:
+                            // GroupLoot: rolls items over threshold. Items with quality < threshold, round robin
+                            group->GroupLoot(loot, go);
+                            break;
+                        case NEED_BEFORE_GREED:
+                            group->NeedBeforeGreed(loot, go);
+                            break;
+                        case MASTER_LOOT:
+                            group->MasterLoot(loot, go);
+                            break;
+                    }
+                }
+            }
+
             go->SetLootState(GO_ACTIVATED);
+        }
+
+        if (go->getLootState() == GO_ACTIVATED)
+        {
+            if (Group* group = GetGroup())
+            {
+                switch (group->GetLootMethod())
+                {
+                    case MASTER_LOOT:
+                        permission = MASTER_PERMISSION;
+                        break;
+                    case FREE_FOR_ALL:
+                        permission = ALL_PERMISSION;
+                        break;
+                    case ROUND_ROBIN:
+                        permission = ROUND_ROBIN_PERMISSION;
+                        break;
+                    default:
+                        permission = GROUP_PERMISSION;
+                        break;
+                }
+            }
+            else 
+                permission = ALL_PERMISSION;
         }
     }
     else if (IS_ITEM_GUID(guid))
@@ -8021,7 +8074,7 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
             return;
         }
 
-        loot   = &creature->loot;
+        loot = &creature->loot;
 
         if (loot_type == LOOT_PICKPOCKETING)
         {
@@ -8031,7 +8084,7 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
                 loot->clear();
 
                 if (uint32 lootid = creature->GetCreatureInfo()->pickpocketLootId)
-                    loot->FillLoot(lootid, LootTemplates_Pickpocketing, this, false);
+                    loot->FillLoot(lootid, LootTemplates_Pickpocketing, this, true);
 
                 // Generate extra money for pick pocket loot
                 const uint32 a = urand(0, creature->getLevel()/2);
@@ -8049,37 +8102,25 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
                 recipient = this;
             }
 
-            if (creature->lootForPickPocketed)
-            {
-                creature->lootForPickPocketed = false;
-                loot->clear();
-            }
-
             if (!creature->lootForBody)
             {
                 creature->lootForBody = true;
-                loot->clear();
 
-                if (uint32 lootid = creature->GetCreatureInfo()->lootid)
-                    loot->FillLoot(lootid, LootTemplates_Creature, recipient, false, false, creature->GetLootMode());
-
-                loot->generateMoneyLoot(creature->GetCreatureInfo()->mingold,creature->GetCreatureInfo()->maxgold);
+                // for creature, loot is filled when creature is killed.
 
                 if (Group* group = recipient->GetGroup())
                 {
-                    group->UpdateLooterGuid(creature,true);
-
                     switch (group->GetLootMethod())
                     {
                         case GROUP_LOOT:
-                            // GroupLoot delete items over threshold (threshold even not implemented), and roll them. Items with quality<threshold, round robin
-                            group->GroupLoot(recipient->GetGUID(), loot, creature);
+                            // GroupLoot: rolls items over threshold. Items with quality < threshold, round robin
+                            group->GroupLoot(loot, creature);
                             break;
                         case NEED_BEFORE_GREED:
-                            group->NeedBeforeGreed(recipient->GetGUID(), loot, creature);
+                            group->NeedBeforeGreed(loot, creature);
                             break;
                         case MASTER_LOOT:
-                            group->MasterLoot(recipient->GetGUID(), loot, creature);
+                            group->MasterLoot(loot, creature);
                             break;
                         default:
                             break;
@@ -8091,26 +8132,30 @@ void Player::SendLoot(uint64 guid, LootType loot_type)
             if (loot_type == LOOT_SKINNING)
             {
                 loot->clear();
-                loot->FillLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, this, false);
+                loot->FillLoot(creature->GetCreatureInfo()->SkinLootId, LootTemplates_Skinning, this, true);
             }
             // set group rights only for loot_type != LOOT_SKINNING
             else
             {
-                if(Group* group = GetGroup())
+                if (Group* group = GetGroup())
                 {
                     if (group == recipient->GetGroup())
                     {
-                        if (group->GetLootMethod() == FREE_FOR_ALL)
-                            permission = ALL_PERMISSION;
-                        else if (group->GetLooterGuid() == GetGUID())
+                        switch (group->GetLootMethod())
                         {
-                            if (group->GetLootMethod() == MASTER_LOOT)
+                            case MASTER_LOOT:
                                 permission = MASTER_PERMISSION;
-                            else
+                                break;
+                            case FREE_FOR_ALL:
                                 permission = ALL_PERMISSION;
+                                break;
+                            case ROUND_ROBIN:
+                                permission = ROUND_ROBIN_PERMISSION;
+                                break;
+                            default:
+                                permission = GROUP_PERMISSION;
+                                break;
                         }
-                        else
-                            permission = GROUP_PERMISSION;
                     }
                     else
                         permission = NONE_PERMISSION;
@@ -16079,22 +16124,50 @@ bool Player::isAllowedToLoot(Creature* creature)
     if (creature->isDead() && !creature->IsDamageEnoughForLootingAndReward())
        return false;
 
-    if (Player* recipient = creature->GetLootRecipient())
-    {
-        if (recipient == this)
-            return true;
-        if (Group* otherGroup = recipient->GetGroup())
-        {
-            Group* thisGroup = GetGroup();
-            if (!thisGroup)
-                return false;
-            return thisGroup == otherGroup;
-        }
+    Loot* loot = &creature->loot;
+    if (loot->items.size() == 0)
         return false;
-    }
-    else
+
+    Player* recipient = creature->GetLootRecipient();
+    if (!recipient)
         // prevent other players from looting if the recipient got disconnected
         return !creature->hasLootRecipient();
+
+    Group* recipientGroup = recipient->GetGroup();
+    if (!recipientGroup)
+        return (this == recipient);
+
+    Group* thisGroup = GetGroup();
+    if (!thisGroup || thisGroup != recipientGroup)
+        return false;
+
+    switch(thisGroup->GetLootMethod())
+    {
+        case FREE_FOR_ALL:
+            return true;
+        case ROUND_ROBIN:
+        case MASTER_LOOT:
+            // may only loot if the player is the loot roundrobin player
+            // or if there are free/quest/conditional item for the player
+            if (loot->roundRobinPlayer == 0 || loot->roundRobinPlayer == GetGUID())
+                return true;
+    
+            return loot->hasItemFor(this);
+        case GROUP_LOOT:
+        case NEED_BEFORE_GREED:
+            // may only loot if the player is the loot roundrobin player
+            // or item over threshold (so roll(s) can be launched)
+            // or if there are free/quest/conditional item for the player
+            if (loot->roundRobinPlayer == 0 || loot->roundRobinPlayer == GetGUID())
+                return true;
+
+            if (loot->hasOverThresholdItem())
+                return true;
+
+            return loot->hasItemFor(this);
+    }
+
+    return false;
 }
 
 void Player::_LoadActions(QueryResult_AutoPtr result, bool startup)
@@ -16110,11 +16183,7 @@ void Player::_LoadActions(QueryResult_AutoPtr result, bool startup)
             uint8 type = fields[2].GetUInt8();
 
             if(ActionButton* ab = addActionButton(button, action, type))
-            {
                 ab->uState = ACTIONBUTTON_UNCHANGED;
-                if(!startup) // Switching specs
-                    ab->canRemoveByClient = false;
-            }
             else
             {
                 sLog.outError( "  ...at loading, and will deleted in DB also");
@@ -18909,7 +18978,7 @@ void Player::CleanupAfterTaxiFlight()
     m_taxi.ClearTaxiDestinations();        // not destinations, clear source node
     Unmount();
     RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_TAXI_FLIGHT);
-    getHostilRefManager().setOnlineOfflineState(true);
+    getHostileRefManager().setOnlineOfflineState(true);
 }
 
 void Player::ContinueTaxiFlight()
@@ -19925,7 +19994,7 @@ bool Player::canSeeOrDetect(Unit const* u, bool detect, bool inVisibleList, bool
         if(isGameMaster())
         {
             if(u->GetTypeId() == TYPEID_PLAYER)
-                return ((Player *)u)->GetSession()->GetSecurity() <= GetSession()->GetSecurity();
+                return u->ToPlayer()->GetSession()->GetSecurity() <= GetSession()->GetSecurity();
             else
                 return true;
         }

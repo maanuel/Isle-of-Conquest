@@ -506,7 +506,7 @@ void WorldSession::HandleTotemDestroyed( WorldPacket& recvPacket)
     Creature* totem = GetPlayer()->GetMap()->GetCreature(_player->m_SummonSlot[slotId]);
     // Don't unsummon sentry totem
     if(totem && totem->isTotem() && totem->GetEntry() != SENTRY_TOTEM_ENTRY)
-        ((Totem*)totem)->UnSummon();
+      totem->ToTotem()->UnSummon();
 }
 
 void WorldSession::HandleSelfResOpcode( WorldPacket & /*recv_data*/ )
@@ -582,7 +582,7 @@ void WorldSession::HandleMirrrorImageDataRequest( WorldPacket & recv_data )
     data << (uint32)creator->GetDisplayId();
     if (creator->GetTypeId() == TYPEID_PLAYER)
     {
-        Player * pCreator = (Player *)creator;
+        Player * pCreator = creator->ToPlayer();
         data << (uint8)pCreator->getRace();
         data << (uint8)pCreator->getGender();
         data << (uint8)pCreator->getClass();
