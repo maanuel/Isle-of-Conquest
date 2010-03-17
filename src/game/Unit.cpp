@@ -4532,10 +4532,6 @@ bool Unit::HasAuraEffect(uint32 spellId, uint8 effIndex, uint64 caster) const
 
 bool Unit::HasAura(uint32 spellId, uint64 caster, uint8 reqEffMask) const
 {
-    //Special case for non existing spell
-    if (spellId==61988)
-        return HasAura(61987, caster, reqEffMask) || HasAura(25771, caster, reqEffMask);
-
     if (GetAuraApplication(spellId, caster, reqEffMask))
         return true;
     return false;
@@ -9969,6 +9965,10 @@ uint32 Unit::SpellDamageBonus(Unit *pVictim, SpellEntry const *spellProto, uint3
                             break;
                         }
                 }
+            // Drain Soul - increased damage for targets under 25 % HP
+            if (spellProto->SpellFamilyFlags[0] & 0x00004000)
+                if (HasAura(200000))
+                    DoneTotalMod *= 4;
         break;
         case SPELLFAMILY_DEATHKNIGHT:
             // Improved Icy Touch
@@ -11976,6 +11976,11 @@ void Unit::SetHover(bool on)
 
 void Unit::setDeathState(DeathState s)
 {
+    // death state needs to be updated before RemoveAllAurasOnDeath() calls HandleChannelDeathItem(..) so that 
+    // it can be used to check creation of death items (such as soul shards).
+    DeathState oldDeathState = m_deathState;
+    m_deathState = s;
+
     if (s != ALIVE && s != JUST_ALIVED)
     {
         CombatStop();
@@ -12012,13 +12017,12 @@ void Unit::setDeathState(DeathState s)
     else if (s == JUST_ALIVED)
         RemoveFlag (UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE); // clear skinnable for creature and player (at battleground)
 
-    if (m_deathState != ALIVE && s == ALIVE)
+    if (oldDeathState != ALIVE && s == ALIVE)
     {
         //_ApplyAllAuraMods();
         // Reset display id on resurection - needed by corpse explosion to cleanup after display change
         SetDisplayId(GetNativeDisplayId());
     }
-    m_deathState = s;
 }
 
 /*########################################
@@ -14789,27 +14793,38 @@ void Unit::SetControlled(bool apply, UnitState state)
         if (hasUnitState(state))
             return;
 
-        addUnitState(state);
-
         switch(state)
         {
-        case UNIT_STAT_STUNNED:
-            SetStunned(true);
-            break;
-        case UNIT_STAT_ROOT:
-            if (!hasUnitState(UNIT_STAT_STUNNED))
-                SetRooted(true);
-            break;
-        case UNIT_STAT_CONFUSED:
-            if (!hasUnitState(UNIT_STAT_STUNNED))
-                SetConfused(true);
-            break;
-        case UNIT_STAT_FLEEING:
-            if (!hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_CONFUSED))
-                SetFeared(true);
-            break;
-        default:
-            break;
+            case UNIT_STAT_STUNNED:
+                addUnitState(state);
+                SetStunned(true);
+                CastStop();
+                break;
+            case UNIT_STAT_ROOT:
+                if (!hasUnitState(UNIT_STAT_STUNNED))
+		        {
+		            addUnitState(state);
+                    SetRooted(true);
+	 	        }
+                break;
+            case UNIT_STAT_CONFUSED:
+                if (!hasUnitState(UNIT_STAT_STUNNED))
+		        {
+		            addUnitState(state);
+                    SetConfused(true);
+		            CastStop();
+		        }
+                break;
+            case UNIT_STAT_FLEEING:
+                if (!hasUnitState(UNIT_STAT_STUNNED | UNIT_STAT_CONFUSED))
+		        {
+		            addUnitState(state);
+                    SetFeared(true);
+		            CastStop();
+		        }
+                break;
+            default:
+                break;
         }
     }
     else

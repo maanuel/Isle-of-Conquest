@@ -296,19 +296,6 @@ enum ChatType
     CHAT_TYPE_ZONE_YELL         = 6
 };
 
-//Selection method used by SelectTarget (CreatureEventAI)
-enum AttackingTarget
-{
-    ATTACKING_TARGET_RANDOM = 0,                            //Just selects a random target
-    ATTACKING_TARGET_TOPAGGRO,                              //Selects targes from top aggro to bottom
-    ATTACKING_TARGET_BOTTOMAGGRO,                           //Selects targets from bottom aggro to top
-    /* not implemented
-    ATTACKING_TARGET_RANDOM_PLAYER,                         //Just selects a random target (player only)
-    ATTACKING_TARGET_TOPAGGRO_PLAYER,                       //Selects targes from top aggro to bottom (player only)
-    ATTACKING_TARGET_BOTTOMAGGRO_PLAYER,                    //Selects targets from bottom aggro to top (player only)
-    */
-};
-
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
 #if defined( __GNUC__ )
 #pragma pack()
@@ -541,7 +528,8 @@ class Creature : public Unit, public GridObject<Creature>
         bool lootForPickPocketed;
         bool lootForBody;
         Player *GetLootRecipient() const;
-        bool hasLootRecipient() const { return m_lootRecipient!=0; }
+        bool hasLootRecipient() const { return m_lootRecipient != 0; }  
+        bool isTappedBy(Player *player) const;                          // return true if the creature is tapped by the player or a member of his party.
 
         void SetLootRecipient (Unit* unit);
         void AllLootRemovedFromCorpse();
@@ -649,7 +637,7 @@ class Creature : public Unit, public GridObject<Creature>
 
         void SetDisableReputationGain(bool disable) { DisableReputationGain = disable; }
         bool IsReputationGainDisabled() { return DisableReputationGain; }
-        bool IsDamageEnoughForLootingAndReward() { return m_PlayerDamageReq == 0; }
+        bool IsDamageEnoughForLootingAndReward() const { return m_PlayerDamageReq == 0; } 
         void LowerPlayerDamageReq(uint32 unDamage)
         {
             if(m_PlayerDamageReq)

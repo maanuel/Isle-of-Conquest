@@ -845,23 +845,6 @@ void AuraEffect::CalculateSpellMod()
                     m_spellmod->value = GetBase()->GetUnitOwner()->CalculateSpellDamage(GetSpellProto(), 1, GetSpellProto()->EffectBasePoints[1], GetBase()->GetUnitOwner());
                     break;
             }
-            // Drain Soul - If the target is at or below 25% health, Drain Soul causes four times the normal damage
-            if (GetSpellProto()->SpellFamilyName == SPELLFAMILY_WARLOCK && GetSpellProto()->SpellFamilyFlags[0] & 0x00004000)
-            {
-                if (!m_spellmod)
-                {
-                    m_spellmod = new SpellModifier(GetBase());
-                    m_spellmod->op = SPELLMOD_DOT;
-                    m_spellmod->type = SPELLMOD_PCT;
-                    m_spellmod->spellId = GetId();
-                    m_spellmod->mask[0] = 0x00004000;
-                    // 300% more dmg
-                    if (GetBase()->GetUnitOwner()->GetMaxHealth() / 4 > GetBase()->GetUnitOwner()->GetHealth())
-                        m_spellmod->value = 300;
-                    else
-                        m_spellmod->value = 0;
-                }
-            }
             break;
         case SPELL_AURA_ADD_FLAT_MODIFIER:
         case SPELL_AURA_ADD_PCT_MODIFIER:
@@ -5988,13 +5971,12 @@ void AuraEffect::HandleChannelDeathItem(AuraApplication const * aurApp, uint8 mo
     {
         Unit * caster = GetCaster();
 
-        if(!caster || caster->GetTypeId() != TYPEID_PLAYER)// || m_removeMode!=AURA_REMOVE_BY_DEATH)
+        if(!caster || caster->GetTypeId() != TYPEID_PLAYER)
             return;
 
-        //we cannot check removemode = death
-        //talent will remove the caster's aura->interrupt channel->remove victim aura
-        if(target->GetHealth() > 0)
+        if(target->getDeathState() != JUST_DIED)
             return;
+
         // Item amount
         if (GetAmount() <= 0)
             return;
@@ -6002,11 +5984,12 @@ void AuraEffect::HandleChannelDeathItem(AuraApplication const * aurApp, uint8 mo
         if(GetSpellProto()->EffectItemType[m_effIndex] == 0)
             return;
 
-        // Soul Shard only from non-grey units
+        // Soul Shard only from units that grant XP or honor
         if( GetSpellProto()->EffectItemType[m_effIndex] == 6265 &&
-            (target->getLevel() <= Trinity::XP::GetGrayLevel(caster->getLevel()) ||
-             target->GetTypeId() == TYPEID_UNIT && !caster->ToPlayer()->isAllowedToLoot(target->ToCreature())) )
+            (!caster->ToPlayer()->isHonorOrXPTarget(target) ||
+             target->GetTypeId() == TYPEID_UNIT && !target->ToCreature()->isTappedBy(caster->ToPlayer())) )
             return;
+
         //Adding items
         uint32 noSpaceForCount = 0;
         uint32 count = m_amount;

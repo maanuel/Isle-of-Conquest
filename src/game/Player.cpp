@@ -12558,7 +12558,7 @@ void Player::RemoveEnchantmentDurations(Item *item)
         if (itr->item == item)
         {
             // save duration in item
-            item->SetEnchantmentDuration(EnchantmentSlot(itr->slot), itr->leftduration);
+            item->SetEnchantmentDuration(EnchantmentSlot(itr->slot), itr->leftduration, this);
             itr = m_enchantDuration.erase(itr);
         }
         else
@@ -12624,7 +12624,7 @@ void Player::AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 durat
     {
         if (itr->item == item && itr->slot == slot)
         {
-            itr->item->SetEnchantmentDuration(itr->slot, itr->leftduration);
+            itr->item->SetEnchantmentDuration(itr->slot, itr->leftduration, this);
             m_enchantDuration.erase(itr);
             break;
         }
@@ -16119,13 +16119,13 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     return true;
 }
 
-bool Player::isAllowedToLoot(Creature* creature)
+bool Player::isAllowedToLoot(const Creature* creature)
 {
-    if (creature->isDead() && !creature->IsDamageEnoughForLootingAndReward())
+    if (!creature->isDead() || !creature->IsDamageEnoughForLootingAndReward())
        return false;
 
-    Loot* loot = &creature->loot;
-    if (loot->items.size() == 0)
+    const Loot* loot = &creature->loot;
+    if (loot->isLooted()) // nothing to loot or everything looted.
         return false;
 
     Player* recipient = creature->GetLootRecipient();
@@ -17456,7 +17456,7 @@ void Player::_SaveInventory()
 
     // update enchantment durations
     for (EnchantDurationList::iterator itr = m_enchantDuration.begin(); itr != m_enchantDuration.end(); ++itr)
-        itr->item->SetEnchantmentDuration(itr->slot,itr->leftduration);
+        itr->item->SetEnchantmentDuration(itr->slot,itr->leftduration, this);
 
     // if no changes
     if (m_itemUpdateQueue.empty())

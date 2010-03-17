@@ -40,6 +40,7 @@
 #include "ObjectDefines.h"
 #include "Policies/Singleton.h"
 #include "Database/SQLStorage.h"
+#include "Vehicle.h"
 
 #include <string>
 #include <map>
@@ -312,9 +313,12 @@ enum ConditionType
     CONDITION_ACTIVE_EVENT          = 12,                   // event_id
     CONDITION_INSTANCE_DATA         = 13,                   // entry        data
     CONDITION_QUEST_NONE            = 14,                   // quest_id     0
+    CONDITION_CLASS                 = 15,                   // class        0
+    CONDITION_RACE                  = 16,                   // race         0
+    CONDITION_ACHIEVEMENT           = 17                    // achievement_id 0
 };
 
-#define MAX_CONDITION                 15                    // maximum value in ConditionType enum
+#define MAX_CONDITION                 18                    // maximum value in ConditionType enum
 
 struct PlayerCondition
 {
@@ -577,6 +581,15 @@ class ObjectMgr
             return NULL;
         }
 
+        VehicleAccessoryList GetVehicleAccessoryList(uint32 uiEntry)
+        {
+            VehicleAccessoryList mVehList;
+            VehicleAccessoryMap::const_iterator itr = m_VehicleAccessoryMap.find(uiEntry);
+            if (itr != m_VehicleAccessoryMap.end())
+                mVehList = itr->second;
+            return mVehList;
+        }
+
         void LoadGuilds();
         void LoadArenaTeams();
         void LoadGroups();
@@ -639,6 +652,7 @@ class ObjectMgr
         void LoadPointOfInterestLocales();
         void LoadInstanceTemplate();
         void LoadMailLevelRewards();
+        void LoadVehicleAccessories();
 
         void LoadGossipText();
 
@@ -1046,6 +1060,8 @@ class ObjectMgr
         SpellClickInfoMap   mSpellClickInfoMap;
 
         ItemRequiredTargetMap m_ItemRequiredTarget;
+
+        VehicleAccessoryMap m_VehicleAccessoryMap;
 
         typedef             std::vector<LocaleConstant> LocalForIndex;
         LocalForIndex        m_LocalForIndex;

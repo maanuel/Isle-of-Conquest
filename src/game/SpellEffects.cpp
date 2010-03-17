@@ -1830,9 +1830,10 @@ void Spell::EffectDummy(uint32 i)
                     if (m_caster->GetTypeId() != TYPEID_PLAYER || !unitTarget)
                         return;
 
-                    if (Pet *PlrPet = m_caster->ToPlayer()->GetPet())
-                        PlrPet->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(i), true);
-                        return;
+                    if (Pet *pPet = m_caster->ToPlayer()->GetPet())
+                        if (pPet->isAlive())
+                            pPet->CastSpell(unitTarget, m_spellInfo->CalculateSimpleValue(i), true);
+                    return;
                 }
             }
             break;
@@ -2265,6 +2266,7 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
     }
 
     uint32 triggered_spell_id = m_spellInfo->EffectTriggerSpell[effIndex];
+    Unit* originalCaster = NULL;
 
     // special cases
     switch(triggered_spell_id)
@@ -2397,6 +2399,10 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
         // Empower Rune Weapon
         case 53258:
             return; // skip, hack-added in spell effect
+        // Snake Trap
+        case 57879:
+            originalCaster = m_originalCaster;
+            break;
     }
 
     // normal case
@@ -2417,7 +2423,7 @@ void Spell::EffectTriggerSpell(uint32 effIndex)
     // so this just for speedup places in else
     Unit * caster = GetTriggeredSpellCaster(spellInfo, m_caster, unitTarget);
 
-    caster->CastSpell(unitTarget,spellInfo,true);
+    caster->CastSpell(unitTarget,spellInfo,true, 0, 0, (originalCaster ? originalCaster->GetGUID() : 0));
 }
 
 void Spell::EffectTriggerMissileSpell(uint32 effect_idx)
@@ -7413,7 +7419,19 @@ void Spell::EffectWMODamage(uint32 /*i*/)
         goft = sFactionTemplateStore.LookupEntry(gameObjTarget->GetUInt32Value(GAMEOBJECT_FACTION));
         // Do not allow to damage GO's of friendly factions (ie: Wintergrasp Walls)
         if (casterft && goft && !casterft->IsFriendlyTo(*goft))
-      gameObjTarget->TakenDamage((uint32)damage, caster);
+        {
+            gameObjTarget->TakenDamage(uint32(damage), caster);
+            WorldPacket data(SMSG_DESTRUCTIBLE_BUILDING_DAMAGE, 8+8+8+4+4);
+            data.append(gameObjTarget->GetPackGUID());
+            data.append(caster->GetPackGUID());
+            if (Unit *who = caster->GetCharmerOrOwner())
+                data.append(who->GetPackGUID());
+            else
+                data << uint8(0);
+            data << uint32(damage);
+            data << uint32(m_spellInfo->Id);
+            gameObjTarget->SendMessageToSet(&data, false);
+        }
     }
 }
 
