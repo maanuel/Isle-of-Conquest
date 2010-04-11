@@ -341,7 +341,7 @@ struct boss_headless_horsemanAI : public ScriptedAI
         {
             confl->EffectApplyAuraName[0] = SPELL_AURA_PERIODIC_DAMAGE_PERCENT;
             confl->EffectBasePoints[0] = 10;
-            confl->EffectBaseDice[0] = 10;
+            //confl->EffectBaseDice[0] = 10;
             confl->DmgMultiplier[0] = 1;
         }
 /*
@@ -504,7 +504,7 @@ struct boss_headless_horsemanAI : public ScriptedAI
         if (PlayerList.isEmpty()) return NULL;
 
         std::list<Player*> temp;
-        std::list<Player*>::iterator j;
+        std::list<Player*>::const_iterator j;
 
         for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
             if ((m_creature->IsWithinLOSInMap(i->getSource()) || !checkLoS) && m_creature->getVictim() != i->getSource() &&
@@ -559,7 +559,7 @@ struct boss_headless_horsemanAI : public ScriptedAI
             caster->GetMotionMaster()->Clear(false);
             caster->GetMotionMaster()->MoveFollow(m_creature,6,urand(0,5));
             //DoResetThreat();//not sure if need
-            std::list<HostileReference*>::iterator itr;
+            std::list<HostileReference*>::const_iterator itr;
             for (itr = caster->getThreatManager().getThreatList().begin(); itr != caster->getThreatManager().getThreatList().end(); ++itr)
             {
                 Unit* pUnit = Unit::GetUnit((*m_creature), (*itr)->getUnitGuid());
@@ -824,7 +824,7 @@ bool GOHello_go_loosely_turned_soil(Player* pPlayer, GameObject* soil)
     ScriptedInstance* pInstance = pPlayer->GetInstanceData();
     if (pInstance)
     {
-        if(pInstance->GetData(DATA_HORSEMAN_EVENT) != NOT_STARTED)
+        if (pInstance->GetData(DATA_HORSEMAN_EVENT) != NOT_STARTED)
             return true;
         pInstance->SetData(DATA_HORSEMAN_EVENT, IN_PROGRESS);
     }

@@ -169,7 +169,7 @@ struct boss_volkhanAI : public ScriptedAI
         if (m_lGolemGUIDList.empty())
             return;
 
-        for (std::list<uint64>::iterator itr = m_lGolemGUIDList.begin(); itr != m_lGolemGUIDList.end(); ++itr)
+        for (std::list<uint64>::const_iterator itr = m_lGolemGUIDList.begin(); itr != m_lGolemGUIDList.end(); ++itr)
         {
             if (Creature* pTemp = Unit::GetCreature(*m_creature, *itr))
             {
@@ -186,7 +186,7 @@ struct boss_volkhanAI : public ScriptedAI
         if (m_lGolemGUIDList.empty())
             return;
 
-        for (std::list<uint64>::iterator itr = m_lGolemGUIDList.begin(); itr != m_lGolemGUIDList.end(); ++itr)
+        for (std::list<uint64>::const_iterator itr = m_lGolemGUIDList.begin(); itr != m_lGolemGUIDList.end(); ++itr)
         {
             if (Creature* pTemp = Unit::GetCreature(*m_creature, *itr))
             {
@@ -255,7 +255,7 @@ struct boss_volkhanAI : public ScriptedAI
 
                 DoScriptText(RAND(SAY_STOMP_1,SAY_STOMP_2), m_creature);
 
-                DoCast(m_creature, DUNGEON_MODE(SPELL_SHATTERING_STOMP_N, SPELL_SHATTERING_STOMP_H));
+                DoCast(m_creature, SPELL_SHATTERING_STOMP_N);
 
                 DoScriptText(EMOTE_SHATTER, m_creature);
 
@@ -441,7 +441,7 @@ struct mob_molten_golemAI : public ScriptedAI
 
         if (m_uiImmolation_Timer <= uiDiff)
         {
-            DoCast(m_creature->getVictim(), DUNGEON_MODE(SPELL_IMMOLATION_STRIKE_N, SPELL_IMMOLATION_STRIKE_H));
+            DoCast(m_creature->getVictim(), SPELL_IMMOLATION_STRIKE_N);
             m_uiImmolation_Timer = 5000;
         }
         else

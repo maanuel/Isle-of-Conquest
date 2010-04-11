@@ -86,23 +86,21 @@ struct boss_mal_ganisAI : public ScriptedAI
     bool bYelled;
     bool bYelled2;
 
-    Creature *pArthas;
     CombatPhases Phase;
-         
+
     ScriptedInstance* pInstance;
 
     void Reset()
     {
          bYelled = false;
          bYelled2 = false;
-         pArthas = NULL;
          Phase = COMBAT;
          uiCarrionSwarmTimer = 6000;
          uiMindBlastTimer = 11000;
          uiVampiricTouchTimer = urand(10000,15000);
          uiSleepTimer = urand(15000,20000);
          uiOutroTimer = 1000;
-         
+
          if (pInstance)
              pInstance->SetData(DATA_MAL_GANIS_EVENT, NOT_STARTED);
     }
@@ -110,9 +108,6 @@ struct boss_mal_ganisAI : public ScriptedAI
     void EnterCombat(Unit* who)
     {
         DoScriptText(SAY_AGGRO, m_creature);
-
-        pArthas = GetClosestCreatureWithEntry(m_creature, NPC_ARTHAS, 150.0f);
-        
         if (pInstance)
             pInstance->SetData(DATA_MAL_GANIS_EVENT, IN_PROGRESS);
     }
@@ -153,24 +148,25 @@ struct boss_mal_ganisAI : public ScriptedAI
                     return;
                 }
 
-                if (pArthas && pArthas->isDead())
-                {
-                    EnterEvadeMode();
-                    m_creature->DisappearAndDie();
-                    if (pInstance)
-                        pInstance->SetData(DATA_MAL_GANIS_EVENT, FAIL);
-                }
+                if (Creature* pArthas = m_creature->GetCreature(*m_creature, pInstance ? pInstance->GetData64(DATA_ARTHAS) : 0))
+                    if (pArthas->isDead())
+                    {
+                        EnterEvadeMode();
+                        m_creature->DisappearAndDie();
+                        if (pInstance)
+                            pInstance->SetData(DATA_MAL_GANIS_EVENT, FAIL);
+                    }
 
                 if (uiCarrionSwarmTimer < diff)
                 {
-                    DoCastVictim(DUNGEON_MODE(SPELL_CARRION_SWARM,H_SPELL_CARRION_SWARM));
+                    DoCastVictim(SPELL_CARRION_SWARM);
                     uiCarrionSwarmTimer = 7000;
                 } else uiCarrionSwarmTimer -= diff;
 
                 if (uiMindBlastTimer < diff)
                 {
                     if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                        DoCast(pTarget, DUNGEON_MODE(SPELL_MIND_BLAST, H_SPELL_MIND_BLAST));
+                        DoCast(pTarget, SPELL_MIND_BLAST);
                     uiMindBlastTimer = 6000;
                 } else uiMindBlastTimer -= diff;
 
@@ -184,7 +180,7 @@ struct boss_mal_ganisAI : public ScriptedAI
                 {
                     DoScriptText(RAND(SAY_SLEEP_1,SAY_SLEEP_2), m_creature);
                     if (Unit *pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                        DoCast(pTarget, DUNGEON_MODE(SPELL_SLEEP, H_SPELL_SLEEP));
+                        DoCast(pTarget, SPELL_SLEEP);
                     uiSleepTimer = urand(15000,20000);
                 } else uiSleepTimer -= diff;
 
@@ -202,7 +198,7 @@ struct boss_mal_ganisAI : public ScriptedAI
                             uiOutroTimer = 8000;
                             break;
                         case 2:
-                            m_creature->SetUInt64Value(UNIT_FIELD_TARGET, pArthas->GetGUID());
+                            m_creature->SetUInt64Value(UNIT_FIELD_TARGET, pInstance ? pInstance->GetData64(DATA_ARTHAS) : 0);
                             m_creature->HandleEmoteCommand(29);
                             DoScriptText(SAY_ESCAPE_SPEECH_2, m_creature);
                             ++uiOutroStep;
@@ -222,7 +218,7 @@ struct boss_mal_ganisAI : public ScriptedAI
                             m_creature->SetVisibility(VISIBILITY_OFF);
                             m_creature->Kill(m_creature);
                             break;
-                            
+
                     }
                 } else uiOutroTimer -= diff;
                 break;

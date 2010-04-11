@@ -108,9 +108,9 @@ enum __QuestGiverStatus
 {
     DIALOG_STATUS_NONE                     = 0,
     DIALOG_STATUS_UNAVAILABLE              = 1,
-    DIALOG_STATUS_CHAT                     = 2,             // 3.1 - may be changed
-    DIALOG_STATUS_UNK1                     = 3,             // 3.1
-    DIALOG_STATUS_UNK2                     = 4,             // 3.1
+    DIALOG_STATUS_LOW_LEVEL_AVAILABLE      = 2,
+    DIALOG_STATUS_LOW_LEVEL_REWARD_REP     = 3,
+    DIALOG_STATUS_LOW_LEVEL_AVAILABLE_REP  = 4,
     DIALOG_STATUS_INCOMPLETE               = 5,
     DIALOG_STATUS_REWARD_REP               = 6,
     DIALOG_STATUS_AVAILABLE_REP            = 7,
@@ -140,7 +140,7 @@ enum __QuestFlags
     QUEST_FLAGS_AUTOCOMPLETE   = 0x00010000,                // auto complete
     QUEST_FLAGS_UNK5           = 0x00020000,                // has something to do with ReqItemId and SrcItemId
     QUEST_FLAGS_UNK6           = 0x00040000,                // use Objective text as Complete text
-    QUEST_FLAGS_LOW_LEVEL      = 0x00080000,                // quests in starting areas
+    QUEST_FLAGS_AUTO_ACCEPT    = 0x00080000,                // quests in starting areas
 
     // Trinity flags for set SpecialFlags in DB if required but used only at server
     QUEST_TRINITY_FLAGS_REPEATABLE           = 0x010000,     // Set by 1 in SpecialFlags from DB
@@ -176,10 +176,10 @@ class Quest
     friend class ObjectMgr;
     public:
         Quest(Field * questRecord);
-        uint32 XPValue( Player *pPlayer ) const;
+        uint32 XPValue(Player *pPlayer) const;
 
-        bool HasFlag( uint32 flag ) const { return ( QuestFlags & flag ) != 0; }
-        void SetFlag( uint32 flag ) { QuestFlags |= flag; }
+        bool HasFlag(uint32 flag) const { return (QuestFlags & flag) != 0; }
+        void SetFlag(uint32 flag) { QuestFlags |= flag; }
 
         // table data accessors:
         uint32 GetQuestId() const { return QuestId; }
@@ -239,7 +239,9 @@ class Quest
         bool   IsRepeatable() const { return QuestFlags & QUEST_TRINITY_FLAGS_REPEATABLE; }
         bool   IsAutoComplete() const { return QuestMethod ? false : true; }
         uint32 GetFlags() const { return QuestFlags; }
-        bool   IsDaily() const { return QuestFlags & (QUEST_FLAGS_DAILY | QUEST_FLAGS_WEEKLY); }
+        bool   IsDaily() const { return QuestFlags & QUEST_FLAGS_DAILY; }
+        bool   IsWeekly() const { return QuestFlags & QUEST_FLAGS_WEEKLY; }	
+        bool   IsAutoAccept() const { return QuestFlags & QUEST_FLAGS_AUTO_ACCEPT; }
 
         // multiple values
         std::string ObjectiveText[QUEST_OBJECTIVES_COUNT];

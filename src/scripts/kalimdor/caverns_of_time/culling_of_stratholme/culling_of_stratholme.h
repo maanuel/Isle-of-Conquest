@@ -31,6 +31,7 @@ enum Data
 
 enum Data64
 {
+    DATA_ARTHAS,
     DATA_MEATHOOK,
     DATA_SALRAMM,
     DATA_EPOCH,
@@ -45,7 +46,7 @@ enum Data64
 
 enum Creatures
 {
-    NPC_MEATHOOK           = 26529,           
+    NPC_MEATHOOK           = 26529,
     NPC_SALRAMM            = 26530,
     NPC_EPOCH              = 26532,
     NPC_MAL_GANIS          = 26533,
@@ -62,6 +63,6 @@ enum GameObjects
     GO_MALGANIS_GATE_2                                     = 187723,
     GO_EXIT_GATE                                           = 191788,
     GO_MALGANIS_CHEST_N                                    = 190663,
-	GO_MALGANIS_CHEST_H                                    = 193597
+    GO_MALGANIS_CHEST_H                                    = 193597
 };
 #endif

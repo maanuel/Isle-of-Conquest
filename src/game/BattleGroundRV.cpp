@@ -68,7 +68,7 @@ void BattleGroundRV::Update(uint32 diff)
                 setState(BG_RV_STATE_OPEN_PILARS);
                 break;
             case BG_RV_STATE_OPEN_PILARS:
-                for(i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PULLEY_2; ++i)
+                for (i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PULLEY_2; ++i)
                     DoorOpen(i);
                 setTimer(BG_RV_PILAR_TO_FIRE_TIMER);
                 setState(BG_RV_STATE_OPEN_FIRE);
@@ -81,7 +81,7 @@ void BattleGroundRV::Update(uint32 diff)
                 break;
             case BG_RV_STATE_CLOSE_PILARS:
                 uint32 i;
-                for(i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PULLEY_2; ++i)
+                for (i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PULLEY_2; ++i)
                     DoorOpen(i);
                 setTimer(BG_RV_PILAR_TO_FIRE_TIMER);
                 setState(BG_RV_STATE_CLOSE_FIRE);
@@ -194,7 +194,7 @@ void BattleGroundRV::Reset()
 bool BattleGroundRV::SetupBattleGround()
 {
     // Fence
-    if (   !AddObject(BG_RV_OBJECT_FENCE_1, BG_RV_OBJECT_TYPE_FENCE_1, 763.432373, -274.058197, 28.276695, 3.141593, 0, 0, 0, RESPAWN_IMMEDIATELY)
+    if (!AddObject(BG_RV_OBJECT_FENCE_1, BG_RV_OBJECT_TYPE_FENCE_1, 763.432373, -274.058197, 28.276695, 3.141593, 0, 0, 0, RESPAWN_IMMEDIATELY)
         || !AddObject(BG_RV_OBJECT_FENCE_2, BG_RV_OBJECT_TYPE_FENCE_2, 763.432373, -294.419464, 28.276684, 3.141593, 0, 0, 0, RESPAWN_IMMEDIATELY)
     // elevators
         || !AddObject(BG_RV_OBJECT_ELEVATOR_1, BG_RV_OBJECT_TYPE_ELEVATOR_1, 763.536377, -294.535767, 0.505383, 3.141593, 0, 0, 0, RESPAWN_IMMEDIATELY)
@@ -225,7 +225,7 @@ bool BattleGroundRV::SetupBattleGround()
         || !AddObject(BG_RV_OBJECT_PILAR_COLLISION_3, BG_RV_OBJECT_TYPE_PILAR_COLLISION_3, 763.611145, -261.856750, 30.639660, 0.000000, 0, 0, 0, RESPAWN_IMMEDIATELY)
         || !AddObject(BG_RV_OBJECT_PILAR_COLLISION_4, BG_RV_OBJECT_TYPE_PILAR_COLLISION_4, 802.211609, -284.493256, 32.382710, 3.141593, 0, 0, 0, RESPAWN_IMMEDIATELY)
 */
-        )
+)
     {
         sLog.outErrorDb("BatteGroundRV: Failed to spawn some object!");
         return false;

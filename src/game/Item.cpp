@@ -83,7 +83,7 @@ void AddItemsSetItem(Player*player,Item *item)
 
         uint32 z=0;
         for (; z<8; z++)
-            if (eff->spells[z] && eff->spells[z]->Id==set->spells[x])
+            if (eff->spells[z] && eff->spells[z]->Id == set->spells[x])
                 break;
 
         if (z < 8)
@@ -150,7 +150,7 @@ void RemoveItemsSetItem(Player*player,ItemPrototype const *proto)
 
         for (uint32 z=0; z<8; z++)
         {
-            if (eff->spells[z] && eff->spells[z]->Id==set->spells[x])
+            if (eff->spells[z] && eff->spells[z]->Id == set->spells[x])
             {
                 // spell can be not active if not fit form requirement
                 player->ApplyEquipSpell(eff->spells[z],NULL,false);
@@ -233,7 +233,7 @@ bool ItemCanGoIntoBag(ItemPrototype const *pProto, ItemPrototype const *pBagProt
     return false;
 }
 
-Item::Item( )
+Item::Item()
 {
     m_objectType |= TYPEMASK_ITEM;
     m_objectTypeId = TYPEID_ITEM;
@@ -248,15 +248,15 @@ Item::Item( )
     m_lootGenerated = false;
     mb_in_trade = false;
     m_lastPlayedTimeUpdate = time(NULL);
-    
+
     m_refundRecipient = 0;
     m_paidMoney = 0;
     m_paidExtendedCost = 0;
 }
 
-bool Item::Create( uint32 guidlow, uint32 itemid, Player const* owner)
+bool Item::Create(uint32 guidlow, uint32 itemid, Player const* owner)
 {
-    Object::_Create( guidlow, 0, HIGHGUID_ITEM );
+    Object::_Create(guidlow, 0, HIGHGUID_ITEM);
 
     SetEntry(itemid);
     SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
@@ -277,7 +277,7 @@ bool Item::Create( uint32 guidlow, uint32 itemid, Player const* owner)
 
     SetUInt32Value(ITEM_FIELD_FLAGS, itemProto->Flags);
     SetUInt32Value(ITEM_FIELD_DURATION, abs(itemProto->Duration));
-    
+
     SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, 0);
 
     return true;
@@ -290,7 +290,7 @@ void Item::UpdateDuration(Player* owner, uint32 diff)
 
     sLog.outDebug("Item::UpdateDuration Item (Entry: %u Duration %u Diff %u)",GetEntry(),GetUInt32Value(ITEM_FIELD_DURATION),diff);
 
-    if (GetUInt32Value(ITEM_FIELD_DURATION)<=diff)
+    if (GetUInt32Value(ITEM_FIELD_DURATION) <= diff)
     {
         sScriptMgr.ItemExpire(owner, GetProto());
         owner->DestroyItem(GetBagSlot(), GetSlot(), true);
@@ -312,7 +312,7 @@ void Item::SaveToDB()
             ss << "REPLACE INTO item_instance (guid,owner_guid,data) VALUES (" << guid << "," << GUID_LOPART(GetOwnerGUID()) << ",'";
             for (uint16 i = 0; i < m_valuesCount; ++i)
                 ss << GetUInt32Value(i) << " ";
-            ss << "' )";
+            ss << "')";
             CharacterDatabase.Execute(ss.str().c_str());
         }break;
         case ITEM_CHANGED:
@@ -323,15 +323,15 @@ void Item::SaveToDB()
                 ss << GetUInt32Value(i) << " ";
             ss << "', owner_guid = '" << GUID_LOPART(GetOwnerGUID()) << "' WHERE guid = '" << guid << "'";
 
-            CharacterDatabase.Execute( ss.str().c_str() );
+            CharacterDatabase.Execute(ss.str().c_str());
 
             if (HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED))
                 CharacterDatabase.PExecute("UPDATE character_gifts SET guid = '%u' WHERE item_guid = '%u'", GUID_LOPART(GetOwnerGUID()),GetGUIDLow());
         }break;
         case ITEM_REMOVED:
         {
-            if (GetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID) > 0)
-                CharacterDatabase.PExecute("DELETE FROM item_text WHERE id = '%u'", GetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID));
+            //if (GetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID) > 0)
+            //    CharacterDatabase.PExecute("DELETE FROM item_text WHERE id = '%u'", GetUInt32Value(ITEM_FIELD_ITEM_TEXT_ID));
             CharacterDatabase.PExecute("DELETE FROM item_instance WHERE guid = '%u'", guid);
             if (HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_WRAPPED))
                 CharacterDatabase.PExecute("DELETE FROM character_gifts WHERE item_guid = '%u'", GetGUIDLow());
@@ -406,7 +406,7 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult_AutoPtr result
     }
 
     // update duration if need, and remove if not need
-    if ((proto->Duration==0) != (GetUInt32Value(ITEM_FIELD_DURATION)==0))
+    if ((proto->Duration == 0) != (GetUInt32Value(ITEM_FIELD_DURATION) == 0))
     {
         SetUInt32Value(ITEM_FIELD_DURATION,abs(proto->Duration));
         need_save = true;
@@ -418,7 +418,7 @@ bool Item::LoadFromDB(uint32 guid, uint64 owner_guid, QueryResult_AutoPtr result
         SetOwnerGUID(owner_guid);
         need_save = true;
     }
-    
+
     if (need_save)                                           // normal item changed state set not work at loading
     {
         std::ostringstream ss;
@@ -544,7 +544,7 @@ int32 Item::GenerateItemRandomPropertyId(uint32 item_id)
     // item can have not null only one from field values
     if ((itemProto->RandomProperty) && (itemProto->RandomSuffix))
     {
-        sLog.outErrorDb("Item template %u have RandomProperty==%u and RandomSuffix==%u, but must have one from field =0",itemProto->ItemId,itemProto->RandomProperty,itemProto->RandomSuffix);
+        sLog.outErrorDb("Item template %u have RandomProperty == %u and RandomSuffix == %u, but must have one from field =0",itemProto->ItemId,itemProto->RandomProperty,itemProto->RandomSuffix);
         return 0;
     }
 
@@ -617,7 +617,7 @@ void Item::SetItemRandomProperties(int32 randomPropId)
 bool Item::UpdateItemSuffixFactor()
 {
     uint32 suffixFactor = GenerateEnchSuffixFactor(GetEntry());
-    if (GetItemSuffixFactor()==suffixFactor)
+    if (GetItemSuffixFactor() == suffixFactor)
         return false;
     SetUInt32Value(ITEM_FIELD_PROPERTY_SEED,suffixFactor);
     return true;
@@ -638,7 +638,7 @@ void Item::SetState(ItemUpdateState state, Player *forplayer)
         // new items must stay in new state until saved
         if (uState != ITEM_NEW)
             uState = state;
-        
+
         AddToUpdateQueueOf(forplayer);
     }
     else
@@ -712,7 +712,7 @@ bool Item::CanBeTraded(bool mail) const
     {
         if (owner->CanUnequipItem(GetPos(),false) !=  EQUIP_ERR_OK)
             return false;
-        if (owner->GetLootGUID()==GetGUID())
+        if (owner->GetLootGUID() == GetGUID())
             return false;
     }
 
@@ -730,8 +730,8 @@ bool Item::HasEnchantRequiredSkill(const Player *pPlayer) const
   for (uint32 enchant_slot = PERM_ENCHANTMENT_SLOT; enchant_slot < MAX_ENCHANTMENT_SLOT; ++enchant_slot)
     if (uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot)))
       if (SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(enchant_id))
-	if (enchantEntry->requiredSkill && pPlayer->GetSkillValue(enchantEntry->requiredSkill) < enchantEntry->requiredSkillValue)
-	  return false;
+    if (enchantEntry->requiredSkill && pPlayer->GetSkillValue(enchantEntry->requiredSkill) < enchantEntry->requiredSkillValue)
+      return false;
 
   return true;
 }
@@ -746,10 +746,10 @@ uint32 Item::GetEnchantRequiredLevel() const
   for (uint32 enchant_slot = PERM_ENCHANTMENT_SLOT; enchant_slot < MAX_ENCHANTMENT_SLOT; ++enchant_slot)
     if (uint32 enchant_id = GetEnchantmentId(EnchantmentSlot(enchant_slot)))
       if (SpellItemEnchantmentEntry const* enchantEntry = sSpellItemEnchantmentStore.LookupEntry(enchant_id))
-	if (enchantEntry->requiredLevel > level)
-	  level = enchantEntry->requiredLevel;
-  
-  return level;  
+    if (enchantEntry->requiredLevel > level)
+      level = enchantEntry->requiredLevel;
+
+  return level;
 }
 
 bool Item::IsBoundByEnchant() const
@@ -770,8 +770,8 @@ bool Item::IsFitToSpellRequirements(SpellEntry const* spellInfo) const
     if (spellInfo->EquippedItemClass != -1)                 // -1 == any item class
     {
         // Special case - accept vellum for armor/weapon requirements
-        if ((spellInfo->EquippedItemClass==ITEM_CLASS_ARMOR && proto->IsArmorVellum())
-            ||( spellInfo->EquippedItemClass==ITEM_CLASS_WEAPON && proto->IsWeaponVellum()))
+        if ((spellInfo->EquippedItemClass == ITEM_CLASS_ARMOR && proto->IsArmorVellum())
+            ||(spellInfo->EquippedItemClass == ITEM_CLASS_WEAPON && proto->IsWeaponVellum()))
             if (spellmgr.IsSkillTypeSpell(spellInfo->Id, SKILL_ENCHANTING)) // only for enchanting spells
                 return true;
 
@@ -834,7 +834,7 @@ void Item::SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration, Player*
         return;
 
     SetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET,duration);
-    SetState(ITEM_CHANGED, owner);  
+    SetState(ITEM_CHANGED, owner);
     // Cannot use GetOwner() here, has to be passed as an argument to avoid freeze due to hashtable locking
 }
 
@@ -933,13 +933,13 @@ uint8 Item::GetGemCountWithLimitCategory(uint32 limitCategory) const
         if (!gemProto)
             continue;
 
-        if (gemProto->ItemLimitCategory==limitCategory)
+        if (gemProto->ItemLimitCategory == limitCategory)
             ++count;
     }
     return count;
 }
 
-bool Item::IsLimitedToAnotherMapOrZone( uint32 cur_mapId, uint32 cur_zoneId) const
+bool Item::IsLimitedToAnotherMapOrZone(uint32 cur_mapId, uint32 cur_zoneId) const
 {
     ItemPrototype const* proto = GetProto();
     return proto && (proto->Map && proto->Map != cur_mapId || proto->Area && proto->Area != cur_zoneId);
@@ -959,23 +959,23 @@ void Item::SendTimeUpdate(Player* owner)
     owner->GetSession()->SendPacket(&data);
 }
 
-Item* Item::CreateItem( uint32 item, uint32 count, Player const* player )
+Item* Item::CreateItem(uint32 item, uint32 count, Player const* player)
 {
     if (count < 1)
         return NULL;                                        //don't create item at zero count
 
-    ItemPrototype const *pProto = objmgr.GetItemPrototype( item );
+    ItemPrototype const *pProto = objmgr.GetItemPrototype(item);
     if (pProto)
     {
         if (count > pProto->GetMaxStackSize())
             count = pProto->GetMaxStackSize();
 
-        assert(count !=0 && "pProto->Stackable==0 but checked at loading already");
+        assert(count !=0 && "pProto->Stackable == 0 but checked at loading already");
 
-        Item *pItem = NewItemOrBag( pProto );
+        Item *pItem = NewItemOrBag(pProto);
         if (pItem->Create(objmgr.GenerateLowGuid(HIGHGUID_ITEM), item, player))
         {
-            pItem->SetCount( count );
+            pItem->SetCount(count);
             return pItem;
         }
         else
@@ -986,28 +986,28 @@ Item* Item::CreateItem( uint32 item, uint32 count, Player const* player )
     return NULL;
 }
 
-Item* Item::CloneItem( uint32 count, Player const* player ) const
+Item* Item::CloneItem(uint32 count, Player const* player) const
 {
-    Item* newItem = CreateItem( GetEntry(), count, player );
+    Item* newItem = CreateItem(GetEntry(), count, player);
     if (!newItem)
         return NULL;
 
-    newItem->SetUInt32Value( ITEM_FIELD_CREATOR,      GetUInt32Value( ITEM_FIELD_CREATOR ) );
-    newItem->SetUInt32Value( ITEM_FIELD_GIFTCREATOR,  GetUInt32Value( ITEM_FIELD_GIFTCREATOR ) );
-    newItem->SetUInt32Value( ITEM_FIELD_FLAGS,        GetUInt32Value( ITEM_FIELD_FLAGS ) );
-    newItem->SetUInt32Value( ITEM_FIELD_DURATION,     GetUInt32Value( ITEM_FIELD_DURATION ) );
+    newItem->SetUInt32Value(ITEM_FIELD_CREATOR,      GetUInt32Value(ITEM_FIELD_CREATOR));
+    newItem->SetUInt32Value(ITEM_FIELD_GIFTCREATOR,  GetUInt32Value(ITEM_FIELD_GIFTCREATOR));
+    newItem->SetUInt32Value(ITEM_FIELD_FLAGS,        GetUInt32Value(ITEM_FIELD_FLAGS));
+    newItem->SetUInt32Value(ITEM_FIELD_DURATION,     GetUInt32Value(ITEM_FIELD_DURATION));
     newItem->SetItemRandomProperties(GetItemRandomPropertyId());
     return newItem;
 }
 
-bool Item::IsBindedNotWith( Player const* player ) const
+bool Item::IsBindedNotWith(Player const* player) const
 {
     // not binded item
     if (!IsSoulBound())
         return false;
 
     // own item
-    if (GetOwnerGUID()== player->GetGUID())
+    if (GetOwnerGUID() == player->GetGUID())
         return false;
 
     // not BOA item case
@@ -1026,7 +1026,7 @@ bool Item::IsBindedNotWith( Player const* player ) const
     }
 }
 
-bool ItemRequiredTarget::IsFitToRequirements( Unit* pUnitTarget ) const
+bool ItemRequiredTarget::IsFitToRequirements(Unit* pUnitTarget) const
 {
     if (pUnitTarget->GetTypeId() != TYPEID_UNIT)
         return false;
@@ -1061,7 +1061,7 @@ void Item::SaveRefundDataToDB()
     ss << GetPaidMoney() << ",";
     ss << GetPaidExtendedCost();
     ss << ")";
-    
+
     CharacterDatabase.Execute(ss.str().c_str());
 }
 
@@ -1079,12 +1079,12 @@ void Item::SetNotRefundable(Player *owner, bool changestate)
     // Following is not applicable in the trading procedure
     if (changestate)
         SetState(ITEM_CHANGED, owner);
-    
+
     SetRefundRecipient(0);
     SetPaidMoney(0);
     SetPaidExtendedCost(0);
-    DeleteRefundDataFromDB();   
-    
+    DeleteRefundDataFromDB();
+
     owner->DeleteRefundReference(GetGUID());
 }
 

@@ -1,6 +1,18 @@
-/* Copyright (C) 2006 - 2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
-* This program is free software licensed under GPL version 2
-* Please see the included DOCS/LICENSE.TXT for more information */
+/* Copyright (C) 2008 - 2010 TrinityCore <http://www.trinitycore.org>
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 
 #include "ScriptedPch.h"
 
@@ -32,6 +44,11 @@ void AddSC_npcs_special();
 void AddSC_npc_taxi();
 
 //eastern kingdoms
+void AddSC_alterac_valley();                 //Alterac Valley
+void AddSC_boss_balinda();
+void AddSC_boss_drekthar();
+void AddSC_boss_galvangar();
+void AddSC_boss_vanndar();
 void AddSC_blackrock_depths();               //Blackrock Depths
 void AddSC_boss_ambassador_flamelash();
 void AddSC_boss_anubshiah();
@@ -44,7 +61,8 @@ void AddSC_boss_magmus();
 void AddSC_boss_moira_bronzebeard();
 void AddSC_boss_tomb_of_seven();
 void AddSC_instance_blackrock_depths();
-void AddSC_boss_drakkisath();                //Blackrock Spire
+void AddSC_blackrock_spire();                //Blackrock Spire
+void AddSC_boss_drakkisath();
 void AddSC_boss_halycon();
 void AddSC_boss_highlordomokk();
 void AddSC_boss_mothersmolderweb();
@@ -56,6 +74,7 @@ void AddSC_boss_quatermasterzigris();
 void AddSC_boss_pyroguard_emberseer();
 void AddSC_boss_gyth();
 void AddSC_boss_rend_blackhand();
+void AddSC_instance_blackrock_spire();
 void AddSC_boss_razorgore();                 //Blackwing lair
 void AddSC_boss_vael();
 void AddSC_boss_broodlord();
@@ -388,6 +407,15 @@ void AddSC_boss_xevozz();
 void AddSC_boss_zuramat();
 void AddSC_instance_violet_hold();
 void AddSC_violet_hold();
+void AddSC_instance_forge_of_souls();   //Forge of Souls
+void AddSC_forge_of_souls();
+void AddSC_boss_bronjahm();
+void AddSC_boss_devourer_of_souls();
+void AddSC_instance_pit_of_saron();     //Pit of Saron
+void AddSC_pit_of_saron();
+void AddSC_boss_garfrost();
+void AddSC_boss_ick();
+void AddSC_boss_tyrannus();
 
 void AddSC_dalaran();
 void AddSC_borean_tundra();
@@ -512,6 +540,11 @@ void AddScripts()
     AddSC_npc_taxi();
 
     //eastern kingdoms
+    AddSC_alterac_valley();                 //Alterac Valley
+    AddSC_boss_balinda();
+    AddSC_boss_drekthar();
+    AddSC_boss_galvangar();
+    AddSC_boss_vanndar();
     AddSC_blackrock_depths();               //Blackrock Depths
     AddSC_boss_ambassador_flamelash();
     AddSC_boss_anubshiah();
@@ -524,7 +557,8 @@ void AddScripts()
     AddSC_boss_moira_bronzebeard();
     AddSC_boss_tomb_of_seven();
     AddSC_instance_blackrock_depths();
-    AddSC_boss_drakkisath();                //Blackrock Spire
+    AddSC_blackrock_spire();                //Blackrock Spire
+    AddSC_boss_drakkisath();
     AddSC_boss_halycon();
     AddSC_boss_highlordomokk();
     AddSC_boss_mothersmolderweb();
@@ -536,6 +570,7 @@ void AddScripts()
     AddSC_boss_pyroguard_emberseer();
     AddSC_boss_gyth();
     AddSC_boss_rend_blackhand();
+    AddSC_instance_blackrock_spire();
     AddSC_boss_razorgore();                 //Blackwing lair
     AddSC_boss_vael();
     AddSC_boss_broodlord();
@@ -868,6 +903,15 @@ void AddScripts()
     AddSC_boss_zuramat();
     AddSC_instance_violet_hold();
     AddSC_violet_hold();
+    AddSC_instance_forge_of_souls();   //Forge of Souls
+    AddSC_forge_of_souls();
+    AddSC_boss_bronjahm();
+    AddSC_boss_devourer_of_souls();
+    AddSC_instance_pit_of_saron();      //Pit of Saron
+    AddSC_pit_of_saron();
+    AddSC_boss_garfrost();
+    AddSC_boss_ick();
+    AddSC_boss_tyrannus();
 
     AddSC_dalaran();
     AddSC_borean_tundra();

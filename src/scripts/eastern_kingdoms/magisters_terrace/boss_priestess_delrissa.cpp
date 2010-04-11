@@ -168,11 +168,11 @@ struct boss_priestess_delrissaAI : public ScriptedAI
                 LackeyEntryList[i] = m_auiAddEntries[i];
 
             //remove random entries
-            while(LackeyEntryList.size() > MAX_ACTIVE_LACKEY)
+            while (LackeyEntryList.size() > MAX_ACTIVE_LACKEY)
                 LackeyEntryList.erase(LackeyEntryList.begin() + rand()%LackeyEntryList.size());
 
             //summon all the remaining in vector
-            for (std::vector<uint32>::iterator itr = LackeyEntryList.begin(); itr != LackeyEntryList.end(); ++itr)
+            for (std::vector<uint32>::const_iterator itr = LackeyEntryList.begin(); itr != LackeyEntryList.end(); ++itr)
             {
                 if (Creature* pAdd = m_creature->SummonCreature((*itr), LackeyLocations[j][0], LackeyLocations[j][1], fZLocation, fOrientation, TEMPSUMMON_CORPSE_DESPAWN, 0))
                     m_auiLackeyGUID[j] = pAdd->GetGUID();
@@ -182,7 +182,7 @@ struct boss_priestess_delrissaAI : public ScriptedAI
         }
         else
         {
-            for (std::vector<uint32>::iterator itr = LackeyEntryList.begin(); itr != LackeyEntryList.end(); ++itr)
+            for (std::vector<uint32>::const_iterator itr = LackeyEntryList.begin(); itr != LackeyEntryList.end(); ++itr)
             {
                 Unit* pAdd = Unit::GetUnit(*m_creature, m_auiLackeyGUID[j]);
 
@@ -267,7 +267,7 @@ struct boss_priestess_delrissaAI : public ScriptedAI
                     if (pAdd->isAlive())
                         pTarget = pAdd;
 
-            DoCast(pTarget, DUNGEON_MODE(SPELL_RENEW_NORMAL, SPELL_RENEW_HEROIC));
+            DoCast(pTarget, SPELL_RENEW_NORMAL);
             RenewTimer = 5000;
         } else RenewTimer -= diff;
 
@@ -312,7 +312,7 @@ struct boss_priestess_delrissaAI : public ScriptedAI
         if (SWPainTimer <= diff)
         {
             if (Unit* pTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
-                DoCast(pTarget, DUNGEON_MODE(SPELL_SW_PAIN_NORMAL, SPELL_SW_PAIN_HEROIC));
+                DoCast(pTarget, SPELL_SW_PAIN_NORMAL);
 
             SWPainTimer = 10000;
         } else SWPainTimer -= diff;
@@ -797,7 +797,7 @@ struct boss_yazzaiAI : public boss_priestess_lackey_commonAI
         {
             bool InMeleeRange = false;
             std::list<HostileReference*>& t_list = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostileReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            for (std::list<HostileReference*>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 if (Unit *pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
                 {
@@ -877,7 +877,7 @@ struct boss_warlord_salarisAI : public boss_priestess_lackey_commonAI
         {
             bool InMeleeRange = false;
             std::list<HostileReference*>& t_list = m_creature->getThreatManager().getThreatList();
-            for (std::list<HostileReference*>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            for (std::list<HostileReference*>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 if (Unit *pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
                 {
@@ -1124,7 +1124,7 @@ struct boss_apokoAI : public boss_priestess_lackey_commonAI
 
         if (Healing_Wave_Timer <= diff)
         {
-            // std::vector<Add*>::iterator itr = Group.begin() + rand()%Group.size();
+            // std::vector<Add*>::const_iterator itr = Group.begin() + rand()%Group.size();
             // uint64 guid = (*itr)->guid;
             // if (guid)
             // {

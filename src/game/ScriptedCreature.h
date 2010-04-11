@@ -64,7 +64,7 @@ struct ScriptedAI : public CreatureAI
     void KilledUnit(Unit* who){}
 
     // Called when the creature summon successfully other creature
-    void JustSummoned(Creature* ) {}
+    void JustSummoned(Creature*) {}
 
     // Called when a summoned creature is despawned
     void SummonedCreatureDespawn(Creature*) {}
@@ -170,8 +170,8 @@ struct ScriptedAI : public CreatureAI
     bool EnterEvadeIfOutOfCombatArea(const uint32 uiDiff);
 
     // return true for heroic mode. i.e.
-    //   - for dungeon in mode 10-heroic, 
-    //   - for raid in mode 10-Heroic 
+    //   - for dungeon in mode 10-heroic,
+    //   - for raid in mode 10-Heroic
     //   - for raid in mode 25-heroic
     // DO NOT USE to check raid in mode 25-normal.
     bool IsHeroic() { return m_heroicMode; }
@@ -228,7 +228,7 @@ struct ScriptedAI : public CreatureAI
     private:
         bool m_bCombatMovement;
         uint32 m_uiEvadeCheckCooldown;
-        
+
         bool m_heroicMode;
         Difficulty m_difficulty;
 };
@@ -271,7 +271,7 @@ struct BossAI : public ScriptedAI
 
         bool CheckInRoom()
         {
-            if(CheckBoundary(me))
+            if (CheckBoundary(me))
                 return true;
             EnterEvadeMode();
             return false;

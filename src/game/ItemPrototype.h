@@ -110,7 +110,7 @@ enum ITEM_FLAGS
     ITEM_FLAGS_CONJURED                       = 0x00000002,
     ITEM_FLAGS_OPENABLE                       = 0x00000004,
     ITEM_FLAGS_WRAPPED                        = 0x00000008,
-    ITEM_FLAGS_BROKEN                         = 0x00000010, // appears red icon (like when item durability==0)
+    ITEM_FLAGS_BROKEN                         = 0x00000010, // appears red icon (like when item durability == 0)
     ITEM_FLAGS_TOTEM                          = 0x00000020, // ?
     ITEM_FLAGS_USABLE                         = 0x00000040, // ?
     ITEM_FLAGS_WRAPPER                        = 0x00000200, // used or not used wrapper
@@ -118,6 +118,7 @@ enum ITEM_FLAGS
     ITEM_FLAGS_REFUNDABLE                     = 0x00001000, // item cost can be refunded within 2 hours after purchase
     ITEM_FLAGS_CHARTER                        = 0x00002000, // arena/guild charter
     ITEM_FLAGS_REFUNDABLE_2                   = 0x00008000,
+    ITEM_FLAGS_UNK1                           = 0x00010000,
     ITEM_FLAGS_PROSPECTABLE                   = 0x00040000,
     ITEM_FLAGS_UNIQUE_EQUIPPED                = 0x00080000,
     ITEM_FLAGS_USEABLE_IN_ARENA               = 0x00200000,
@@ -474,7 +475,7 @@ inline uint8 ItemSubClassToDurabilityMultiplierId(uint32 ItemClass, uint32 ItemS
 }
 
 // GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
-#if defined( __GNUC__ )
+#if defined(__GNUC__)
 #pragma pack(1)
 #else
 #pragma pack(push,1)
@@ -540,7 +541,7 @@ struct ItemPrototype
     uint32 RequiredCityRank;
     uint32 RequiredReputationFaction;                       // id from Faction.dbc
     uint32 RequiredReputationRank;
-    int32  MaxCount;                                        // <=0: no limit
+    int32  MaxCount;                                        // <= 0: no limit
     int32  Stackable;                                       // 0: not allowed, -1: put in player coin info tab and don't limit stacking (so 1 slot)
     uint32 ContainerSlots;
     uint32 StatsCount;
@@ -640,9 +641,9 @@ struct ItemPrototype
         return 0;
     }
 
-    bool IsPotion() const { return Class==ITEM_CLASS_CONSUMABLE && SubClass==ITEM_SUBCLASS_POTION; }
-    bool IsWeaponVellum() const { return Class==ITEM_CLASS_TRADE_GOODS && SubClass==ITEM_SUBCLASS_WEAPON_ENCHANTMENT; }
-    bool IsArmorVellum() const { return Class==ITEM_CLASS_TRADE_GOODS && SubClass==ITEM_SUBCLASS_ARMOR_ENCHANTMENT; }
+    bool IsPotion() const { return Class == ITEM_CLASS_CONSUMABLE && SubClass == ITEM_SUBCLASS_POTION; }
+    bool IsWeaponVellum() const { return Class == ITEM_CLASS_TRADE_GOODS && SubClass == ITEM_SUBCLASS_WEAPON_ENCHANTMENT; }
+    bool IsArmorVellum() const { return Class == ITEM_CLASS_TRADE_GOODS && SubClass == ITEM_SUBCLASS_ARMOR_ENCHANTMENT; }
     bool IsConjuredConsumable() const { return Class == ITEM_CLASS_CONSUMABLE && (Flags & ITEM_FLAGS_CONJURED); }
 };
 
@@ -653,7 +654,7 @@ struct ItemLocale
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
-#if defined( __GNUC__ )
+#if defined(__GNUC__)
 #pragma pack()
 #else
 #pragma pack(pop)

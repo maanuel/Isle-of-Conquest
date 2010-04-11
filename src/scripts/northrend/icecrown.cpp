@@ -150,7 +150,7 @@ enum eSquireDavid
 bool GossipHello_npc_squire_david(Player* pPlayer, Creature* pCreature)
 {
     if (pPlayer->GetQuestStatus(QUEST_THE_ASPIRANT_S_CHALLENGE_H) == QUEST_STATUS_INCOMPLETE ||
-        pPlayer->GetQuestStatus(QUEST_THE_ASPIRANT_S_CHALLENGE_A) == QUEST_STATUS_INCOMPLETE )//We need more info about it.
+        pPlayer->GetQuestStatus(QUEST_THE_ASPIRANT_S_CHALLENGE_A) == QUEST_STATUS_INCOMPLETE)//We need more info about it.
     {
         pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SQUIRE_ITEM_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
         pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SQUIRE_ITEM_2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
@@ -191,7 +191,7 @@ struct npc_argent_valiantAI : public ScriptedAI
         pCreature->GetMotionMaster()->MovePoint(0,8599.258,963.951,547.553);
         pCreature->setFaction(35); //wrong faction in db?
     }
-	
+
     uint32 uiChargeTimer;
     uint32 uiShieldBreakerTimer;
 
@@ -200,7 +200,7 @@ struct npc_argent_valiantAI : public ScriptedAI
         uiChargeTimer = 7000;
         uiShieldBreakerTimer = 10000;
     }
-	
+
     void MovementInform(uint32 uiType, uint32 uiId)
     {
         if (uiType != POINT_MOTION_TYPE)
@@ -220,7 +220,7 @@ struct npc_argent_valiantAI : public ScriptedAI
             m_creature->SetHomePosition(m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ(),m_creature->GetOrientation());
             EnterEvadeMode();
         }
-    }          
+    }
 
     void UpdateAI(const uint32 uiDiff)
     {
@@ -238,7 +238,7 @@ struct npc_argent_valiantAI : public ScriptedAI
             DoCastVictim(SPELL_SHIELD_BREAKER);
             uiShieldBreakerTimer = 10000;
         } else uiShieldBreakerTimer -= uiDiff;
-                
+
         DoMeleeAttackIfReady();
     }
 };

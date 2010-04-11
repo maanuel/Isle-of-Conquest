@@ -25,7 +25,7 @@
 #include "Player.h"
 #include "World.h"
 
-void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
+void WorldSession::HandleGMTicketCreateOpcode(WorldPacket & recv_data)
 {
     if (GetPlayer()->getLevel() < sWorld.getConfig(CONFIG_TICKET_LEVEL_REQ))
     {
@@ -33,11 +33,11 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
         return;
     }
 
-    if(GM_Ticket *ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->GetGUID()))
+    if (GM_Ticket *ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->GetGUID()))
     {
-        WorldPacket data( SMSG_GMTICKET_CREATE, 4 );
+        WorldPacket data(SMSG_GMTICKET_CREATE, 4);
         data << uint32(1); // 1 - You already have GM ticket
-        SendPacket( &data );
+        SendPacket(&data);
         return;
     }
 
@@ -79,7 +79,7 @@ void WorldSession::HandleGMTicketCreateOpcode( WorldPacket & recv_data )
 
 }
 
-void WorldSession::HandleGMTicketUpdateOpcode( WorldPacket & recv_data)
+void WorldSession::HandleGMTicketUpdateOpcode(WorldPacket & recv_data)
 {
     WorldPacket data(SMSG_GMTICKET_UPDATETEXT, 4);
 
@@ -87,7 +87,7 @@ void WorldSession::HandleGMTicketUpdateOpcode( WorldPacket & recv_data)
     recv_data >> message;
 
     GM_Ticket *ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->GetGUID());
-    if(!ticket)
+    if (!ticket)
     {
         data << uint32(1);
         SendPacket(&data);
@@ -106,35 +106,35 @@ void WorldSession::HandleGMTicketUpdateOpcode( WorldPacket & recv_data)
 
 }
 
-void WorldSession::HandleGMTicketDeleteOpcode( WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketDeleteOpcode(WorldPacket & /*recv_data*/)
 {
     GM_Ticket* ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->GetGUID());
 
-    if(ticket)
+    if (ticket)
     {
         WorldPacket data(SMSG_GMTICKET_DELETETICKET, 4);
         data << uint32(9);
         SendPacket(&data);
 
-        sWorld.SendGMText(LANG_COMMAND_TICKETPLAYERABANDON, GetPlayer()->GetName(), ticket->guid );
+        sWorld.SendGMText(LANG_COMMAND_TICKETPLAYERABANDON, GetPlayer()->GetName(), ticket->guid);
         objmgr.RemoveGMTicket(ticket, GetPlayer()->GetGUID(), false);
         SendGMTicketGetTicket(0x0A, 0);
     }
 }
 
-void WorldSession::HandleGMTicketGetTicketOpcode( WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketGetTicketOpcode(WorldPacket & /*recv_data*/)
 {
     SendQueryTimeResponse();
 
     GM_Ticket *ticket = objmgr.GetGMTicketByPlayer(GetPlayer()->GetGUID());
-    if(ticket)
+    if (ticket)
         SendGMTicketGetTicket(0x06, ticket->message.c_str());
     else
         SendGMTicketGetTicket(0x0A, 0);
 
 }
 
-void WorldSession::HandleGMTicketSystemStatusOpcode( WorldPacket & /*recv_data*/)
+void WorldSession::HandleGMTicketSystemStatusOpcode(WorldPacket & /*recv_data*/)
 {
     WorldPacket data(SMSG_GMTICKET_SYSTEMSTATUS, 4);
     data << uint32(1);
@@ -144,9 +144,10 @@ void WorldSession::HandleGMTicketSystemStatusOpcode( WorldPacket & /*recv_data*/
 void WorldSession::SendGMTicketGetTicket(uint32 status, char const* text)
 {
     int len = text ? strlen(text) : 0;
-    WorldPacket data( SMSG_GMTICKET_GETTICKET, (4+len+1+4+2+4+4) );
+    WorldPacket data(SMSG_GMTICKET_GETTICKET, (4+len+1+4+2+4+4));
     data << uint32(status); // standard 0x0A, 0x06 if text present
-    if(status == 6)
+    data << uint32(1);      // unk flags, if 0, can't edit the ticket
+    if (status == 6)
     {
         data << text; // ticket text
         data << uint8(0x7); // ticket category
@@ -156,5 +157,5 @@ void WorldSession::SendGMTicketGetTicket(uint32 status, char const* text)
         data << uint8(0); // if == 2 and next field == 1 then "Your ticket has been escalated"
         data << uint8(0); // const
     }
-    SendPacket( &data );
+    SendPacket(&data);
 }

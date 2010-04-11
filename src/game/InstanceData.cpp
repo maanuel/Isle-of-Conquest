@@ -57,7 +57,7 @@ bool InstanceData::IsEncounterInProgress() const
 
 void InstanceData::LoadMinionData(const MinionData *data)
 {
-    while(data->entry)
+    while (data->entry)
     {
         if (data->bossId < bosses.size())
             minions.insert(std::make_pair(data->entry, MinionInfo(&bosses[data->bossId])));
@@ -69,7 +69,7 @@ void InstanceData::LoadMinionData(const MinionData *data)
 
 void InstanceData::LoadDoorData(const DoorData *data)
 {
-    while(data->entry)
+    while (data->entry)
     {
         if (data->bossId < bosses.size())
             doors.insert(std::make_pair(data->entry, DoorInfo(&bosses[data->bossId], data->type, BoundaryType(data->boundary))));
@@ -203,7 +203,7 @@ bool InstanceData::SetBossState(uint32 id, EncounterState state)
 
             if (state == DONE)
                 for (MinionSet::iterator i = bossInfo->minion.begin(); i != bossInfo->minion.end(); ++i)
-                    if((*i)->isWorldBoss() && (*i)->isAlive())
+                    if ((*i)->isWorldBoss() && (*i)->isAlive())
                         return false;
 
             bossInfo->state = state;
@@ -224,7 +224,7 @@ bool InstanceData::SetBossState(uint32 id, EncounterState state)
 
 std::string InstanceData::LoadBossState(const char * data)
 {
-    if(!data)
+    if (!data)
         return NULL;
     std::istringstream loadStream(data);
     uint32 buff;
@@ -272,8 +272,8 @@ void InstanceData::DoRespawnGameObject(uint64 uiGuid, uint32 uiTimeToDespawn)
     if (GameObject* pGo = instance->GetGameObject(uiGuid))
     {
         //not expect any of these should ever be handled
-        if (pGo->GetGoType() == GAMEOBJECT_TYPE_FISHINGNODE || pGo->GetGoType()==GAMEOBJECT_TYPE_DOOR ||
-            pGo->GetGoType() == GAMEOBJECT_TYPE_BUTTON || pGo->GetGoType()==GAMEOBJECT_TYPE_TRAP)
+        if (pGo->GetGoType() == GAMEOBJECT_TYPE_FISHINGNODE || pGo->GetGoType() == GAMEOBJECT_TYPE_DOOR ||
+            pGo->GetGoType() == GAMEOBJECT_TYPE_BUTTON || pGo->GetGoType() == GAMEOBJECT_TYPE_TRAP)
             return;
 
         if (pGo->isSpawned())
@@ -350,7 +350,7 @@ void InstanceData::DoRemoveAurasDueToSpellOnPlayers(uint32 spell)
                 pPlayer->RemoveAurasDueToSpell(spell);
 }
 
-bool InstanceData::CheckAchievementCriteriaMeet( uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/ /*= NULL*/, uint32 /*miscvalue1*/ /*= 0*/ )
+bool InstanceData::CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/ /*= NULL*/, uint32 /*miscvalue1*/ /*= 0*/)
 {
     sLog.outError("Achievement system call InstanceData::CheckAchievementCriteriaMeet but instance script for map %u not have implementation for achievement criteria %u",
         instance->GetId(),criteria_id);

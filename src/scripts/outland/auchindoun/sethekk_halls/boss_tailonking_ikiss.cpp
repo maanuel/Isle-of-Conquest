@@ -126,14 +126,14 @@ struct boss_talon_king_ikissAI : public ScriptedAI
 
         if (Blink)
         {
-            DoCast(m_creature, DUNGEON_MODE(SPELL_ARCANE_EXPLOSION, H_SPELL_ARCANE_EXPLOSION));
+            DoCast(m_creature, SPELL_ARCANE_EXPLOSION);
             DoCast(m_creature, SPELL_ARCANE_BUBBLE, true);
             Blink = false;
         }
 
         if (ArcaneVolley_Timer <= diff)
         {
-            DoCast(m_creature, DUNGEON_MODE(SPELL_ARCANE_VOLLEY, H_SPELL_ARCANE_VOLLEY));
+            DoCast(m_creature, SPELL_ARCANE_VOLLEY);
             ArcaneVolley_Timer = 7000+rand()%5000;
         } else ArcaneVolley_Timer -= diff;
 
@@ -144,11 +144,11 @@ struct boss_talon_king_ikissAI : public ScriptedAI
             //second top aggro target in normal, random target in heroic correct?
             if (IsHeroic())
                 pTarget = SelectUnit(SELECT_TARGET_RANDOM,0);
-            else 
+            else
                 pTarget = SelectUnit(SELECT_TARGET_TOPAGGRO,1);
 
             if (pTarget)
-                DoCast(pTarget, DUNGEON_MODE(SPELL_POLYMORPH, H_SPELL_POLYMORPH));
+                DoCast(pTarget, SPELL_POLYMORPH);
             Sheep_Timer = 15000+rand()%2500;
         } else Sheep_Timer -= diff;
 

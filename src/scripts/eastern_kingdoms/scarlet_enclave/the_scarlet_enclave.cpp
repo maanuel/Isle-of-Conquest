@@ -52,12 +52,12 @@ struct npc_valkyr_battle_maidenAI : public PassiveAI
         if (FlyBackTimer <= diff)
         {
             Player *plr = NULL;
-            if(me->isSummon())
-                if(Unit *summoner = CAST_SUM(me)->GetSummoner())
-                    if(summoner->GetTypeId() == TYPEID_PLAYER)
+            if (me->isSummon())
+                if (Unit *summoner = CAST_SUM(me)->GetSummoner())
+                    if (summoner->GetTypeId() == TYPEID_PLAYER)
                         plr = CAST_PLR(summoner);
 
-            if(!plr)
+            if (!plr)
                 phase = 3;
 
             switch(phase)
@@ -85,11 +85,11 @@ struct npc_valkyr_battle_maidenAI : public PassiveAI
                     FlyBackTimer = 5000;
                     break;
                 case 3:
-                    me->SetVisibility(VISIBILITY_OFF);        
-                    FlyBackTimer = 3000;  
+                    me->SetVisibility(VISIBILITY_OFF);
+                    FlyBackTimer = 3000;
                     break;
                 case 4:
-                    me->DisappearAndDie();                                      
+                    me->DisappearAndDie();
                     break;
                 default:
                     //Nothing To DO

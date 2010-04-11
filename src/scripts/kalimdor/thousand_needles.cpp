@@ -190,9 +190,9 @@ bool QuestAccept_npc_lakota_windsong(Player* pPlayer, Creature* pCreature, const
 
 enum ePacka
 {
-    SAY_START           = -1000147,
-    SAY_WYVERN          = -1000148,
-    SAY_COMPLETE        = -1000149,
+    SAY_START           = -1000362,
+    SAY_WYVERN          = -1000363,
+    SAY_COMPLETE        = -1000364,
 
     QUEST_HOMEWARD      = 4770,
     NPC_WYVERN          = 4107,
@@ -377,7 +377,7 @@ bool go_panther_cage(Player* pPlayer, GameObject* pGo)
 
     if (pPlayer->GetQuestStatus(5151) == QUEST_STATUS_INCOMPLETE)
     {
-        if(Creature* panther = pGo->FindNearestCreature(ENRAGED_PANTHER, 5, true))
+        if (Creature* panther = pGo->FindNearestCreature(ENRAGED_PANTHER, 5, true))
         {
             panther->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NON_ATTACKABLE);
             panther->SetReactState(REACT_AGGRESSIVE);

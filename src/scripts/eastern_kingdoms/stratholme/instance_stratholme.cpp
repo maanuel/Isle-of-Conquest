@@ -147,26 +147,26 @@ struct instance_stratholme : public ScriptedInstance
     {
         switch(pGo->GetEntry())
         {
-        case GO_SERVICE_ENTRANCE:   
-            serviceEntranceGUID = pGo->GetGUID(); 
+        case GO_SERVICE_ENTRANCE:
+            serviceEntranceGUID = pGo->GetGUID();
             break;
         case GO_GAUNTLET_GATE1:
             //weird, but unless flag is set, client will not respond as expected. DB bug?
             pGo->SetFlag(GAMEOBJECT_FLAGS,GO_FLAG_LOCKED);
             gauntletGate1GUID = pGo->GetGUID();
             break;
-        case GO_ZIGGURAT1:          
-            ziggurat1GUID = pGo->GetGUID(); 
+        case GO_ZIGGURAT1:
+            ziggurat1GUID = pGo->GetGUID();
             if (GetData(TYPE_BARONESS) == IN_PROGRESS)
                 HandleGameObject(0, true, pGo);
             break;
-        case GO_ZIGGURAT2:          
-            ziggurat2GUID = pGo->GetGUID(); 
+        case GO_ZIGGURAT2:
+            ziggurat2GUID = pGo->GetGUID();
             if (GetData(TYPE_NERUB) == IN_PROGRESS)
                 HandleGameObject(0, true, pGo);
             break;
-        case GO_ZIGGURAT3:          
-            ziggurat3GUID = pGo->GetGUID(); 
+        case GO_ZIGGURAT3:
+            ziggurat3GUID = pGo->GetGUID();
             if (GetData(TYPE_PALLID) == IN_PROGRESS)
                 HandleGameObject(0, true, pGo);
             break;
@@ -180,18 +180,18 @@ struct instance_stratholme : public ScriptedInstance
             if (GetData(TYPE_BARON) == DONE || GetData(TYPE_RAMSTEIN) == DONE)
                 HandleGameObject(0, true, pGo);
             break;
-        case GO_PORT_GAUNTLET:      
-            portGauntletGUID = pGo->GetGUID(); 
+        case GO_PORT_GAUNTLET:
+            portGauntletGUID = pGo->GetGUID();
             if (GetData(TYPE_BARONESS) == IN_PROGRESS && GetData(TYPE_NERUB) == IN_PROGRESS && GetData(TYPE_PALLID) == IN_PROGRESS)
                 HandleGameObject(0, true, pGo);
             break;
-        case GO_PORT_SLAUGTHER:     
-            portSlaugtherGUID = pGo->GetGUID(); 
+        case GO_PORT_SLAUGTHER:
+            portSlaugtherGUID = pGo->GetGUID();
             if (GetData(TYPE_BARONESS) == IN_PROGRESS && GetData(TYPE_NERUB) == IN_PROGRESS && GetData(TYPE_PALLID) == IN_PROGRESS)
                 HandleGameObject(0, true, pGo);
             break;
-        case GO_PORT_ELDERS:        
-            portElderGUID = pGo->GetGUID(); 
+        case GO_PORT_ELDERS:
+            portElderGUID = pGo->GetGUID();
             break;
         }
     }
@@ -251,7 +251,7 @@ struct instance_stratholme : public ScriptedInstance
                 HandleGameObject(portGauntletGUID, false);
 
                 uint32 count = abomnationGUID.size();
-                for (std::set<uint64>::iterator i = abomnationGUID.begin(); i != abomnationGUID.end(); ++i)
+                for (std::set<uint64>::const_iterator i = abomnationGUID.begin(); i != abomnationGUID.end(); ++i)
                 {
                     if (Creature* pAbom = instance->GetCreature(*i))
                     {

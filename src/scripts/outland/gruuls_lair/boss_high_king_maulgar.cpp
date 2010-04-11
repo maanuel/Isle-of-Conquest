@@ -181,7 +181,7 @@ struct boss_high_king_maulgarAI : public ScriptedAI
 
     void GetCouncil()
     {
-        if(pInstance)
+        if (pInstance)
         {
             //get council member's guid to respawn them if needed
             Council[0] = pInstance->GetData64(DATA_KIGGLERTHECRAZED);
@@ -708,7 +708,7 @@ struct boss_krosh_firehandAI : public ScriptedAI
             Unit *pTarget;
             std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
             std::vector<Unit *> target_list;
-            for (std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+            for (std::list<HostileReference *>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
             {
                 pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                                                             //15 yard radius minimum

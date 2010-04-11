@@ -86,6 +86,10 @@ void WaypointMovementGenerator<Creature>::InitTraveller(Creature &unit, const Wa
     unit.SetUInt32Value(UNIT_NPC_EMOTESTATE, 0);
     unit.SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
 
+    // TODO: make this part of waypoint node, so that creature can walk when desired?
+    if (unit.canFly())
+        unit.SetByteFlag(UNIT_FIELD_BYTES_1, 3, 0x02);
+
     unit.addUnitState(UNIT_STAT_ROAMING);
 }
 
@@ -325,7 +329,7 @@ void FlightPathMovementGenerator::SetCurrentNodeAfterTeleport()
     uint32 map0 = i_mapIds[0];
     for (size_t i = 1; i < i_mapIds.size(); ++i)
     {
-        if(i_mapIds[i] != map0)
+        if (i_mapIds[i] != map0)
         {
             i_currentNode = i;
             return;
@@ -673,4 +677,5 @@ int GetFCost(int to, int num, int parentNum, float *gcost)
     return (int)(gc + hc);
 }
 #endif                                                      //__PATHFINDING__
+
 

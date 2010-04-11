@@ -141,7 +141,7 @@ struct npc_announcer_toc5AI : public ScriptedAI
                             break;
                     }
 
-                    for(std::list<uint64>::iterator itr = TempList.begin(); itr != TempList.end(); ++itr)
+                    for (std::list<uint64>::const_iterator itr = TempList.begin(); itr != TempList.end(); ++itr)
                         if (Creature* pSummon = Unit::GetCreature(*m_creature, *itr))
                             AggroAllPlayers(pSummon);
                 }else if (uiLesserChampions == 9)
@@ -322,7 +322,7 @@ struct npc_announcer_toc5AI : public ScriptedAI
     {
         uiFirstBoss = urand(0,4);
 
-        while(uiSecondBoss == uiFirstBoss || uiThirdBoss == uiFirstBoss || uiThirdBoss == uiSecondBoss)
+        while (uiSecondBoss == uiFirstBoss || uiThirdBoss == uiFirstBoss || uiThirdBoss == uiSecondBoss)
         {
             uiSecondBoss = urand(0,4);
             uiThirdBoss = urand(0,4);
@@ -373,17 +373,17 @@ struct npc_announcer_toc5AI : public ScriptedAI
     {
         Map::PlayerList const &PlList = m_creature->GetMap()->GetPlayers();
 
-        if(PlList.isEmpty())
+        if (PlList.isEmpty())
             return;
 
         for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
         {
-            if(Player* pPlayer = i->getSource())
+            if (Player* pPlayer = i->getSource())
             {
-                if(pPlayer->isGameMaster())
+                if (pPlayer->isGameMaster())
                     continue;
 
-                if(pPlayer->isAlive())
+                if (pPlayer->isAlive())
                 {
                     pTemp->SetHomePosition(m_creature->GetPositionX(),m_creature->GetPositionY(),m_creature->GetPositionZ(),m_creature->GetOrientation());
                     pTemp->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NON_ATTACKABLE);
@@ -416,7 +416,7 @@ struct npc_announcer_toc5AI : public ScriptedAI
                 case 3:
                     if (!Champion1List.empty())
                     {
-                        for(std::list<uint64>::iterator itr = Champion1List.begin(); itr != Champion1List.end(); ++itr)
+                        for (std::list<uint64>::const_iterator itr = Champion1List.begin(); itr != Champion1List.end(); ++itr)
                             if (Creature* pSummon = Unit::GetCreature(*m_creature, *itr))
                                 AggroAllPlayers(pSummon);
                         NextStep(0,false);

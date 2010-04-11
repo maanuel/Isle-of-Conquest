@@ -303,7 +303,7 @@ struct boss_jedoga_shadowseekerAI : public ScriptedAI
 
             if (uiCycloneTimer <= diff)
             {
-                DoCast(m_creature, DUNGEON_MODE(SPELL_CYCLONE_STRIKE, SPELL_CYCLONE_STRIKE_H), false);
+                DoCast(m_creature, SPELL_CYCLONE_STRIKE, false);
                 uiCycloneTimer = urand(15*IN_MILISECONDS,30*IN_MILISECONDS);
             } else uiCycloneTimer -= diff;
 
@@ -518,7 +518,7 @@ struct npc_jedogas_aufseher_triggerAI : public Scripted_NoMovementAI
             return;
 
         if (!bRemoved && m_creature->GetPositionX() > 440.0f)
-        {   
+        {
             if (pInstance->GetData(DATA_PRINCE_TALDARAM_EVENT) == DONE)
             {
                 m_creature->InterruptNonMeleeSpells(true);

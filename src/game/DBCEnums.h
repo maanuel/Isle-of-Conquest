@@ -209,8 +209,12 @@ enum AchievementCriteriaTypes
     // 0..115 => 116 criteria types total
     ACHIEVEMENT_CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS = 115,
     ACHIEVEMENT_CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS = 119,
-    // 0..119 => 120 criteria types total
-    ACHIEVEMENT_CRITERIA_TYPE_TOTAL = 120,
+    // 120	
+    // 121	
+    // 122	
+    // 123	
+    // 0..123 => 124 criteria types total	
+    ACHIEVEMENT_CRITERIA_TYPE_TOTAL = 124,
 };
 
 enum AreaFlags
@@ -235,7 +239,7 @@ enum AreaFlags
     AREA_FLAG_UNUSED2          = 0x00020000,                // not used now (no area/zones with this flag set in 3.0.3)
     AREA_FLAG_UNK5             = 0x00040000,                // only used for Amani Pass, Hatchet Hills
     AREA_FLAG_UNK6             = 0x00080000,                // Valgarde and Acherus: The Ebon Hold
-    AREA_FLAG_LOWLEVEL         = 0x00100000,                // used for some starting areas with area_level <=15
+    AREA_FLAG_LOWLEVEL         = 0x00100000,                // used for some starting areas with area_level <= 15
     AREA_FLAG_TOWN             = 0x00200000,                // small towns with Inn
     AREA_FLAG_UNK7             = 0x00400000,                // Warsong Hold, Acherus: The Ebon Hold, New Agamand Inn, Vengeance Landing Inn
     AREA_FLAG_UNK8             = 0x00800000,                // Westguard Inn, Acherus: The Ebon Hold, Valgarde
@@ -251,6 +255,7 @@ enum Difficulty
 
     DUNGEON_DIFFICULTY_NORMAL    = 0,
     DUNGEON_DIFFICULTY_HEROIC    = 1,
+    DUNGEON_DIFFICULTY_EPIC      = 2,
 
     RAID_DIFFICULTY_10MAN_NORMAL = 0,
     RAID_DIFFICULTY_25MAN_NORMAL = 1,
@@ -258,7 +263,7 @@ enum Difficulty
     RAID_DIFFICULTY_25MAN_HEROIC = 3,
 };
 
-#define MAX_DUNGEON_DIFFICULTY     2
+#define MAX_DUNGEON_DIFFICULTY     3
 #define MAX_RAID_DIFFICULTY        4
 #define MAX_DIFFICULTY             4
 

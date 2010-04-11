@@ -16,4 +16,12 @@ SET(trinityauth_STAT_SRCS
    SARC4.h
 )
 
+include_directories(
+  ${ACE_INCLUDE_DIR}
+  ${CMAKE_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/src/shared
+  ${CMAKE_SOURCE_DIR}/src/framework
+  ${MYSQL_INCLUDE_DIR}
+)
+
 add_library(trinityauth STATIC ${trinityauth_STAT_SRCS})

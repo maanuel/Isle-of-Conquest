@@ -17,6 +17,11 @@ SET(scripts_STAT_SRCS
    ../game/ScriptedSimpleAI.cpp
    ../game/ScriptedSimpleAI.h
    custom/on_events.cpp
+   eastern_kingdoms/alterac_valley/alterac_valley.cpp
+   eastern_kingdoms/alterac_valley/boss_balinda.cpp
+   eastern_kingdoms/alterac_valley/boss_drekthar.cpp
+   eastern_kingdoms/alterac_valley/boss_galvangar.cpp
+   eastern_kingdoms/alterac_valley/boss_vanndar.cpp
    eastern_kingdoms/blackrock_depths/blackrock_depths.cpp
    eastern_kingdoms/blackrock_depths/boss_ambassador_flamelash.cpp
    eastern_kingdoms/blackrock_depths/boss_anubshiah.cpp
@@ -30,6 +35,7 @@ SET(scripts_STAT_SRCS
    eastern_kingdoms/blackrock_depths/boss_tomb_of_seven.cpp
    eastern_kingdoms/blackrock_depths/blackrock_depths.h
    eastern_kingdoms/blackrock_depths/instance_blackrock_depths.cpp
+   eastern_kingdoms/blackrock_spire/blackrock_spire.cpp
    eastern_kingdoms/blackrock_spire/boss_drakkisath.cpp
    eastern_kingdoms/blackrock_spire/boss_gyth.cpp
    eastern_kingdoms/blackrock_spire/boss_halycon.cpp
@@ -42,6 +48,8 @@ SET(scripts_STAT_SRCS
    eastern_kingdoms/blackrock_spire/boss_shadow_hunter_voshgajin.cpp
    eastern_kingdoms/blackrock_spire/boss_the_beast.cpp
    eastern_kingdoms/blackrock_spire/boss_warmaster_voone.cpp
+   eastern_kingdoms/blackrock_spire/blackrock_spire.h
+   eastern_kingdoms/blackrock_spire/instance_blackrock_spire.cpp
    eastern_kingdoms/blackwing_lair/boss_broodlord_lashlayer.cpp
    eastern_kingdoms/blackwing_lair/boss_chromaggus.cpp
    eastern_kingdoms/blackwing_lair/boss_ebonroc.cpp
@@ -333,10 +341,16 @@ SET(scripts_STAT_SRCS
    northrend/draktharon_keep/drak_tharon_keep.h
    northrend/frozen_halls/forge_of_souls/instance_forge_of_souls.cpp
    northrend/frozen_halls/forge_of_souls/boss_bronjahm.cpp
+   northrend/frozen_halls/forge_of_souls/boss_devourer_of_souls.cpp
    northrend/frozen_halls/forge_of_souls/forge_of_souls.h
+   northrend/frozen_halls/forge_of_souls/forge_of_souls.cpp
    northrend/frozen_halls/halls_of_reflection/instance_halls_of_reflection.cpp
    northrend/frozen_halls/halls_of_reflection/halls_of_reflection.h
+   northrend/frozen_halls/pit_of_saron/boss_forgemaster_garfrost.cpp
+   northrend/frozen_halls/pit_of_saron/boss_krickandick.cpp
+   northrend/frozen_halls/pit_of_saron/boss_scourgelord_tyrannus.cpp
    northrend/frozen_halls/pit_of_saron/instance_pit_of_saron.cpp
+   northrend/frozen_halls/pit_of_saron/pit_of_saron.cpp
    northrend/frozen_halls/pit_of_saron/pit_of_saron.h
    northrend/gundrak/instance_gundrak.cpp
    northrend/gundrak/boss_slad_ran.cpp
@@ -558,5 +572,17 @@ SET(scripts_STAT_SRCS
    world/npc_taxi.cpp
 )
 message("-- Added Script Engine to SCRIPTS lib")
+
+include_directories(
+  ${ACE_INCLUDE_DIR}
+  ${CMAKE_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/src/shared
+  ${CMAKE_SOURCE_DIR}/src/framework
+  ${CMAKE_SOURCE_DIR}/src/game
+  ${CMAKE_SOURCE_DIR}/src/shared/Database
+  ${CMAKE_SOURCE_DIR}/dep/include
+  ${MYSQL_INCLUDE_DIR}
+)
+
 add_library(scripts STATIC ${scripts_STAT_SRCS})
 

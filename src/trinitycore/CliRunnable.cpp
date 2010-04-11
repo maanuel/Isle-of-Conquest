@@ -240,7 +240,7 @@ bool ChatHandler::HandleAccountOnlineListCommand(const char* /*args*/)
 
         ///- Get the username, last IP and GM level of each account
         // No SQL injection. account is uint32.
-        QueryResult_AutoPtr resultLogin = 
+        QueryResult_AutoPtr resultLogin =
             loginDatabase.PQuery("SELECT a.username, a.last_ip, aa.gmlevel, a.expansion "
                                  "FROM account a "
                                  "LEFT JOIN account_access aa "
@@ -373,8 +373,6 @@ void CliRunnable::run()
 {
     ///- Init new SQL thread for the world database (one connection call enough)
     WorldDatabase.ThreadStart();                                // let thread do safe mySQL requests
-    CharacterDatabase.ThreadStart();
-    loginDatabase.ThreadStart();
 
     char commandbuf[256];
     bool canflush = true;
@@ -444,6 +442,4 @@ void CliRunnable::run()
 
     ///- End the database thread
     WorldDatabase.ThreadEnd();                                  // free mySQL thread resources
-    CharacterDatabase.ThreadEnd();
-    loginDatabase.ThreadEnd();
 }

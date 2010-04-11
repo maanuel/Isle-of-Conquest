@@ -206,7 +206,7 @@ struct boss_ichoronAI : public ScriptedAI
         if (!bIsFrenzy && HealthBelowPct(25) && !bIsExploded)
         {
             DoScriptText(SAY_ENRAGE, m_creature);
-            DoCast(m_creature, DUNGEON_MODE(SPELL_FRENZY, SPELL_FRENZY_H), true);
+            DoCast(m_creature, SPELL_FRENZY, true);
             bIsFrenzy = true;
         }
 
@@ -219,12 +219,12 @@ struct boss_ichoronAI : public ScriptedAI
                     if (!m_creature->HasAura(SPELL_PROTECTIVE_BUBBLE, 0))
                     {
                         DoScriptText(SAY_SHATTER, m_creature);
-                        DoCast(m_creature, DUNGEON_MODE(SPELL_WATER_BLAST, SPELL_WATER_BLAST_H));
+                        DoCast(m_creature, SPELL_WATER_BLAST);
                         DoCast(m_creature, SPELL_DRAINED);
                         bIsExploded = true;
                         m_creature->AttackStop();
                         m_creature->SetVisibility(VISIBILITY_OFF);
-                        for(uint8 i = 0; i < 10; i++)
+                        for (uint8 i = 0; i < 10; i++)
                         {
                             int tmp = urand(0, MAX_SPAWN_LOC-1);
                             m_creature->SummonCreature(NPC_ICHOR_GLOBULE, SpawnLoc[tmp], TEMPSUMMON_CORPSE_DESPAWN);
@@ -236,7 +236,7 @@ struct boss_ichoronAI : public ScriptedAI
                     bool bIsWaterElementsAlive = false;
                     if (!m_waterElements.empty())
                     {
-                        for (std::list<uint64>::iterator itr = m_waterElements.begin(); itr != m_waterElements.end(); ++itr)
+                        for (std::list<uint64>::const_iterator itr = m_waterElements.begin(); itr != m_waterElements.end(); ++itr)
                             if (Creature* pTemp = Unit::GetCreature(*m_creature, *itr))
                                 if (pTemp->isAlive())
                                 {
@@ -257,7 +257,7 @@ struct boss_ichoronAI : public ScriptedAI
         {
             if (uiWaterBoltVolleyTimer <= uiDiff)
             {
-                DoCast(m_creature, DUNGEON_MODE(SPELL_WATER_BOLT_VOLLEY, SPELL_WATER_BOLT_VOLLEY_H));
+                DoCast(m_creature, SPELL_WATER_BOLT_VOLLEY);
                 uiWaterBoltVolleyTimer = urand(10000, 15000);
             }
             else uiWaterBoltVolleyTimer -= uiDiff;
@@ -304,7 +304,7 @@ struct boss_ichoronAI : public ScriptedAI
     }
 
 
-    void SummonedCreatureDespawn(Creature *pSummoned) 
+    void SummonedCreatureDespawn(Creature *pSummoned)
     {
         m_waterElements.remove(pSummoned->GetGUID());
     }
@@ -326,7 +326,7 @@ struct mob_ichor_globuleAI : public ScriptedAI
 {
     mob_ichor_globuleAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-    	pInstance = pCreature->GetInstanceData();
+        pInstance = pCreature->GetInstanceData();
     }
 
     ScriptedInstance* pInstance;
@@ -349,7 +349,7 @@ struct mob_ichor_globuleAI : public ScriptedAI
         {
             if (pInstance)
             {
-                if (Creature* pIchoron = ((Creature*)Unit::GetUnit((*m_creature), pInstance->GetData64(DATA_ICHORON))))
+                if (Creature* pIchoron = Unit::GetCreature(*m_creature, pInstance->GetData64(DATA_ICHORON)))
                 {
                     if (m_creature->IsWithinDist(pIchoron, 2.0f , false))
                     {
@@ -367,7 +367,7 @@ struct mob_ichor_globuleAI : public ScriptedAI
     void JustDied(Unit* pKiller)
     {
         DoCast(m_creature, SPELL_SPLASH);
-        if (Creature* pIchoron = ((Creature*)Unit::GetUnit((*m_creature), pInstance->GetData64(DATA_ICHORON))))
+        if (Creature* pIchoron = Unit::GetCreature(*m_creature, pInstance->GetData64(DATA_ICHORON)))
             if (pIchoron->AI())
                 pIchoron->AI()->DoAction(ACTION_WATER_ELEMENT_KILLED);
     }

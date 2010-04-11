@@ -48,7 +48,7 @@ struct boss_ayamissAI : public ScriptedAI
     uint32 POISONSTINGER_Timer;
     uint32 SUMMONSWARMER_Timer;
     uint32 phase;
-    
+
     ScriptedInstance *pInstance;
 
     void Reset()
@@ -57,7 +57,7 @@ struct boss_ayamissAI : public ScriptedAI
         POISONSTINGER_Timer = 30000;
         SUMMONSWARMER_Timer = 60000;
         phase=1;
-        
+
         if (pInstance)
             pInstance->SetData(DATA_AYAMISS_EVENT, NOT_STARTED);
     }
@@ -67,7 +67,7 @@ struct boss_ayamissAI : public ScriptedAI
         if (pInstance)
             pInstance->SetData(DATA_AYAMISS_EVENT, IN_PROGRESS);
     }
-    
+
     void JustDied(Unit *killer)
     {
         if (pInstance)
@@ -80,20 +80,20 @@ struct boss_ayamissAI : public ScriptedAI
             return;
 
         //If he is 70% start phase 2
-        if (phase==1 && m_creature->GetHealth()*100 / m_creature->GetMaxHealth() <= 70 && !m_creature->IsNonMeleeSpellCasted(false))
+        if (phase == 1 && m_creature->GetHealth()*100 / m_creature->GetMaxHealth() <= 70 && !m_creature->IsNonMeleeSpellCasted(false))
         {
             phase=2;
         }
 
         //STINGERSPRAY_Timer (only in phase2)
-        if (phase==2 && STINGERSPRAY_Timer <= diff)
+        if (phase == 2 && STINGERSPRAY_Timer <= diff)
         {
             DoCast(m_creature->getVictim(), SPELL_STINGERSPRAY);
             STINGERSPRAY_Timer = 30000;
         } else STINGERSPRAY_Timer -= diff;
 
         //POISONSTINGER_Timer (only in phase1)
-        if (phase==1 && POISONSTINGER_Timer <= diff)
+        if (phase == 1 && POISONSTINGER_Timer <= diff)
         {
             DoCast(m_creature->getVictim(), SPELL_POISONSTINGER);
             POISONSTINGER_Timer = 30000;

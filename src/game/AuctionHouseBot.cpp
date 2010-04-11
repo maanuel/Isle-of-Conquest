@@ -47,9 +47,7 @@ AuctionHouseBot::AuctionHouseBot()
 
     DisableBeta_PTR_Unused = false;
     DisablePermEnchant = false;
-#if CLIENT_VER > 300
     DisableConjured = false;
-#endif
     DisableGems = false;
     DisableMoney = false;
     DisableMoneyLoot = false;
@@ -775,9 +773,7 @@ void AuctionHouseBot::Initialize()
 
     DisableBeta_PTR_Unused = sConfig.GetBoolDefault("AuctionHouseBot.DisableBeta_PTR_Unused", false);
     DisablePermEnchant = sConfig.GetBoolDefault("AuctionHouseBot.DisablePermEnchant", false);
-#if CLIENT_VER > 300
     DisableConjured = sConfig.GetBoolDefault("AuctionHouseBot.DisableConjured", false);
-#endif
     DisableGems = sConfig.GetBoolDefault("AuctionHouseBot.DisableGems", false);
     DisableMoney = sConfig.GetBoolDefault("AuctionHouseBot.DisableMoney", false);
     DisableMoneyLoot = sConfig.GetBoolDefault("AuctionHouseBot.DisableMoneyLoot", false);
@@ -857,13 +853,12 @@ void AuctionHouseBot::Initialize()
         }
 
         char lootQuery[] = "SELECT item FROM creature_loot_template UNION "
+            "SELECT item FROM reference_loot_template UNION "
             "SELECT item FROM disenchant_loot_template UNION "
             "SELECT item FROM fishing_loot_template UNION "
             "SELECT item FROM gameobject_loot_template UNION "
             "SELECT item FROM item_loot_template UNION "
-#if CLIENT_VER > 300
             "SELECT item FROM milling_loot_template UNION "
-#endif
             "SELECT item FROM pickpocketing_loot_template UNION "
             "SELECT item FROM prospecting_loot_template UNION "
             "SELECT item FROM skinning_loot_template";
@@ -1041,14 +1036,12 @@ void AuctionHouseBot::Initialize()
                 continue;
             }
 
-#if CLIENT_VER > 300
             // Disable conjured items
             if ((DisableConjured) && (prototype->IsConjuredConsumable()))
             {
                 if (debug_Out_Filters) sLog.outString("AuctionHouseBot: Item %u disabled (Conjured Consumable)", prototype->ItemId);
                 continue;
             }
-#endif
 
             // Disable gems
             if ((DisableGems) && (prototype->Class == ITEM_CLASS_GEM))

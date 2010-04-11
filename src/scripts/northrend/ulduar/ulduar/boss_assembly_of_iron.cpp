@@ -219,7 +219,7 @@ struct boss_steelbreakerAI : public ScriptedAI
 
         events.Update(diff);
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {
@@ -329,7 +329,7 @@ struct boss_runemaster_molgeimAI : public ScriptedAI
 
         events.Update(diff);
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {
@@ -410,7 +410,7 @@ struct mob_rune_of_summoningAI : public ScriptedAI
 
     void SummonLightningElemental()
     {
-        m_creature->SummonCreature(CREATURE_RUNE_OF_SUMMONING, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, TEMPSUMMON_CORPSE_DESPAWN );
+        m_creature->SummonCreature(CREATURE_RUNE_OF_SUMMONING, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0, TEMPSUMMON_CORPSE_DESPAWN);
         m_creature->DealDamage(m_creature, m_creature->GetHealth());
     }
 };
@@ -499,7 +499,7 @@ struct boss_stormcaller_brundirAI : public ScriptedAI
 
         events.Update(diff);
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {

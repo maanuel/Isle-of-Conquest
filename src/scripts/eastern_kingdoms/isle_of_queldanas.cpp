@@ -32,8 +32,8 @@ EndContentData */
 ## npc_converted_sentry
 ######*/
 
-#define SAY_CONVERTED_1         -1000284
-#define SAY_CONVERTED_2         -1000284
+#define SAY_CONVERTED_1         -1000188
+#define SAY_CONVERTED_2         -1000189
 
 #define SPELL_CONVERT_CREDIT    45009
 
@@ -62,7 +62,7 @@ struct npc_converted_sentryAI : public ScriptedAI
             if (Timer <= diff)
             {
                 uint32 i = urand(1,2);
-                if (i==1)
+                if (i == 1)
                     DoScriptText(SAY_CONVERTED_1, m_creature);
                 else
                     DoScriptText(SAY_CONVERTED_2, m_creature);

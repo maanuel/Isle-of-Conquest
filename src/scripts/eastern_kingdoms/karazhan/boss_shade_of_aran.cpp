@@ -181,7 +181,7 @@ struct boss_aranAI : public ScriptedAI
             return;
 
         //store the threat list in a different container
-        for (std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+        for (std::list<HostileReference *>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
         {
             Unit *pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
             //only on alive players
@@ -190,11 +190,11 @@ struct boss_aranAI : public ScriptedAI
         }
 
         //cut down to size if we have more than 3 targets
-        while(targets.size() > 3)
+        while (targets.size() > 3)
             targets.erase(targets.begin()+rand()%targets.size());
 
         uint32 i = 0;
-        for (std::vector<Unit*>::iterator itr = targets.begin(); itr!= targets.end(); ++itr)
+        for (std::vector<Unit*>::const_iterator itr = targets.begin(); itr!= targets.end(); ++itr)
         {
             if (*itr)
             {
@@ -475,9 +475,9 @@ struct boss_aranAI : public ScriptedAI
     void SpellHit(Unit* pAttacker, const SpellEntry* Spell)
     {
         //We only care about inturrupt effects and only if they are durring a spell currently being casted
-        if ((Spell->Effect[0]!=SPELL_EFFECT_INTERRUPT_CAST &&
-            Spell->Effect[1]!=SPELL_EFFECT_INTERRUPT_CAST &&
-            Spell->Effect[2]!=SPELL_EFFECT_INTERRUPT_CAST) || !m_creature->IsNonMeleeSpellCasted(false))
+        if ((Spell->Effect[0] != SPELL_EFFECT_INTERRUPT_CAST &&
+            Spell->Effect[1] != SPELL_EFFECT_INTERRUPT_CAST &&
+            Spell->Effect[2] != SPELL_EFFECT_INTERRUPT_CAST) || !m_creature->IsNonMeleeSpellCasted(false))
             return;
 
         //Inturrupt effect

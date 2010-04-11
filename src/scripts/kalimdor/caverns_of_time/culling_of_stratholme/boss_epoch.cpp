@@ -75,7 +75,7 @@ struct boss_epochAI : public ScriptedAI
         uiTimeWarpTimer = 25300;
         uiTimeStopTimer = 21300;
         uiWoundingStrikeTimer = 5300;
-        
+
         if (pInstance)
             pInstance->SetData(DATA_EPOCH_EVENT, NOT_STARTED);
     }
@@ -83,7 +83,7 @@ struct boss_epochAI : public ScriptedAI
     void EnterCombat(Unit* who)
     {
         DoScriptText(SAY_AGGRO, m_creature);
-        
+
         if (pInstance)
             pInstance->SetData(DATA_EPOCH_EVENT, IN_PROGRESS);
     }
@@ -103,7 +103,7 @@ struct boss_epochAI : public ScriptedAI
 
         if (uiWoundingStrikeTimer < diff)
         {
-            DoCastVictim(DUNGEON_MODE(SPELL_WOUNDING_STRIKE, H_SPELL_WOUNDING_STRIKE));
+            DoCastVictim(SPELL_WOUNDING_STRIKE);
             uiWoundingStrikeTimer = 5300;
         } else uiWoundingStrikeTimer -= diff;
 
@@ -126,7 +126,7 @@ struct boss_epochAI : public ScriptedAI
     void JustDied(Unit* killer)
     {
         DoScriptText(SAY_DEATH, m_creature);
-        
+
         if (pInstance)
             pInstance->SetData(DATA_EPOCH_EVENT, DONE);
     }

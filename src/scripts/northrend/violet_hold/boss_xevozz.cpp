@@ -100,7 +100,7 @@ struct boss_xevozzAI : public ScriptedAI
         if (assistList.empty())
             return;
 
-        for(std::list<Creature*>::iterator iter = assistList.begin(); iter != assistList.end(); ++iter)
+        for (std::list<Creature*>::const_iterator iter = assistList.begin(); iter != assistList.end(); ++iter)
         {
             if (Creature* pSphere = *iter)
                 pSphere->Kill(pSphere, false);
@@ -159,7 +159,7 @@ struct boss_xevozzAI : public ScriptedAI
 
         if (uiArcaneBarrageVolley_Timer < uiDiff)
         {
-            DoCast(m_creature, DUNGEON_MODE(SPELL_ARCANE_BARRAGE_VOLLEY, SPELL_ARCANE_BARRAGE_VOLLEY_H));
+            DoCast(m_creature, SPELL_ARCANE_BARRAGE_VOLLEY);
             uiArcaneBarrageVolley_Timer = urand(20000, 22000);
         }
         else uiArcaneBarrageVolley_Timer -= uiDiff;
@@ -167,7 +167,7 @@ struct boss_xevozzAI : public ScriptedAI
         if (uiArcaneBuffet_Timer)
             if (uiArcaneBuffet_Timer < uiDiff)
             {
-                DoCast(m_creature->getVictim(), DUNGEON_MODE(SPELL_ARCANE_BUFFET, SPELL_ARCANE_BUFFET_H));
+                DoCast(m_creature->getVictim(), SPELL_ARCANE_BUFFET);
                 uiArcaneBuffet_Timer = 0;
             }
             else uiArcaneBuffet_Timer -= uiDiff;
@@ -225,7 +225,7 @@ struct mob_ethereal_sphereAI : public ScriptedAI
 {
     mob_ethereal_sphereAI(Creature* pCreature) : ScriptedAI(pCreature)
     {
-    	pInstance   = pCreature->GetInstanceData();
+        pInstance   = pCreature->GetInstanceData();
     }
 
     ScriptedInstance* pInstance;
@@ -252,11 +252,11 @@ struct mob_ethereal_sphereAI : public ScriptedAI
         {
             if (pInstance)
             {
-                if (Creature* pXevozz = ((Creature*)Unit::GetUnit((*m_creature), pInstance->GetData64(DATA_XEVOZZ))))
+                if (Creature* pXevozz = Unit::GetCreature(*m_creature, pInstance->GetData64(DATA_XEVOZZ)))
                 {
                     float fDistance = m_creature->GetDistance2d(pXevozz);
                     if (fDistance <= 3)
-                        DoCast(pXevozz, DUNGEON_MODE(SPELL_ARCANE_POWER, H_SPELL_ARCANE_POWER));
+                        DoCast(pXevozz, SPELL_ARCANE_POWER);
                     else
                         DoCast(m_creature, 35845); //Is it blizzlike?
                 }

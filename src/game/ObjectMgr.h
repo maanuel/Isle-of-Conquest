@@ -173,7 +173,7 @@ typedef std::pair<ItemRequiredTargetMap::const_iterator, ItemRequiredTargetMap::
 
 struct PetLevelInfo
 {
-    PetLevelInfo() : health(0), mana(0) { for (uint8 i=0; i < MAX_STATS; ++i ) stats[i] = 0; }
+    PetLevelInfo() : health(0), mana(0) { for (uint8 i=0; i < MAX_STATS; ++i) stats[i] = 0; }
 
     uint16 stats[MAX_STATS];
     uint16 health;
@@ -374,7 +374,7 @@ typedef std::list<GM_Ticket*> GmTicketList;
 SkillRangeType GetSkillRangeType(SkillLineEntry const *pSkill, bool racial);
 
 #define MAX_PLAYER_NAME          12                         // max allowed by client name length
-#define MAX_INTERNAL_PLAYER_NAME 15                         // max server internal player name length ( > MAX_PLAYER_NAME for support declined names )
+#define MAX_INTERNAL_PLAYER_NAME 15                         // max server internal player name length (> MAX_PLAYER_NAME for support declined names)
 #define MAX_PET_NAME             12                         // max allowed by client name length
 #define MAX_CHARTER_NAME         24                         // max allowed by client name length
 
@@ -435,8 +435,8 @@ class ObjectMgr
         void AddGameobjectInfo(GameObjectInfo *goinfo);
 
         Group * GetGroupByLeader(const uint64 &guid) const;
-        void AddGroup(Group* group) { mGroupSet.insert( group ); }
-        void RemoveGroup(Group* group) { mGroupSet.erase( group ); }
+        void AddGroup(Group* group) { mGroupSet.insert(group); }
+        void RemoveGroup(Group* group) { mGroupSet.erase(group); }
 
         Guild* GetGuildByLeader(uint64 const&guid) const;
         Guild* GetGuildById(uint32 GuildId) const;
@@ -453,17 +453,17 @@ class ObjectMgr
         ArenaTeamMap::iterator GetArenaTeamMapBegin() { return mArenaTeamMap.begin(); }
         ArenaTeamMap::iterator GetArenaTeamMapEnd()   { return mArenaTeamMap.end(); }
 
-        static CreatureInfo const *GetCreatureTemplate( uint32 id );
-        CreatureModelInfo const *GetCreatureModelInfo( uint32 modelid );
+        static CreatureInfo const *GetCreatureTemplate(uint32 id);
+        CreatureModelInfo const *GetCreatureModelInfo(uint32 modelid);
         CreatureModelInfo const* GetCreatureModelRandomGender(uint32 display_id);
         uint32 ChooseDisplayId(uint32 team, const CreatureInfo *cinfo, const CreatureData *data = NULL);
-        EquipmentInfo const *GetEquipmentInfo( uint32 entry );
-        static CreatureDataAddon const *GetCreatureAddon( uint32 lowguid )
+        EquipmentInfo const *GetEquipmentInfo(uint32 entry);
+        static CreatureDataAddon const *GetCreatureAddon(uint32 lowguid)
         {
             return sCreatureDataAddonStorage.LookupEntry<CreatureDataAddon>(lowguid);
         }
 
-        static CreatureDataAddon const *GetCreatureTemplateAddon( uint32 entry )
+        static CreatureDataAddon const *GetCreatureTemplateAddon(uint32 entry)
         {
             return sCreatureInfoAddonStorage.LookupEntry<CreatureDataAddon>(entry);
         }
@@ -479,17 +479,17 @@ class ObjectMgr
 
         PlayerClassInfo const* GetPlayerClassInfo(uint32 class_) const
         {
-            if(class_ >= MAX_CLASSES) return NULL;
+            if (class_ >= MAX_CLASSES) return NULL;
             return &playerClassInfo[class_];
         }
         void GetPlayerClassLevelInfo(uint32 class_,uint8 level, PlayerClassLevelInfo* info) const;
 
         PlayerInfo const* GetPlayerInfo(uint32 race, uint32 class_) const
         {
-            if(race   >= MAX_RACES)   return NULL;
-            if(class_ >= MAX_CLASSES) return NULL;
+            if (race >= MAX_RACES)   return NULL;
+            if (class_ >= MAX_CLASSES) return NULL;
             PlayerInfo const* info = &playerInfo[race][class_];
-            if(info->displayId_m==0 || info->displayId_f==0) return NULL;
+            if (info->displayId_m == 0 || info->displayId_f == 0) return NULL;
             return info;
         }
         void GetPlayerLevelInfo(uint32 race, uint32 class_, uint8 level, PlayerLevelInfo* info) const;
@@ -500,11 +500,11 @@ class ObjectMgr
         uint32 GetPlayerAccountIdByGUID(const uint64 &guid) const;
         uint32 GetPlayerAccountIdByPlayerName(const std::string& name) const;
 
-        uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid, uint32 team );
-        void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
-        uint32 GetTaxiMountDisplayId( uint32 id, uint32 team, bool allowed_alt_team = false);
-        void GetTaxiPathNodes( uint32 path, Path &pathnodes, std::vector<uint32>& mapIds );
-        void GetTransportPathNodes( uint32 path, TransportPath &pathnodes );
+        uint32 GetNearestTaxiNode(float x, float y, float z, uint32 mapid, uint32 team);
+        void GetTaxiPath(uint32 source, uint32 destination, uint32 &path, uint32 &cost);
+        uint32 GetTaxiMountDisplayId(uint32 id, uint32 team, bool allowed_alt_team = false);
+        void GetTaxiPathNodes(uint32 path, Path &pathnodes, std::vector<uint32>& mapIds);
+        void GetTransportPathNodes(uint32 path, TransportPath &pathnodes);
 
         Quest const* GetQuestTemplate(uint32 quest_id) const
         {
@@ -516,7 +516,7 @@ class ObjectMgr
         uint32 GetQuestForAreaTrigger(uint32 Trigger_ID) const
         {
             QuestAreaTriggerMap::const_iterator itr = mQuestAreaTriggerMap.find(Trigger_ID);
-            if(itr != mQuestAreaTriggerMap.end())
+            if (itr != mQuestAreaTriggerMap.end())
                 return itr->second;
             return 0;
         }
@@ -540,16 +540,16 @@ class ObjectMgr
 
         AreaTrigger const* GetAreaTrigger(uint32 trigger) const
         {
-            AreaTriggerMap::const_iterator itr = mAreaTriggers.find( trigger );
-            if( itr != mAreaTriggers.end( ) )
+            AreaTriggerMap::const_iterator itr = mAreaTriggers.find(trigger);
+            if (itr != mAreaTriggers.end())
                 return &itr->second;
             return NULL;
         }
 
         AccessRequirement const* GetAccessRequirement(uint32 requirement) const
         {
-            AccessRequirementMap::const_iterator itr = mAccessRequirements.find( requirement );
-            if( itr != mAccessRequirements.end( ) )
+            AccessRequirementMap::const_iterator itr = mAccessRequirements.find(requirement);
+            if (itr != mAccessRequirements.end())
                 return &itr->second;
             return NULL;
         }
@@ -562,7 +562,7 @@ class ObjectMgr
         ReputationOnKillEntry const* GetReputationOnKilEntry(uint32 id) const
         {
             RepOnKillMap::const_iterator itr = mRepOnKill.find(id);
-            if(itr != mRepOnKill.end())
+            if (itr != mRepOnKill.end())
                 return &itr->second;
             return NULL;
         }
@@ -570,7 +570,7 @@ class ObjectMgr
         PointOfInterest const* GetPointOfInterest(uint32 id) const
         {
             PointOfInterestMap::const_iterator itr = mPointsOfInterest.find(id);
-            if(itr != mPointsOfInterest.end())
+            if (itr != mPointsOfInterest.end())
                 return &itr->second;
             return NULL;
         }
@@ -578,7 +578,7 @@ class ObjectMgr
         QuestPOIVector const* GetQuestPOIVector(uint32 questId)
         {
             QuestPOIMap::const_iterator itr = mQuestPOIMap.find(questId);
-            if(itr != mQuestPOIMap.end())
+            if (itr != mQuestPOIMap.end())
                 return &itr->second;
             return NULL;
         }
@@ -715,16 +715,16 @@ class ObjectMgr
         uint32 GenerateAuctionID();
         uint64 GenerateEquipmentSetGuid();
         uint32 GenerateGuildId();
-        uint32 GenerateItemTextID();
+        //uint32 GenerateItemTextID();
         uint32 GenerateMailID();
         uint32 GeneratePetNumber();
 
-        uint32 CreateItemText(std::string text);
-        void AddItemText(uint32 itemTextId, std::string text) { mItemTexts[itemTextId] = text; }
-        std::string GetItemText( uint32 id )
+        void CreateItemText(uint32 guid, std::string text);	
+        void AddItemText(uint32 guid, std::string text) { mItemTexts[guid] = text; }
+        std::string GetItemText(uint32 id)
         {
-            ItemTextMap::const_iterator itr = mItemTexts.find( id );
-            if ( itr != mItemTexts.end() )
+            ItemTextMap::const_iterator itr = mItemTexts.find(id);
+            if (itr != mItemTexts.end())
                 return itr->second;
             else
                 return "There is no info for this item";
@@ -739,7 +739,7 @@ class ObjectMgr
             if (map_itr == m_mailLevelRewardMap.end())
                 return NULL;
 
-            for(MailLevelRewardList::const_iterator set_itr = map_itr->second.begin(); set_itr != map_itr->second.end(); ++set_itr)
+            for (MailLevelRewardList::const_iterator set_itr = map_itr->second.begin(); set_itr != map_itr->second.end(); ++set_itr)
                 if (set_itr->raceMask & raceMask)
                     return &*set_itr;
 
@@ -749,7 +749,7 @@ class ObjectMgr
         WeatherZoneChances const* GetWeatherChances(uint32 zone_id) const
         {
             WeatherZoneMap::const_iterator itr = mWeatherZoneMap.find(zone_id);
-            if(itr != mWeatherZoneMap.end())
+            if (itr != mWeatherZoneMap.end())
                 return &itr->second;
             else
                 return NULL;
@@ -763,7 +763,7 @@ class ObjectMgr
         CreatureData const* GetCreatureData(uint32 guid) const
         {
             CreatureDataMap::const_iterator itr = mCreatureDataMap.find(guid);
-            if(itr==mCreatureDataMap.end()) return NULL;
+            if (itr == mCreatureDataMap.end()) return NULL;
             return &itr->second;
         }
         CreatureData& NewOrExistCreatureData(uint32 guid) { return mCreatureDataMap[guid]; }
@@ -771,55 +771,55 @@ class ObjectMgr
         uint32 GetLinkedRespawnGuid(uint32 guid) const
         {
             CreatureLinkedRespawnMap::const_iterator itr = mCreatureLinkedRespawnMap.find(guid);
-            if(itr == mCreatureLinkedRespawnMap.end()) return 0;
+            if (itr == mCreatureLinkedRespawnMap.end()) return 0;
             return itr->second;
         }
         CreatureLocale const* GetCreatureLocale(uint32 entry) const
         {
             CreatureLocaleMap::const_iterator itr = mCreatureLocaleMap.find(entry);
-            if(itr==mCreatureLocaleMap.end()) return NULL;
+            if (itr == mCreatureLocaleMap.end()) return NULL;
             return &itr->second;
         }
         GameObjectLocale const* GetGameObjectLocale(uint32 entry) const
         {
             GameObjectLocaleMap::const_iterator itr = mGameObjectLocaleMap.find(entry);
-            if(itr==mGameObjectLocaleMap.end()) return NULL;
+            if (itr == mGameObjectLocaleMap.end()) return NULL;
             return &itr->second;
         }
         ItemLocale const* GetItemLocale(uint32 entry) const
         {
             ItemLocaleMap::const_iterator itr = mItemLocaleMap.find(entry);
-            if(itr==mItemLocaleMap.end()) return NULL;
+            if (itr == mItemLocaleMap.end()) return NULL;
             return &itr->second;
         }
         QuestLocale const* GetQuestLocale(uint32 entry) const
         {
             QuestLocaleMap::const_iterator itr = mQuestLocaleMap.find(entry);
-            if(itr==mQuestLocaleMap.end()) return NULL;
+            if (itr == mQuestLocaleMap.end()) return NULL;
             return &itr->second;
         }
         NpcTextLocale const* GetNpcTextLocale(uint32 entry) const
         {
             NpcTextLocaleMap::const_iterator itr = mNpcTextLocaleMap.find(entry);
-            if(itr==mNpcTextLocaleMap.end()) return NULL;
+            if (itr == mNpcTextLocaleMap.end()) return NULL;
             return &itr->second;
         }
         PageTextLocale const* GetPageTextLocale(uint32 entry) const
         {
             PageTextLocaleMap::const_iterator itr = mPageTextLocaleMap.find(entry);
-            if(itr==mPageTextLocaleMap.end()) return NULL;
+            if (itr == mPageTextLocaleMap.end()) return NULL;
             return &itr->second;
         }
         GossipMenuItemsLocale const* GetGossipMenuItemsLocale(uint32 entry) const
         {
             GossipMenuItemsLocaleMap::const_iterator itr = mGossipMenuItemsLocaleMap.find(entry);
-            if(itr==mGossipMenuItemsLocaleMap.end()) return NULL;
+            if (itr == mGossipMenuItemsLocaleMap.end()) return NULL;
             return &itr->second;
         }
         PointOfInterestLocale const* GetPointOfInterestLocale(uint32 poi_id) const
         {
             PointOfInterestLocaleMap::const_iterator itr = mPointOfInterestLocaleMap.find(poi_id);
-            if(itr==mPointOfInterestLocaleMap.end()) return NULL;
+            if (itr == mPointOfInterestLocaleMap.end()) return NULL;
             return &itr->second;
         }
 
@@ -835,7 +835,7 @@ class ObjectMgr
         GameObjectData const* GetGOData(uint32 guid) const
         {
             GameObjectDataMap::const_iterator itr = mGameObjectDataMap.find(guid);
-            if(itr==mGameObjectDataMap.end()) return NULL;
+            if (itr == mGameObjectDataMap.end()) return NULL;
             return &itr->second;
         }
         GameObjectData& NewGOData(uint32 guid) { return mGameObjectDataMap[guid]; }
@@ -844,7 +844,7 @@ class ObjectMgr
         TrinityStringLocale const* GetTrinityStringLocale(int32 entry) const
         {
             TrinityStringLocaleMap::const_iterator itr = mTrinityStringLocaleMap.find(entry);
-            if(itr==mTrinityStringLocaleMap.end()) return NULL;
+            if (itr == mTrinityStringLocaleMap.end()) return NULL;
             return &itr->second;
         }
         const char *GetTrinityString(int32 entry, int locale_idx) const;
@@ -875,9 +875,9 @@ class ObjectMgr
         bool IsReservedName(const std::string& name) const;
 
         // name with valid structure and symbols
-        static uint8 CheckPlayerName( const std::string& name, bool create = false );
-        static PetNameInvalidReason CheckPetName( const std::string& name );
-        static bool IsValidCharterName( const std::string& name );
+        static uint8 CheckPlayerName(const std::string& name, bool create = false);
+        static PetNameInvalidReason CheckPetName(const std::string& name);
+        static bool IsValidCharterName(const std::string& name);
 
         static bool CheckDeclinedNames(std::wstring mainpart, DeclinedName const& names);
 
@@ -892,7 +892,7 @@ class ObjectMgr
         uint16 GetConditionId(ConditionType condition, uint32 value1, uint32 value2);
         bool IsPlayerMeetToCondition(Player const* player, uint16 condition_id) const
         {
-            if(condition_id >= mConditions.size())
+            if (condition_id >= mConditions.size())
                 return false;
 
             return mConditions[condition_id].Meets(player);
@@ -901,7 +901,7 @@ class ObjectMgr
         GameTele const* GetGameTele(uint32 id) const
         {
             GameTeleMap::const_iterator itr = m_GameTeleMap.find(id);
-            if(itr==m_GameTeleMap.end()) return NULL;
+            if (itr == m_GameTeleMap.end()) return NULL;
             return &itr->second;
         }
         GameTele const* GetGameTele(const std::string& name) const;
@@ -912,7 +912,7 @@ class ObjectMgr
         uint32 GetNpcGossip(uint32 entry) const
         {
             CacheNpcTextIdMap::const_iterator iter = m_mCacheNpcTextIdMap.find(entry);
-            if(iter == m_mCacheNpcTextIdMap.end())
+            if (iter == m_mCacheNpcTextIdMap.end())
                 return 0;
 
             return iter->second;
@@ -921,7 +921,7 @@ class ObjectMgr
         TrainerSpellData const* GetNpcTrainerSpells(uint32 entry) const
         {
             CacheTrainerSpellMap::const_iterator  iter = m_mCacheTrainerSpellMap.find(entry);
-            if(iter == m_mCacheTrainerSpellMap.end())
+            if (iter == m_mCacheTrainerSpellMap.end())
                 return NULL;
 
             return &iter->second;
@@ -930,14 +930,14 @@ class ObjectMgr
         VendorItemData const* GetNpcVendorItemList(uint32 entry) const
         {
             CacheVendorItemMap::const_iterator  iter = m_mCacheVendorItemMap.find(entry);
-            if(iter == m_mCacheVendorItemMap.end())
+            if (iter == m_mCacheVendorItemMap.end())
                 return NULL;
 
             return &iter->second;
         }
         void AddVendorItem(uint32 entry,uint32 item, int32 maxcount, uint32 incrtime, uint32 ExtendedCost, bool savetodb = true); // for event
         bool RemoveVendorItem(uint32 entry,uint32 item, bool savetodb = true); // for event
-        bool IsVendorItemValid( uint32 vendor_entry, uint32 item, int32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL, uint32 ORnpcflag = 0 ) const;
+        bool IsVendorItemValid(uint32 vendor_entry, uint32 item, int32 maxcount, uint32 ptime, uint32 ExtendedCost, Player* pl = NULL, std::set<uint32>* skip_vendors = NULL, uint32 ORnpcflag = 0) const;
 
         void LoadScriptNames();
         ScriptNameMap &GetScriptNames() { return m_scriptNames; }
@@ -959,7 +959,7 @@ class ObjectMgr
         GM_Ticket *GetGMTicket(uint64 ticketGuid)
         {
             for (GmTicketList::const_iterator i = m_GMTicketList.begin(); i != m_GMTicketList.end(); ++i)
-                if((*i) && (*i)->guid == ticketGuid)
+                if ((*i) && (*i)->guid == ticketGuid)
                     return (*i);
 
             return NULL;
@@ -967,7 +967,7 @@ class ObjectMgr
         GM_Ticket *GetGMTicketByPlayer(uint64 playerGuid)
         {
             for (GmTicketList::const_iterator i = m_GMTicketList.begin(); i != m_GMTicketList.end(); ++i)
-                if((*i) && (*i)->playerGuid == playerGuid && (*i)->closed == 0)
+                if ((*i) && (*i)->playerGuid == playerGuid && (*i)->closed == 0)
                     return (*i);
 
             return NULL;

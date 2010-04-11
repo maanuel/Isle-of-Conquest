@@ -163,7 +163,7 @@ public:
     }
     uint32 GetMinItems()
     {
-        if ((minItems  == 0) && (maxItems))
+        if ((minItems == 0) && (maxItems))
             return maxItems;
         else if ((maxItems) && (minItems > maxItems))
             return maxItems;
@@ -1156,9 +1156,7 @@ private:
 
     bool DisableBeta_PTR_Unused;
     bool DisablePermEnchant;
-#if CLIENT_VER > 300
     bool DisableConjured;
-#endif
     bool DisableGems;
     bool DisableMoney;
     bool DisableMoneyLoot;

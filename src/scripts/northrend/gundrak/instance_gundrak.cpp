@@ -294,11 +294,11 @@ struct instance_gundrak : public ScriptedInstance
         if (data == DONE)
             SaveToDB();
     }
-    
+
     void SetData64(uint32 type, uint64 data)
     {
         if (type == DATA_RUIN_DWELLER_DIED)
-	    DwellerGUIDs.erase(data);
+        DwellerGUIDs.erase(data);
     }
 
     uint32 GetData(uint32 type)

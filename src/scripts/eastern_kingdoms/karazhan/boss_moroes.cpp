@@ -134,7 +134,7 @@ struct boss_moroesAI : public ScriptedAI
         DeSpawnAdds();
 
         //remove aura from spell Garrote when Moroes dies
-        if(pInstance)
+        if (pInstance)
             pInstance->DoRemoveAurasDueToSpellOnPlayers(SPELL_GARROTE);
     }
 
@@ -149,11 +149,11 @@ struct boss_moroesAI : public ScriptedAI
             for (uint8 i = 0; i < 6; ++i)
                 AddList.push_back(Adds[i]);
 
-            while(AddList.size() > 4)
+            while (AddList.size() > 4)
                 AddList.erase((AddList.begin())+(rand()%AddList.size()));
 
             uint8 i = 0;
-            for (std::vector<uint32>::iterator itr = AddList.begin(); itr != AddList.end(); ++itr)
+            for (std::vector<uint32>::const_iterator itr = AddList.begin(); itr != AddList.end(); ++itr)
             {
                 uint32 entry = *itr;
 
@@ -274,8 +274,8 @@ struct boss_moroesAI : public ScriptedAI
             {
                 std::list<Unit*> pTargets;
                 SelectTargetList(pTargets, 5, SELECT_TARGET_RANDOM, m_creature->GetMeleeReach()*5, true);
-                for (std::list<Unit*>::iterator i = pTargets.begin(); i != pTargets.end(); ++i)
-                    if(!m_creature->IsWithinMeleeRange(*i))
+                for (std::list<Unit*>::const_iterator i = pTargets.begin(); i != pTargets.end(); ++i)
+                    if (!m_creature->IsWithinMeleeRange(*i))
                     {
                         DoCast(*i, SPELL_BLIND);
                         break;

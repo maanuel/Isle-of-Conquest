@@ -89,7 +89,7 @@ struct boss_trollgoreAI : public ScriptedAI
         lSummons.DespawnAll();
 
         m_creature->RemoveAura(DUNGEON_MODE(SPELL_CONSUME_AURA,H_SPELL_CONSUME_AURA));
-        
+
         if (pInstance)
             pInstance->SetData(DATA_TROLLGORE_EVENT, NOT_STARTED);
     }
@@ -119,7 +119,7 @@ struct boss_trollgoreAI : public ScriptedAI
         if (uiConsumeTimer <= diff)
         {
             DoScriptText(SAY_CONSUME, m_creature);
-            DoCast(DUNGEON_MODE(SPELL_CONSUME, H_SPELL_CONSUME));
+            DoCast(SPELL_CONSUME);
             uiConsumeTimer = 15*IN_MILISECONDS;
         } else uiConsumeTimer -= diff;
 
@@ -144,14 +144,14 @@ struct boss_trollgoreAI : public ScriptedAI
 
         if (uiExplodeCorpseTimer <= diff)
         {
-            DoCast(DUNGEON_MODE(SPELL_CORPSE_EXPLODE, H_SPELL_CORPSE_EXPLODE));
+            DoCast(SPELL_CORPSE_EXPLODE);
             DoScriptText(SAY_EXPLODE, m_creature);
             uiExplodeCorpseTimer = urand(15*IN_MILISECONDS,19*IN_MILISECONDS);
         } else uiExplodeCorpseTimer -= diff;
 
         DoMeleeAttackIfReady();
     }
-    
+
     void JustDied(Unit* killer)
     {
         DoScriptText(SAY_DEATH, m_creature);
@@ -165,7 +165,7 @@ struct boss_trollgoreAI : public ScriptedAI
             pInstance->SetData(DATA_TROLLGORE_EVENT, DONE);
         }
     }
-    
+
     void KilledUnit(Unit *victim)
     {
         if (victim == m_creature)

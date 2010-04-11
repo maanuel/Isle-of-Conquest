@@ -429,7 +429,7 @@ enum eFelCrystalforge
 
 bool GOHello_go_fel_crystalforge(Player *pPlayer, GameObject *pGO)
 {
-    if ( pGO->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER ) /* != GAMEOBJECT_TYPE_QUESTGIVER) */
+    if (pGO->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER) /* != GAMEOBJECT_TYPE_QUESTGIVER) */
         pPlayer->PrepareQuestMenu(pGO->GetGUID()); /* return true*/
 
     pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_FEL_CRYSTALFORGE_ITEM_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
@@ -505,28 +505,28 @@ bool GOHello_go_matrix_punchograph(Player *pPlayer, GameObject *pGO)
     switch(pGO->GetEntry())
     {
         case MATRIX_PUNCHOGRAPH_3005_A:
-            if(pPlayer->HasItemCount(ITEM_WHITE_PUNCH_CARD, 1))
+            if (pPlayer->HasItemCount(ITEM_WHITE_PUNCH_CARD, 1))
             {
                 pPlayer->DestroyItemCount(ITEM_WHITE_PUNCH_CARD, 1, true);
                 pPlayer->CastSpell(pPlayer,SPELL_YELLOW_PUNCH_CARD,true);
             }
             break;
         case MATRIX_PUNCHOGRAPH_3005_B:
-            if(pPlayer->HasItemCount(ITEM_YELLOW_PUNCH_CARD, 1))
+            if (pPlayer->HasItemCount(ITEM_YELLOW_PUNCH_CARD, 1))
             {
                 pPlayer->DestroyItemCount(ITEM_YELLOW_PUNCH_CARD, 1, true);
                 pPlayer->CastSpell(pPlayer,SPELL_BLUE_PUNCH_CARD,true);
             }
             break;
         case MATRIX_PUNCHOGRAPH_3005_C:
-            if(pPlayer->HasItemCount(ITEM_BLUE_PUNCH_CARD, 1))
+            if (pPlayer->HasItemCount(ITEM_BLUE_PUNCH_CARD, 1))
             {
                 pPlayer->DestroyItemCount(ITEM_BLUE_PUNCH_CARD, 1, true);
                 pPlayer->CastSpell(pPlayer,SPELL_RED_PUNCH_CARD,true);
             }
             break;
         case MATRIX_PUNCHOGRAPH_3005_D:
-            if(pPlayer->HasItemCount(ITEM_RED_PUNCH_CARD, 1))
+            if (pPlayer->HasItemCount(ITEM_RED_PUNCH_CARD, 1))
             {
                 pPlayer->DestroyItemCount(ITEM_RED_PUNCH_CARD, 1, true);
                 pPlayer->CastSpell(pPlayer, SPELL_PRISMATIC_PUNCH_CARD, true);
@@ -549,7 +549,7 @@ enum eRustyCage
 
 bool GOHello_go_rusty_cage(Player *pPlayer, GameObject *pGO)
 {
-    if(Creature *pGoblinPrisoner = pGO->FindNearestCreature(NPC_GOBLIN_PRISIONER, 5.0f, true))
+    if (Creature *pGoblinPrisoner = pGO->FindNearestCreature(NPC_GOBLIN_PRISIONER, 5.0f, true))
     {
         pGO->SetGoState(GO_STATE_ACTIVE);
         pPlayer->KilledMonsterCredit(NPC_GOBLIN_PRISIONER, pGoblinPrisoner->GetGUID());
@@ -715,8 +715,8 @@ bool GOHello_go_soulwell(Player *pPlayer, GameObject* pGO)
     if (!pPlayer->IsInSameRaidWith(static_cast<Player *>(caster)))
         return true;
 
-    // Repeating this at every use is ugly and inefficient. But as long as we don't have proper  
-    // GO scripting with at least On Create and On Update events, the other options are no less 
+    // Repeating this at every use is ugly and inefficient. But as long as we don't have proper
+    // GO scripting with at least On Create and On Update events, the other options are no less
     // ugly and hacky.
     uint32 newSpell = 0;
     if (pGO->GetEntry() == 193169)                                  // Soulwell for rank 2
@@ -855,8 +855,8 @@ bool GOHello_go_amberpine_outhouse(Player *pPlayer, GameObject *pGO)
     }
     else
         pPlayer->SEND_GOSSIP_MENU(GOSSIP_OUTHOUSE_INUSE, pGO->GetGUID());
-        return true;    
-} 
+        return true;
+}
 
 bool GOSelect_go_amberpine_outhouse(Player *pPlayer, GameObject *pGO, uint32 uiSender, uint32 uiAction)
 {
@@ -1044,7 +1044,7 @@ void AddSC_go_scripts()
     newscript->Name = "go_dragonflayer_cage";
     newscript->pGOHello =           &GOHello_go_dragonflayer_cage;
     newscript->RegisterSelf();
-    
+
     newscript = new Script;
     newscript->Name = "go_amberpine_outhouse";
     newscript->pGOHello =           &GOHello_go_amberpine_outhouse;

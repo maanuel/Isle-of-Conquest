@@ -36,12 +36,12 @@ EndContentData */
 ######*/
 
 //used by 20209,20417,20418,20440, signed for 20209
-#define EMOTE_START     -1000296
-#define EMOTE_60        -1000297
-#define EMOTE_30        -1000298
-#define EMOTE_10        -1000299
-#define EMOTE_COMPLETE  -1000300
-#define EMOTE_ABORT     -1000301
+#define EMOTE_START     -1000211
+#define EMOTE_60        -1000212
+#define EMOTE_30        -1000213
+#define EMOTE_10        -1000214
+#define EMOTE_COMPLETE  -1000215
+#define EMOTE_ABORT     -1000216
 
 #define ENTRY_BNAAR_C_CONSOLE   20209
 #define ENTRY_CORUU_C_CONSOLE   20417
@@ -79,7 +79,7 @@ struct npc_manaforge_control_consoleAI : public ScriptedAI
         Wave = false;
         someplayer = 0;
         goConsole = 0;
-        Creature* add = NULL;
+        add = NULL;
     }
 
     void EnterCombat(Unit *who) { return; }
@@ -296,8 +296,7 @@ bool GOHello_go_manaforge_control_console(Player* pPlayer, GameObject* pGo)
         pPlayer->SendPreparedQuest(pGo->GetGUID());
     }
 
-    Creature* manaforge;
-    manaforge = NULL;
+    Creature* manaforge = NULL;
 
     switch(pGo->GetAreaId())
     {
@@ -696,6 +695,7 @@ struct mob_phase_hunterAI : public ScriptedAI
     float HpPercent;
 
     Player *pPlayer;
+    uint64 PlayerGUID;
 
     uint32 ManaBurnTimer;
 
@@ -707,18 +707,18 @@ struct mob_phase_hunterAI : public ScriptedAI
         WeakPercent = 25 + (rand() % 16); // 25-40
         HpPercent = 0.0f;
 
-        pPlayer = NULL;
+        PlayerGUID = 0;
 
         ManaBurnTimer = 5000 + (rand() % 3 * 1000); // 5-8 sec cd
 
-        if(m_creature->GetEntry() == NPC_DRAINED_PHASE_HUNTER_ENTRY)
+        if (m_creature->GetEntry() == NPC_DRAINED_PHASE_HUNTER_ENTRY)
             m_creature->UpdateEntry(NPC_PHASE_HUNTER_ENTRY);
     }
 
     void EnterCombat(Unit *who)
     {
         if (who->GetTypeId() == TYPEID_PLAYER)
-            pPlayer = CAST_PLR(who);
+            PlayerGUID = who->GetGUID();
     }
 
     void SpellHit(Unit *caster, const SpellEntry *spell)
@@ -746,15 +746,15 @@ struct mob_phase_hunterAI : public ScriptedAI
             std::list<HostileReference*> AggroList = m_creature->getThreatManager().getThreatList();
             std::list<Unit*> UnitsWithMana;
 
-            for(std::list<HostileReference*>::const_iterator itr = AggroList.begin(); itr != AggroList.end(); ++itr)
+            for (std::list<HostileReference*>::const_iterator itr = AggroList.begin(); itr != AggroList.end(); ++itr)
             {
-                if(Unit *pUnit = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
+                if (Unit *pUnit = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid()))
                 {
-                    if(pUnit->GetCreateMana() > 0)
+                    if (pUnit->GetCreateMana() > 0)
                         UnitsWithMana.push_back(pUnit);
                 }
             }
-            if(!UnitsWithMana.empty())
+            if (!UnitsWithMana.empty())
             {
                 std::list<Unit*>::const_iterator it = UnitsWithMana.begin();
                 std::advance(it, rand() % UnitsWithMana.size());
@@ -765,7 +765,7 @@ struct mob_phase_hunterAI : public ScriptedAI
                 ManaBurnTimer = 3500;
         } else ManaBurnTimer -= diff;
 
-        if (pPlayer) // start: support for quest 10190
+        if (Player *pPlayer = Unit::GetPlayer(PlayerGUID)) // start: support for quest 10190
         {
             if (!Weak && m_creature->GetHealth() < (m_creature->GetMaxHealth() / 100 * WeakPercent)
                 && pPlayer->GetQuestStatus(QUEST_RECHARGING_THE_BATTERIES) == QUEST_STATUS_INCOMPLETE)

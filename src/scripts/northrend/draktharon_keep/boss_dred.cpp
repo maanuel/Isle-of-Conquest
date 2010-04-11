@@ -108,10 +108,10 @@ struct boss_dredAI : public ScriptedAI
             DoCastVictim(SPELL_MANGLING_SLASH,false);
             uiManglingSlashTimer = 20*IN_MILISECONDS;
         } else uiManglingSlashTimer -=diff;
-        
+
         if (uiFearsomeRoarTimer < diff)
         {
-            DoCastAOE(DUNGEON_MODE(SPELL_FEARSOME_ROAR, H_SPELL_FEARSOME_ROAR),false);
+            DoCastAOE(SPELL_FEARSOME_ROAR,false);
             uiFearsomeRoarTimer = urand(16*IN_MILISECONDS,18*IN_MILISECONDS);
         } else uiFearsomeRoarTimer -=diff;
 

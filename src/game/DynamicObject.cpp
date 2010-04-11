@@ -44,7 +44,7 @@ DynamicObject::DynamicObject() : WorldObject()
 void DynamicObject::AddToWorld()
 {
     ///- Register the dynamicObject for guid lookup
-    if(!IsInWorld())
+    if (!IsInWorld())
     {
         ObjectAccessor::Instance().AddObject(this);
         WorldObject::AddToWorld();
@@ -54,13 +54,13 @@ void DynamicObject::AddToWorld()
 void DynamicObject::RemoveFromWorld()
 {
     ///- Remove the dynamicObject from the accessor
-    if(IsInWorld())
+    if (IsInWorld())
     {
-        if(m_isWorldObject)
+        if (m_isWorldObject)
         {
-            if(Unit *caster = GetCaster())
+            if (Unit *caster = GetCaster())
             {
-                if(caster->GetTypeId() == TYPEID_PLAYER)
+                if (caster->GetTypeId() == TYPEID_PLAYER)
                     caster->ToPlayer()->SetViewpoint(this, false);
             }
             else
@@ -77,7 +77,7 @@ bool DynamicObject::Create(uint32 guidlow, Unit *caster, uint32 spellId, const P
 {
     SetMap(caster->GetMap());
     Relocate(pos);
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("DynamicObject (spell %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)",spellId,GetPositionX(),GetPositionY());
         return false;
@@ -86,18 +86,18 @@ bool DynamicObject::Create(uint32 guidlow, Unit *caster, uint32 spellId, const P
     WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetPhaseMask());
 
     SetEntry(spellId);
-    SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );
-    SetUInt64Value( DYNAMICOBJECT_CASTER, caster->GetGUID() );
+    SetFloatValue(OBJECT_FIELD_SCALE_X, 1);
+    SetUInt64Value(DYNAMICOBJECT_CASTER, caster->GetGUID());
 
     // The lower word of DYNAMICOBJECT_BYTES must be 0x0001. This value means that the visual radius will be overriden
     // by client for most of the "ground patch" visual effect spells and a few "skyfall" ones like Hurricane.
     // If any other value is used, the client will _always_ use the radius provided in DYNAMICOBJECT_RADIUS, but
-    // precompensation is necessary (eg radius *= 2) for many spells. Anyway, blizz sends 0x0001 for all the spells 
+    // precompensation is necessary (eg radius *= 2) for many spells. Anyway, blizz sends 0x0001 for all the spells
     // I saw sniffed...
-    SetUInt32Value( DYNAMICOBJECT_BYTES, 0x00000001 );
-    SetUInt32Value( DYNAMICOBJECT_SPELLID, spellId );
-    SetFloatValue( DYNAMICOBJECT_RADIUS, radius );
-    SetUInt32Value( DYNAMICOBJECT_CASTTIME, getMSTime() );
+    SetUInt32Value(DYNAMICOBJECT_BYTES, 0x00000001);
+    SetUInt32Value(DYNAMICOBJECT_SPELLID, spellId);
+    SetFloatValue(DYNAMICOBJECT_RADIUS, radius);
+    SetUInt32Value(DYNAMICOBJECT_CASTTIME, getMSTime());
 
     m_isWorldObject = active;
     return true;
@@ -132,7 +132,7 @@ void DynamicObject::Update(uint32 p_time)
     }
     else
     {
-        if(GetDuration() > int32(p_time))
+        if (GetDuration() > int32(p_time))
             m_duration -= p_time;
         else
             expired = true;
@@ -166,7 +166,7 @@ int32 DynamicObject::GetDuration() const
     if (!m_aura)
         return m_duration;
     else
-        return m_aura->GetDuration(); 
+        return m_aura->GetDuration();
 }
 
 void DynamicObject::SetDuration(int32 newDuration)

@@ -99,9 +99,9 @@ struct boss_brutallusAI : public ScriptedAI
         IntroFrostBoltTimer = 0;
 
         IsIntro = false;
-        Enraged = false;        
+        Enraged = false;
 
-        DoCast(m_creature, SPELL_DUAL_WIELD, true);        
+        DoCast(m_creature, SPELL_DUAL_WIELD, true);
 
         if (pInstance)
             pInstance->SetData(DATA_BRUTALLUS_EVENT, NOT_STARTED);
@@ -151,7 +151,7 @@ struct boss_brutallusAI : public ScriptedAI
             Madrigosa->setActive(true);
             IsIntro = true;
             Madrigosa->SetMaxHealth(m_creature->GetMaxHealth());
-            Madrigosa->SetHealth(m_creature->GetMaxHealth());            
+            Madrigosa->SetHealth(m_creature->GetMaxHealth());
             m_creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             m_creature->Attack(Madrigosa, true);
             Madrigosa->Attack(m_creature, true);
@@ -265,7 +265,7 @@ struct boss_brutallusAI : public ScriptedAI
 
         if (Intro && !IsIntro)
             StartIntro();
-        if(!Intro)
+        if (!Intro)
             ScriptedAI::MoveInLineOfSight(who);
     }
 
@@ -313,8 +313,8 @@ struct boss_brutallusAI : public ScriptedAI
         {
             std::list<Unit*> pTargets;
             SelectTargetList(pTargets, 10, SELECT_TARGET_RANDOM, 100, true);
-            for (std::list<Unit*>::iterator i = pTargets.begin(); i != pTargets.end(); ++i)
-                if(!(*i)->HasAura(SPELL_BURN))
+            for (std::list<Unit*>::const_iterator i = pTargets.begin(); i != pTargets.end(); ++i)
+                if (!(*i)->HasAura(SPELL_BURN))
                 {
                     (*i)->CastSpell((*i), SPELL_BURN, true);
                     break;

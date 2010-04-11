@@ -191,7 +191,7 @@ struct boss_vazrudenAI : public ScriptedAI
 
     void KilledUnit(Unit* who)
     {
-        if (who && who->GetEntry()!=ENTRY_VAZRUDEN)
+        if (who && who->GetEntry() != ENTRY_VAZRUDEN)
             DoScriptText(RAND(SAY_KILL_1,SAY_KILL_2), m_creature);
     }
 
@@ -293,7 +293,7 @@ struct boss_vazruden_the_heraldAI : public ScriptedAI
 
     void EnterCombat(Unit *who)
     {
-        if (phase==0)
+        if (phase == 0)
         {
             phase = 1;
             check = 0;

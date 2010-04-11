@@ -320,7 +320,7 @@ struct boss_twinemperorsAI : public ScriptedAI
 
         Creature *nearb = NULL;
 
-        for (std::list<Creature*>::iterator iter = lUnitList.begin(); iter != lUnitList.end(); ++iter)
+        for (std::list<Creature*>::const_iterator iter = lUnitList.begin(); iter != lUnitList.end(); ++iter)
         {
             Creature *c = *iter;
             if (c)
@@ -531,7 +531,7 @@ struct boss_veklorAI : public boss_twinemperorsAI
         if (ArcaneBurst_Timer <= diff)
         {
             Unit *mvic;
-            if ((mvic=SelectTarget(SELECT_TARGET_NEAREST, 0, NOMINAL_MELEE_RANGE, true))!=NULL)
+            if ((mvic=SelectTarget(SELECT_TARGET_NEAREST, 0, NOMINAL_MELEE_RANGE, true)) != NULL)
             {
                 DoCast(mvic, SPELL_ARCANEBURST);
                 ArcaneBurst_Timer = 5000;

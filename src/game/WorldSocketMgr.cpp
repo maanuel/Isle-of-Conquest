@@ -155,8 +155,6 @@ class ReactorRunnable : protected ACE_Task_Base
             DEBUG_LOG ("Network Thread Starting");
 
             WorldDatabase.ThreadStart();
-            CharacterDatabase.ThreadStart();
-            loginDatabase.ThreadStart();
 
             ACE_ASSERT (m_Reactor);
 
@@ -190,8 +188,6 @@ class ReactorRunnable : protected ACE_Task_Base
             }
 
             WorldDatabase.ThreadEnd();
-            CharacterDatabase.ThreadEnd();
-            loginDatabase.ThreadEnd();
 
             DEBUG_LOG ("Network Thread Exitting");
 
@@ -227,7 +223,7 @@ WorldSocketMgr::~WorldSocketMgr ()
     if (m_NetThreads)
         delete [] m_NetThreads;
 
-    if(m_Acceptor)
+    if (m_Acceptor)
         delete m_Acceptor;
 }
 
@@ -255,7 +251,7 @@ WorldSocketMgr::StartReactiveIO (ACE_UINT16 port, const char* address)
 
     m_SockOutUBuff = sConfig.GetIntDefault ("Network.OutUBuff", 65536);
 
-    if ( m_SockOutUBuff <= 0 )
+    if (m_SockOutUBuff <= 0)
     {
         sLog.outError ("Network.OutUBuff is wrong in your config file");
         return -1;

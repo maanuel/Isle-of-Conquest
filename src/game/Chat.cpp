@@ -772,7 +772,7 @@ ChatCommand * ChatHandler::getCommandTable()
 
                 SetDataForCommandInTable(commandTable, name.c_str(), fields[1].GetUInt16(), fields[2].GetCppString(), name);
 
-            } while(result->NextRow());
+            } while (result->NextRow());
         }
     }
 
@@ -827,7 +827,7 @@ bool ChatHandler::HasLowerSecurityAccount(WorldSession* target, uint32 target_ac
     else if (target_account)
         target_sec = accmgr.GetSecurity(target_account);
     else
-        return true;                                        // caller must report error for (target==NULL && target_account==0)
+        return true;                                        // caller must report error for (target == NULL && target_account == 0)
 
     if (m_session->GetSecurity() < target_sec || (strong && m_session->GetSecurity() <= target_sec))
     {
@@ -872,7 +872,7 @@ void ChatHandler::SendSysMessage(const char *str)
     char* buf = strdup(str);
     char* pos = buf;
 
-    while(char* line = LineFromMessage(pos))
+    while (char* line = LineFromMessage(pos))
     {
         FillSystemMessageData(&data, line);
         m_session->SendPacket(&data);
@@ -890,7 +890,7 @@ void ChatHandler::SendGlobalSysMessage(const char *str)
     char* buf = strdup(str);
     char* pos = buf;
 
-    while(char* line = LineFromMessage(pos))
+    while (char* line = LineFromMessage(pos))
     {
         FillSystemMessageData(&data, line);
         sWorld.SendGlobalMessage(&data);
@@ -908,7 +908,7 @@ void ChatHandler::SendGlobalGMSysMessage(const char *str)
     char* buf = strdup(str);
     char* pos = buf;
 
-    while(char* line = LineFromMessage(pos))
+    while (char* line = LineFromMessage(pos))
     {
         FillSystemMessageData(&data, line);
         sWorld.SendGlobalGMMessage(&data);
@@ -982,7 +982,7 @@ bool ChatHandler::ExecuteCommandInTable(ChatCommand *table, const char* text, co
 
         SetSentErrorMessage(false);
         // table[i].Name == "" is special case: send original command to handler
-        if ((this->*(table[i].Handler))(strlen(table[i].Name)!=0 ? text : oldtext))
+        if ((this->*(table[i].Handler))(strlen(table[i].Name) != 0 ? text : oldtext))
         {
             if (table[i].SecurityLevel > SEC_PLAYER)
             {
@@ -1058,7 +1058,7 @@ bool ChatHandler::SetDataForCommandInTable(ChatCommand *table, const char* text,
     // in case "" command let process by caller
     if (!cmd.empty())
     {
-        if (table==getCommandTable())
+        if (table == getCommandTable())
             sLog.outErrorDb("Table `command` have not existed command '%s', skip.",cmd.c_str());
         else
             sLog.outErrorDb("Table `command` have not existed subcommand '%s' in command '%s', skip.",cmd.c_str(),fullcommand.c_str());
@@ -1137,7 +1137,7 @@ valid examples:
     {
         const std::string validCommands = "cHhr|";
 
-        while(*message)
+        while (*message)
         {
             // find next pipe command
             message = strchr(message, '|');
@@ -1180,7 +1180,7 @@ valid examples:
     ItemRandomPropertiesEntry const* itemProperty;
     ItemRandomSuffixEntry const* itemSuffix;
 
-    while(!reader.eof())
+    while (!reader.eof())
     {
         if (validSequence == validSequenceIterator)
         {
@@ -1263,12 +1263,12 @@ valid examples:
 
                     color <<= 4;
                     // check for hex char
-                    if (c >= '0' && c <='9')
+                    if (c >= '0' && c <= '9')
                     {
                         color |= c-'0';
                         continue;
                     }
-                    if (c >= 'a' && c <='f')
+                    if (c >= 'a' && c <= 'f')
                     {
                         color |= 10+c-'a';
                         continue;
@@ -1314,17 +1314,17 @@ valid examples:
                     int32 propertyId = 0;
                     bool negativeNumber = false;
                     char c;
-                    for(uint8 i=0; i<randomPropertyPosition; ++i)
+                    for (uint8 i=0; i<randomPropertyPosition; ++i)
                     {
                         propertyId = 0;
                         negativeNumber = false;
-                        while((c = reader.get())!=':')
+                        while ((c = reader.get()) != ':')
                         {
-                            if(c >='0' && c<='9')
+                            if (c >='0' && c <= '9')
                             {
                                 propertyId*=10;
                                 propertyId += c-'0';
-                            } else if(c == '-')
+                            } else if (c == '-')
                                 negativeNumber = true;
                             else
                                 return false;
@@ -1339,7 +1339,7 @@ valid examples:
                         if (!itemProperty)
                             return false;
                     }
-                    else if(propertyId < 0)
+                    else if (propertyId < 0)
                     {
                         itemSuffix = sItemRandomSuffixStore.LookupEntry(-propertyId);
                         if (!itemSuffix)
@@ -1347,7 +1347,7 @@ valid examples:
                     }
 
                     // ignore other integers
-                    while((c >='0' && c <='9') || c==':')
+                    while ((c >='0' && c <= '9') || c == ':')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1359,7 +1359,7 @@ valid examples:
                     uint32 questid= 0;
                     // read questid
                     char c = reader.peek();
-                    while(c >='0' && c<='9')
+                    while (c >='0' && c <= '9')
                     {
                         reader.ignore(1);
                         questid *= 10;
@@ -1378,7 +1378,7 @@ valid examples:
                     }
                     c = reader.peek();
                     // level
-                    while(c !='|' && c!='\0')
+                    while (c !='|' && c != '\0')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1397,7 +1397,7 @@ valid examples:
 
                     char c = reader.peek();
                     // base64 encoded stuff
-                    while(c !='|' && c!='\0')
+                    while (c !='|' && c != '\0')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1421,7 +1421,7 @@ valid examples:
 
                     char c = reader.peek();
                     // skillpoints? whatever, drop it
-                    while(c !='|' && c!='\0')
+                    while (c !='|' && c != '\0')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1435,7 +1435,7 @@ valid examples:
                     uint32 spellid = 0;
                     // read spell entry
                     char c = reader.peek();
-                    while(c >='0' && c<='9')
+                    while (c >='0' && c <= '9')
                     {
                         reader.ignore(1);
                         spellid *= 10;
@@ -1454,7 +1454,7 @@ valid examples:
                     uint32 spellid = 0;
                     // read spell entry
                     char c = reader.peek();
-                    while(c >='0' && c<='9')
+                    while (c >='0' && c <= '9')
                     {
                         reader.ignore(1);
                         spellid *= 10;
@@ -1478,7 +1478,7 @@ valid examples:
 
                     char c = reader.peek();
                     // skip progress
-                    while(c !='|' && c!='\0')
+                    while (c !='|' && c != '\0')
                     {
                         reader.ignore(1);
                         c = reader.peek();
@@ -1493,7 +1493,7 @@ valid examples:
                     reader.getline(buffer, 256, ':');
                     uint32 glyphId = 0;
                     char c = reader.peek();
-                    while(c>='0' && c <='9')
+                    while (c >= '0' && c <= '9')
                     {
                         glyphId *= 10;
                         glyphId += c-'0';
@@ -1629,7 +1629,7 @@ valid examples:
                             ItemLocale const *il = objmgr.GetItemLocale(linkedItem->ItemId);
 
                             bool foundName = false;
-                            for(uint8 i=LOCALE_koKR; i<MAX_LOCALE; ++i)
+                            for (uint8 i=LOCALE_koKR; i<MAX_LOCALE; ++i)
                             {
                                 int8 dbIndex = objmgr.GetIndexForLocale(LocaleConstant(i));
                                 if (dbIndex == -1 || il == NULL || dbIndex >= il->Name.size())
@@ -1642,7 +1642,7 @@ valid examples:
                                     expectedName += " ";
                                     expectedName += suffix[i];
                                 }
-                                if ( expectedName == buffer)
+                                if (expectedName == buffer)
                                 {
                                     foundName = true;
                                     break;
@@ -1724,7 +1724,7 @@ bool ChatHandler::ShowHelpForSubCommands(ChatCommand *table, char const* cmd, ch
     if (list.empty())
         return false;
 
-    if (table==getCommandTable())
+    if (table == getCommandTable())
     {
         SendSysMessage(LANG_AVIABLE_CMD);
         PSendSysMessage("%s",list.c_str());
@@ -1927,14 +1927,14 @@ char* ChatHandler::extractKeyFromLink(char* text, char const* linkType, char** s
         return NULL;
 
     // skip spaces
-    while(*text==' '||*text=='\t'||*text=='\b')
+    while (*text == ' '||*text == '\t'||*text == '\b')
         ++text;
 
     if (!*text)
         return NULL;
 
     // return non link case
-    if (text[0]!='|')
+    if (text[0] != '|')
         return strtok(text, " ");
 
     // [name] Shift-click form |color|linkType:key|h[name]|h|r
@@ -1975,14 +1975,14 @@ char* ChatHandler::extractKeyFromLink(char* text, char const* const* linkTypes, 
         return NULL;
 
     // skip spaces
-    while(*text==' '||*text=='\t'||*text=='\b')
+    while (*text == ' '||*text == '\t'||*text == '\b')
         ++text;
 
     if (!*text)
         return NULL;
 
     // return non link case
-    if (text[0]!='|')
+    if (text[0] != '|')
         return strtok(text, " ");
 
     // [name] Shift-click form |color|linkType:key|h[name]|h|r
@@ -1993,7 +1993,7 @@ char* ChatHandler::extractKeyFromLink(char* text, char const* const* linkTypes, 
 
     char* tail;
 
-    if (text[1]=='c')
+    if (text[1] == 'c')
     {
         char* check = strtok(text, "|");                    // skip color
         if (!check)
@@ -2347,7 +2347,7 @@ char* ChatHandler::extractQuotedArg(char* args)
     if (!*args)
         return NULL;
 
-    if (*args=='"')
+    if (*args == '"')
         return strtok(args+1, "\"");
     else
     {

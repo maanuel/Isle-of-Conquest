@@ -11,5 +11,12 @@ SET(trinityconfig_STAT_SRCS
    ConfigEnv.h
 )
 
+include_directories(
+  ${ACE_INCLUDE_DIR}
+  ${CMAKE_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/src/shared
+  ${CMAKE_SOURCE_DIR}/src/framework
+)
+
 add_library(trinityconfig STATIC ${trinityconfig_STAT_SRCS})
 

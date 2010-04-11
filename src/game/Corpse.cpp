@@ -53,7 +53,7 @@ Corpse::~Corpse()
 void Corpse::AddToWorld()
 {
     ///- Register the corpse for guid lookup
-    if(!IsInWorld())
+    if (!IsInWorld())
         ObjectAccessor::Instance().AddObject(this);
 
     Object::AddToWorld();
@@ -62,26 +62,26 @@ void Corpse::AddToWorld()
 void Corpse::RemoveFromWorld()
 {
     ///- Remove the corpse from the accessor
-    if(IsInWorld())
+    if (IsInWorld())
         ObjectAccessor::Instance().RemoveObject(this);
 
     Object::RemoveFromWorld();
 }
 
-bool Corpse::Create( uint32 guidlow, Map *map )
+bool Corpse::Create(uint32 guidlow, Map *map)
 {
     SetMap(map);
     Object::_Create(guidlow, 0, HIGHGUID_CORPSE);
     return true;
 }
 
-bool Corpse::Create( uint32 guidlow, Player *owner)
+bool Corpse::Create(uint32 guidlow, Player *owner)
 {
     ASSERT(owner);
 
     Relocate(owner->GetPositionX(), owner->GetPositionY(), owner->GetPositionZ(), owner->GetOrientation());
 
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("Corpse (guidlow %d, owner %s) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
             guidlow, owner->GetName(), owner->GetPositionX(), owner->GetPositionY());
@@ -94,8 +94,8 @@ bool Corpse::Create( uint32 guidlow, Player *owner)
 
     WorldObject::_Create(guidlow, HIGHGUID_CORPSE, owner->GetPhaseMask());
 
-    SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );
-    SetUInt64Value( CORPSE_FIELD_OWNER, owner->GetGUID() );
+    SetFloatValue(OBJECT_FIELD_SCALE_X, 1);
+    SetUInt64Value(CORPSE_FIELD_OWNER, owner->GetGUID());
 
     m_grid = Trinity::ComputeGridPair(GetPositionX(), GetPositionY());
 
@@ -118,14 +118,14 @@ void Corpse::SaveToDB()
         << GetOrientation() << ", "
         << GetZoneId() << ", "
         << GetMapId() << ", '";
-    for (uint16 i = 0; i < m_valuesCount; ++i )
+    for (uint16 i = 0; i < m_valuesCount; ++i)
         ss << GetUInt32Value(i) << " ";
     ss  << "',"
         << uint64(m_time) <<", "
         << uint32(GetType()) << ", "
         << int(GetInstanceId()) << ", "
         << uint16(GetPhaseMask()) << ")";           // prevent out of range error
-    CharacterDatabase.Execute( ss.str().c_str() );
+    CharacterDatabase.Execute(ss.str().c_str());
     CharacterDatabase.CommitTransaction();
 }
 
@@ -145,7 +145,7 @@ void Corpse::DeleteBonesFromWorld()
 
 void Corpse::DeleteFromDB()
 {
-    if(GetType() == CORPSE_BONES)
+    if (GetType() == CORPSE_BONES)
         // only specific bones
         CharacterDatabase.PExecute("DELETE FROM corpse WHERE guid = '%d'", GetGUIDLow());
     else
@@ -161,7 +161,7 @@ bool Corpse::LoadFromDB(uint32 guid, QueryResult *result, uint32 InstanceId)
         //                                        0          1          2          3           4   5    6    7           8        9
         result = CharacterDatabase.PQuery("SELECT position_x,position_y,position_z,orientation,map,data,time,corpse_type,instance,phaseMask FROM corpse WHERE guid = '%u'",guid);
 
-    if( !result )
+    if (!result)
     {
         sLog.outError("Corpse (GUID: %u) not found in table `corpse`, can't load. ",guid);
         return false;
@@ -169,7 +169,7 @@ bool Corpse::LoadFromDB(uint32 guid, QueryResult *result, uint32 InstanceId)
 
     Field *fields = result->Fetch();
 
-    if(!LoadFromDB(guid, fields))
+    if (!LoadFromDB(guid, fields))
     {
         if (!external)
             delete result;
@@ -193,7 +193,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
 
     Object::_Create(guid, 0, HIGHGUID_CORPSE);
 
-    if(!LoadValues( fields[5].GetString() ))
+    if (!LoadValues(fields[5].GetString()))
     {
         sLog.outError("Corpse #%d have broken data in `data` field. Can't be loaded.",guid);
         return false;
@@ -202,13 +202,13 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
     m_time = time_t(fields[6].GetUInt64());
     m_type = CorpseType(fields[7].GetUInt32());
 
-    if(m_type >= MAX_CORPSE_TYPE)
+    if (m_type >= MAX_CORPSE_TYPE)
     {
         sLog.outError("Corpse (guidlow %d, owner %d) have wrong corpse type, not load.",GetGUIDLow(),GUID_LOPART(GetOwnerGUID()));
         return false;
     }
 
-    if(m_type != CORPSE_BONES)
+    if (m_type != CORPSE_BONES)
         m_isWorldObject = true;
 
     uint32 instanceid  = fields[8].GetUInt32();
@@ -224,7 +224,7 @@ bool Corpse::LoadFromDB(uint32 guid, Field *fields)
     SetPhaseMask(phaseMask, false);
     Relocate(positionX, positionY, positionZ, ort);
 
-    if(!IsPositionValid())
+    if (!IsPositionValid())
     {
         sLog.outError("Corpse (guidlow %d, owner %d) not created. Suggested coordinates isn't valid (X: %f Y: %f)",
             GetGUIDLow(), GUID_LOPART(GetOwnerGUID()), GetPositionX(), GetPositionY());

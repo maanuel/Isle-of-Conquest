@@ -140,7 +140,7 @@ struct boss_najentusAI : public ScriptedAI
 
         events.Update(diff);
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {
@@ -175,7 +175,7 @@ struct boss_najentusAI : public ScriptedAI
                     //DoCast(m_creature, SPELL_NEEDLE_SPINE, true);
                     std::list<Unit*> pTargets;
                     SelectTargetList(pTargets, 3, SELECT_TARGET_RANDOM, 80, true);
-                    for (std::list<Unit*>::iterator i = pTargets.begin(); i != pTargets.end(); ++i)
+                    for (std::list<Unit*>::const_iterator i = pTargets.begin(); i != pTargets.end(); ++i)
                         DoCast(*i, 39835, true);
                     events.ScheduleEvent(EVENT_NEEDLE, urand(15000,25000), GCD_CAST);
                     events.DelayEvents(1500, GCD_CAST);

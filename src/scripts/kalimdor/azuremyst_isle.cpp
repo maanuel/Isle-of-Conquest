@@ -42,15 +42,15 @@ EndContentData */
 
 enum eEnums
 {
-    SAY_HEAL1           = -1000248,
-    SAY_HEAL2           = -1000249,
-    SAY_HEAL3           = -1000250,
-    SAY_HEAL4           = -1000251,
+    SAY_HEAL1           = -1000176,
+    SAY_HEAL2           = -1000177,
+    SAY_HEAL3           = -1000178,
+    SAY_HEAL4           = -1000179,
 
-    SAY_HELP1           = -1000252,
-    SAY_HELP2           = -1000253,
-    SAY_HELP3           = -1000254,
-    SAY_HELP4           = -1000255,
+    SAY_HELP1           = -1000180,
+    SAY_HELP2           = -1000181,
+    SAY_HELP3           = -1000182,
+    SAY_HELP4           = -1000183,
 
     SPELL_IRRIDATION    = 35046,
     SPELL_STUNNED       = 28630
@@ -168,9 +168,9 @@ CreatureAI* GetAI_npc_draenei_survivor(Creature* pCreature)
 
 enum eOvergrind
 {
-    SAY_TEXT        = -1000256,
-    SAY_EMOTE       = -1000257,
-    ATTACK_YELL     = -1000258,
+    SAY_TEXT        = -1000184,
+    SAY_EMOTE       = -1000185,
+    ATTACK_YELL     = -1000186,
 
     AREA_COVE       = 3579,
     AREA_ISLE       = 3639,
@@ -488,10 +488,10 @@ struct npc_geezleAI : public ScriptedAI
         Trinity::PlayerListSearcher<Trinity::AnyPlayerInObjectRangeCheck> searcher(m_creature, players, checker);
         m_creature->VisitNearbyWorldObject(radius, searcher);
 
-        for (std::list<Player*>::iterator itr = players.begin(); itr != players.end(); ++itr)
+        for (std::list<Player*>::const_iterator itr = players.begin(); itr != players.end(); ++itr)
         {
-            if((*itr)->GetQuestStatus(QUEST_TREES_COMPANY)==QUEST_STATUS_INCOMPLETE
-                &&(*itr)->HasAura(SPELL_TREE_DISGUISE) )
+            if ((*itr)->GetQuestStatus(QUEST_TREES_COMPANY) == QUEST_STATUS_INCOMPLETE
+                &&(*itr)->HasAura(SPELL_TREE_DISGUISE))
             {
                 (*itr)->KilledMonsterCredit(MOB_SPARK,0);
             }
@@ -505,7 +505,7 @@ struct npc_geezleAI : public ScriptedAI
 
         if (!FlagList.empty())
         {
-            for (std::list<GameObject*>::iterator itr = FlagList.begin(); itr != FlagList.end(); ++itr)
+            for (std::list<GameObject*>::const_iterator itr = FlagList.begin(); itr != FlagList.end(); ++itr)
             {
                 if (despawn)
                 {
@@ -613,9 +613,9 @@ enum eRavegerCage
 bool go_ravager_cage(Player* pPlayer, GameObject* pGo)
 {
 
-    if(pPlayer->GetQuestStatus(QUEST_STRENGTH_ONE) == QUEST_STATUS_INCOMPLETE)
+    if (pPlayer->GetQuestStatus(QUEST_STRENGTH_ONE) == QUEST_STATUS_INCOMPLETE)
     {
-        if(Creature* ravager = pGo->FindNearestCreature(NPC_DEATH_RAVAGER, 5.0f, true))
+        if (Creature* ravager = pGo->FindNearestCreature(NPC_DEATH_RAVAGER, 5.0f, true))
         {
             ravager->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NON_ATTACKABLE);
             ravager->SetReactState(REACT_AGGRESSIVE);
@@ -646,14 +646,14 @@ struct npc_death_ravagerAI : public ScriptedAI
         if (!UpdateVictim())
             return;
 
-        if(RendTimer <= diff)
+        if (RendTimer <= diff)
         {
             DoCast(m_creature->getVictim(), SPELL_REND);
             RendTimer = 30000;
         }
         else RendTimer -= diff;
 
-        if(EnragingBiteTimer <= diff)
+        if (EnragingBiteTimer <= diff)
         {
             DoCast(m_creature->getVictim(), SPELL_ENRAGING_BITE);
             EnragingBiteTimer = 15000;

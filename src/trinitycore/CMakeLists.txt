@@ -13,6 +13,17 @@ WorldRunnable.cpp
 WorldRunnable.h
 )
 
+include_directories(
+  ${ACE_INCLUDE_DIR}
+  ${CMAKE_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/dep/include
+  ${CMAKE_SOURCE_DIR}/src/shared
+  ${CMAKE_SOURCE_DIR}/src/shared/Database
+  ${CMAKE_SOURCE_DIR}/src/framework
+  ${CMAKE_SOURCE_DIR}/src/game
+  ${MYSQL_INCLUDE_DIR}
+)
+
 SET(trinity-core_LINK_FLAGS "")
 
 add_executable(trinity-core ${trinity-core_SRCS})

@@ -176,7 +176,7 @@ struct boss_taldaramAI : public ScriptedAI
                     break;
                 case VANISHED:
                     if (Unit *pEmbraceTarget = GetEmbraceTarget())
-                        DoCast(pEmbraceTarget, DUNGEON_MODE(SPELL_EMBRACE_OF_THE_VAMPYR, H_SPELL_EMBRACE_OF_THE_VAMPYR));
+                        DoCast(pEmbraceTarget, SPELL_EMBRACE_OF_THE_VAMPYR);
                     m_creature->GetMotionMaster()->Clear();
                     m_creature->SetSpeed(MOVE_WALK, 1.0f, true);
                     m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim());
@@ -209,7 +209,7 @@ struct boss_taldaramAI : public ScriptedAI
                         Unit *pTarget = NULL;
                         std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
                         std::vector<Unit *> target_list;
-                        for (std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+                        for (std::list<HostileReference *>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                         {
                             pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                             // exclude pets & totems
@@ -226,7 +226,7 @@ struct boss_taldaramAI : public ScriptedAI
                             uiPhaseTimer = 500;
                             if (Unit* pEmbraceTarget = SelectTarget(SELECT_TARGET_RANDOM, 0, 100, true))
                                 uiEmbraceTarget = pEmbraceTarget->GetGUID();
-                            
+
                         }
                         uiVanishTimer = urand(25*IN_MILISECONDS,35*IN_MILISECONDS);
                     } else uiVanishTimer -= diff;
@@ -279,7 +279,7 @@ struct boss_taldaramAI : public ScriptedAI
 
     bool CheckSpheres()
     {
-        if(!pInstance)
+        if (!pInstance)
             return false;
 
         uint64 uiSphereGuids[2];
@@ -308,7 +308,7 @@ struct boss_taldaramAI : public ScriptedAI
 
     void RemovePrison()
     {
-        if(!pInstance)
+        if (!pInstance)
             return;
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
         m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
@@ -338,7 +338,7 @@ struct mob_taldaram_flamesphereAI : public ScriptedAI
         m_creature->SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
         DoCast(m_creature, SPELL_FLAME_SPHERE_VISUAL);
         DoCast(m_creature, SPELL_FLAME_SPHERE_SPAWN_EFFECT);
-        DoCast(m_creature, DUNGEON_MODE(SPELL_FLAME_SPHERE_PERIODIC, H_SPELL_FLAME_SPHERE_PERIODIC));
+        DoCast(m_creature, SPELL_FLAME_SPHERE_PERIODIC);
         uiDespawnTimer = 10*IN_MILISECONDS;
     }
 

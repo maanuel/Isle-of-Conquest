@@ -5118,12 +5118,6 @@ CREATE TABLE `spell_dbc` (
   `EffectDieSides1` int(11) NOT NULL DEFAULT '0',
   `EffectDieSides2` int(11) NOT NULL DEFAULT '0',
   `EffectDieSides3` int(11) NOT NULL DEFAULT '0',
-  `EffectBaseDice1` int(11) NOT NULL DEFAULT '0',
-  `EffectBaseDice2` int(11) NOT NULL DEFAULT '0',
-  `EffectBaseDice3` int(11) NOT NULL DEFAULT '0',
-  `EffectDicePerLevel1` float NOT NULL DEFAULT '0',
-  `EffectDicePerLevel2` float NOT NULL DEFAULT '0',
-  `EffectDicePerLevel3` float NOT NULL DEFAULT '0',
   `EffectRealPointsPerLevel1` float NOT NULL DEFAULT '0',
   `EffectRealPointsPerLevel2` float NOT NULL DEFAULT '0',
   `EffectRealPointsPerLevel3` float NOT NULL DEFAULT '0',
@@ -5206,7 +5200,15 @@ INSERT INTO `spell_dbc` (`Id`,`Dispel`,`Mechanic`,`Attributes`,`AttributesEx`,`A
 (68496,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Item_template serverside spell'),
 (72958,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Item_template serverside spell'),
 (32780,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 10040 reward serverside spell'),
-(45453,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11587 reward serverside spell');
+(45453,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11587 reward serverside spell'),
+(25347,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Item_template serverside spell'),
+(45315,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11566 reward serverside spell'),
+(43236,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11288 reward serverside spell'),
+(43459,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11332 reward serverside spell'),
+(43499,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11250 reward serverside spell'),
+(44275,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 11432 reward serverside spell'),
+(64689,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 13854 and 13862 reward serverside spell'),
+(50574,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'Quest 12597 reward serverside spell');
 /*!40000 ALTER TABLE `spell_dbc` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5547,8 +5549,201 @@ INSERT INTO `spell_group` (`id`, `spell_id`) VALUES
 (1010, -1008),
 (1010, -1009),
 -- Commanding shout, Battle Shout
-(1011, 469),
-(1011, -1003);
+(1011,-1083),
+(1011, -1003),
+-- Armor Debuff (Major)
+(1012,55749), -- Acid Spit
+(1013,8647), -- Exposed Armor
+(1014,7386), -- sunder Armor
+-- Armor Debuff (Minor)
+(1016,770), -- Faerie Fire
+(1016,16857), -- Faerie Fire
+(1017,56626), -- Sting
+(1018,16231), -- Curse of Recklessness
+-- Melee Haste Buff
+(1020,55610), -- Improved Icy Talons
+(1021,8515), -- windfury totem
+-- Melee Critical Strike Chance Buff
+(1023,17007), -- Leader of the Pack
+(1024,29801), -- Rampage
+-- Attack Power Buff (Multiplier)
+(1026,53137), -- Abomination's Might
+(1027,19506), -- Trueshot Aura
+(1028,30802), -- Unleashed Rage
+-- Bleed Damage Increase Debuff
+(1030,33878), -- Mangle (Bear)
+(1031,33876), -- Mangle (Cat)
+(1032,46854), -- Trauma
+-- Spell Critical Strike Chance Buff
+(1034,24907), -- moonkng aura
+(1035,51466), -- elemental oath
+-- Spell Critical Strike Chance Debuff
+(1037,11095), -- improved scorch
+(1038,11180), -- Winter's Chill
+-- Increased Spell Damage Taken Debuff
+(1040,51099), -- Ebon Plaguebringer
+(1041,48506), -- Earth and Moon
+(1042,1490), -- Curse of the Elements
+-- Increased Spell Power Buff
+(1044,54646), -- Focus Magic
+(1045,52109), -- Flametongue Totem
+(1046,63283), -- Totem of Wrath
+(1046,57658), -- Totem of Wrath
+(1046,57660), -- Totem of Wrath
+(1046,57662), -- Totem of Wrath
+(1046,57663), -- Totem of Wrath
+(1046,30708), -- Totem of Wrath
+(1047,53646), -- Demonic Pact
+-- Increased Spell Hit Chance Taken Debuff
+(1049,33600), --  Improved Faerie Fire
+(1050,33191), -- Misery
+-- Percentage Haste Increase (All Types)
+(1052,48384), -- Improved Moonkin Form
+(1053,53379), -- Swift Retribution
+-- Percentage Damage Increase
+(1055,34455), -- Ferocious Inspiration
+(1056,31869), -- Sanctified Retribution
+-- Critical Strike Chance Taken Debuff (All types)
+(1058,20335), -- Heart of the Crusader
+-- totem of wrath  1046 CHECK IT!
+-- Melee Attack Speed Slow Debuff
+(1060,45477), -- Icy Touch
+(1061,48483), -- Infected Wounds
+(1062,53695), -- Judgements of the Just
+(1063,6343), -- Thunder Clap
+-- Melee Hit Chance Reduction Debuff
+(1066,5570), -- Insect Swarm
+(1067,3043), -- Scorpid Sting
+-- Healing Debuff
+(1070,13218), -- Wound Posion
+(1071,19434), -- Aimed Shot
+(1072,12294), -- Mortal Strike
+(1073,46910), -- Furious Attacks
+-- Attack Power Debuff
+(1076,99), -- Demoralizing Roar
+(1077,702), -- Curse of Weakness
+(1078,1160), -- Demoralizing Shout
+-- Agility and Strength Buff
+(1080,8076), -- Strength of Earth
+(1081,57330), -- Horn of Winter
+-- Health Buff
+(1083,469), -- Commanding Shout
+(1084,6307), -- Blood Pact
+-- Intellect Buff
+(1086,1459), -- Arcane Intellect
+(1104,23028), -- Arcane Brilliance
+(1087,54424), -- Fel Intelligence
+-- Spirit Buff
+-- fel intelegencegoes here
+(1105,14752), -- Divine Spirit
+(1106,27681), -- Prayer of Spirit
+-- Damage Reduction Percentage Buff
+(1091,47930), -- Grace
+(1092,20911), -- Blessing of Sanctuary
+-- Percentage Increase Healing Received Buff
+(1094,34123), -- tree of life aura
+(1095,20138), -- Improved Devotion Aura
+-- Armor Increase Percentage Buff
+(1097,14892), -- Inspiration
+(1098,16176), -- Ancestral Healing
+-- Cast Speed Slow
+(1100,1714), -- Curse of Tongues
+(1101,31589), -- Slow
+(1102,5760), -- Mind-numbing Poison
+-- Armor Debuff (Major)
+(1015,-1012),
+(1015,-1013),
+(1015,-1014),
+-- Armor Debuff (Minor)
+(1019,-1016),
+(1019,-1017),
+(1019,-1018),
+-- Melee Haste Buff
+(1022,-1020),
+(1022,-1021),
+-- Melee Critical Strike Chance Buff
+(1025,-1023),
+(1025,-1024),
+-- Attack Power Buff (Multiplier)
+(1029,-1026),
+(1029,-1027),
+(1029,-1028),
+-- Bleed Damage Increase Debuff
+(1033,-1030),
+(1033,-1031),
+(1033,-1032),
+-- Spell Critical Strike Chance Buff
+(1036,-1034),
+(1036,-1035),
+-- Spell Critical Strike Chance Debuff
+(1039,-1037),
+(1039,-1038),
+-- Increased Spell Damage Taken Debuff
+(1043,-1040),
+(1043,-1041),
+(1043,-1042),
+-- Increased Spell Power Buff
+(1048,-1044),
+(1048,-1045),
+(1048,-1046),
+(1048,-1047),
+-- Increased Spell Hit Chance Taken Debuff
+(1051,-1049),
+(1051,-1050),
+-- Percentage Haste Increase (All Types)
+(1054,-1052),
+(1054,-1053),
+-- Percentage Damage Increase
+(1057,-1055),
+(1057,-1056),
+-- Critical Strike Chance Taken Debuff (All types)
+(1059,-1058),
+(1059,-1046),
+-- Melee Attack Speed Slow Debuff
+(1064,-1060),
+(1064,-1061),
+(1064,-1062),
+(1064,-1063),
+-- Melee Hit Chance Reduction Debuff
+(1068,-1066),
+(1068,-1067),
+-- Healing Debuff
+(1074,-1070),
+(1074,-1071),
+(1074,-1072),
+(1074,-1073),
+-- Attack Power Debuff
+(1079,-1076),
+(1079,-1077),
+(1079,-1078),
+-- Agility and Strength Buff
+(1082,-1080),
+(1082,-1081),
+-- Health Buff
+(1085,-1083),
+(1085,-1084),
+-- Intellect Buff
+(1088,-1086),
+(1088,-1104),
+(1088,-1087),
+-- Spirit Buff
+(1090,-1087),
+(1090,-1105),
+(1090,-1106),
+-- Damage Reduction Percentage Buff
+(1093,-1091),
+(1093,-1092),
+-- Percentage Increase Healing Received Buff
+(1096,-1094),
+(1096,-1095),
+-- Armor Increase Percentage Buff
+(1099,-1097),
+(1099,-1098),
+-- Cast Speed Slow
+(1103,-1100),
+(1103,-1001),
+(1103,-1002);
+
 /*!40000 ALTER TABLE `spell_group` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5779,8 +5974,6 @@ INSERT INTO `spell_linked_spell` (`spell_trigger`,`spell_effect`,`type`,`comment
 ( 34471, 24397, 2, 'The Beast Within'),
 ( 34471, 26592, 2, 'The Beast Within'),
 (-59907,     7, 0, 'Lightwell Charges - Suicide'),
-( 26022, 61417, 2, 'Pursuit of Justice'),
-( 26023, 61418, 2, 'Pursuit of Justice'),
 ( 19263, 67801, 2, 'Deterrence'),
 -- Quest
 ( 40214, 40216, 2, 'Dragonmaw Illusion'),
@@ -6219,7 +6412,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 29635, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   3,   0,   0), -- Flaming Shell
 ( 29636, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   3,   0,   0), -- Venom Shot
 ( 29637, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   3,   0,   0), -- Keeper's Sting
-( 29801, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Rampage (Rank 1)
 ( 29834, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Second Wind (Rank 1)
 ( 29838, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Second Wind (Rank 2)
 ( 29977, 0x00,   3, 0x00C00017, 0x00000040, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Combustion
@@ -6236,12 +6428,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 30679, 0x00,  11, 0x00000003, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Lightning Overload (Rank 3)
 ( 30701, 0x1C,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Elemental Absorption (Rank 1)
 ( 30705, 0x1C,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Elemental Absorption (Rank 5)
-( 30802, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 1)
-( 30803, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 1)
-( 30804, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 2)
-( 30805, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 3)
-( 30808, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 2)
-( 30809, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Unleashed Rage (Rank 3)
 ( 30823, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 10.,   0,   0), -- Shamanistic Rage
 ( 30881, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   5), -- Nature's Guardian (Rank 1)
 ( 30883, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   5), -- Nature's Guardian (Rank 2)
@@ -6298,8 +6484,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 33150, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Surge of Light (Rank 1)
 ( 33151, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Surge of Light (Rank 1)
 ( 33154, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Surge of Light (Rank 2)
-( 33174, 0x00,   6, 0x00000020, 0x00000000, 0x00000000, 0x00004000, 0x00000000,   0,   0,   0), -- Improved Divine Spirit (Rank 1)
-( 33182, 0x00,   6, 0x00000020, 0x00000000, 0x00000000, 0x00004000, 0x00000000,   0,   0,   0), -- Improved Divine Spirit (Rank 2)
 ( 33191, 0x00,   6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Misery (Rank 1)
 ( 33192, 0x00,   6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Misery (Rank 2)
 ( 33193, 0x00,   6, 0x00808000, 0x00000400, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Misery (Rank 3)
@@ -6324,7 +6508,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 34262, 0x00,  10, 0x00800000, 0x00000000, 0x00000000, 0x00000000, 0x00040000,   0,   0,   0), -- Mercy
 ( 34320, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,  45), -- Call of the Nexus
 ( 34355, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   3), -- Poison Shield
-( 34457, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Ferocious Inspiration (Rank 1)
 ( 34497, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Thrill of the Hunt (Rank 1)
 ( 34498, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Thrill of the Hunt (Rank 2)
 ( 34499, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Thrill of the Hunt (Rank 3)
@@ -6451,9 +6634,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 43748, 0x00,  11, 0x90100000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Elemental Strength
 ( 43750, 0x00,  11, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Energized
 ( 43819, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Lucidity
-( 44394, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000400,   0,   0,   0), -- Incanter's Absorption (Rank 1)
-( 44395, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000400,   0,   0,   0), -- Incanter's Absorption (Rank 2)
-( 44396, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000400,   0,   0,   0), -- Incanter's Absorption (Rank 3)
 ( 44404, 0x00,   3, 0x20000021, 0x00009000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Missile Barrage (Rank 1)
 ( 44442, 0x00,   3, 0x00800000, 0x00000040, 0x00000000, 0x00000000, 0x00010000,   0,   0,   1), -- Firestarter (Rank 1)
 ( 44443, 0x00,   3, 0x00800000, 0x00000040, 0x00000000, 0x00000000, 0x00010000,   0,   0,   1), -- Firestarter (Rank 2)
@@ -6589,8 +6769,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 51352, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,  10), -- Venture Company Beatdown!
 ( 51359, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,  10), -- Venture Company Beatdown
 ( 51414, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,  45), -- Venomous Breath Aura
-( 51466, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Elemental Oath (Rank 1)
-( 51470, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Elemental Oath (Rank 2)
 ( 51474, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Astral Shift (Rank 1)
 ( 51478, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Astral Shift (Rank 2)
 ( 51479, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00010000,   0,   0,   0), -- Astral Shift (Rank 3)
@@ -6657,8 +6835,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 52799, 0x00,   6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Borrowed Time (Rank 4)
 ( 52800, 0x00,   6, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Borrowed Time (Rank 5)
 ( 52898, 0x00,   0, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000002,   0,   0,   0), -- Spell Damping
-( 53137, 0x00,  15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Abomination's Might (Rank 1)
-( 53138, 0x00,  15, 0x01400000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Abomination's Might (Rank 2)
 ( 53215, 0x00,   9, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Wild Quiver (Rank 1)
 ( 53216, 0x00,   9, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Wild Quiver (Rank 2)
 ( 53217, 0x00,   9, 0x00000001, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Wild Quiver (Rank 3)
@@ -6899,8 +7075,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 49217, 0x00,  15, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000,   0,   0,   1), -- Wandering Plague
 ( 49654, 0x00,  15, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000,   0,   0,   1), -- Wandering Plague
 ( 49655, 0x00,  15, 0x00000000, 0x00000000, 0x00000002, 0x00000000, 0x00000000,   0,   0,   1), -- Wandering Plague
-( 49137, 0x00,  15, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Endless Winter
-( 49657, 0x00,  15, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Endless Winter
 ( 58620, 0x00,  15, 0x00000004, 0x00000000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Glyph of Chains of Ice
 ( 56342, 0x00,   9, 0x00000018, 0x08000000, 0x00024000, 0x00000000, 0x00000000,   0,   0,   0), -- Lock and Load
 ( 56343, 0x00,   9, 0x00000018, 0x08000000, 0x00024000, 0x00000000, 0x00000000,   0,   0,   0), -- Lock and Load
@@ -6918,8 +7092,6 @@ INSERT INTO `spell_proc_event` (`entry`,`SchoolMask`,`SpellFamilyName`,`SpellFam
 ( 54639, 0x00,  15, 0x00400000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Blood of the north
 ( 54638, 0x00,  15, 0x00400000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Blood of the north
 ( 54637, 0x00,  15, 0x00400000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Blood of the north
-( 61433, 0x00,  15, 0x00400000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Blood of the north
-( 61434, 0x00,  15, 0x00400000, 0x00010000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Blood of the north
 ( 49467, 0x00,  15, 0x00000010, 0x00020000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Death Rune Mastery
 ( 50033, 0x00,  15, 0x00000010, 0x00020000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Death Rune Mastery
 ( 50034, 0x00,  15, 0x00000010, 0x00020000, 0x00000000, 0x00000000, 0x00000000,   0,   0,   0), -- Death Rune Mastery
@@ -7052,7 +7224,35 @@ INSERT INTO spell_group_stack_rules (`group_id`, `stack_rule`) VALUES
 (1008, 1),
 (1009, 1),
 (1010, 2),
-(1011, 2);
+(1011, 2),
+(1015,1),
+(1016,1),
+(1019,1),
+(1022,1),
+(1025,1),
+(1029,1),
+(1033,1),
+(1036,1),
+(1043,1),
+(1048,1),
+(1051,1),
+(1054,1),
+(1057,1),
+(1059,1),
+(1064,1),
+(1068,1),
+(1074,1),
+(1079,1),
+(1082,1),
+(1085,1),
+(1088,1),
+(1090,1),
+(1093,1),
+(1096,1),
+(1099,1),
+(1103,1),
+(1046,1);
+
 /*!40000 ALTER TABLE `spell_group_stack_rules` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -9824,9 +10024,6 @@ INSERT INTO spell_ranks (`first_spell_id`, `spell_id`, `rank`) VALUES
  -- Improved Disciplines
 (12312, 12312, 1),
 (12312, 12803, 2),
- -- Improved Divine Spirit
-(33174, 33174, 1),
-(33174, 33182, 2),
  -- Improved Drain Soul
 (18213, 18213, 1),
 (18213, 18372, 2),
@@ -11201,9 +11398,6 @@ INSERT INTO spell_ranks (`first_spell_id`, `spell_id`, `rank`) VALUES
  -- Purifying Power
 (31825, 31825, 1),
 (31825, 31826, 2),
- -- Pursuit of Justice
-(61417, 61417, 1),
-(61417, 61418, 2),
  -- Pursuit of Justice
 (26022, 26022, 1),
 (26022, 26023, 2),
@@ -13398,10 +13592,6 @@ INSERT INTO spell_ranks (`first_spell_id`, `spell_id`, `rank`) VALUES
 (30802, 30802, 1),
 (30802, 30808, 2),
 (30802, 30809, 3),
- -- Unleashed Rage
-(30803, 30803, 1),
-(30803, 30804, 2),
-(30803, 30805, 3),
  -- Vindication
 (9452, 9452, 1),
 (9452, 26016, 2),
@@ -13437,8 +13627,6 @@ INSERT INTO spell_ranks (`first_spell_id`, `spell_id`, `rank`) VALUES
 (19386, 27068, 4),
 (19386, 49011, 5),
 (19386, 49012, 6),
- -- Arantir's Deception
-(9736, 9736, 1),
  -- First Aid
 (746, 746, 1),
 (746, 1159, 2),
@@ -13514,8 +13702,6 @@ INSERT INTO spell_ranks (`first_spell_id`, `spell_id`, `rank`) VALUES
 (8072, 25507, 8),
 (8072, 58752, 9),
 (8072, 58754, 10),
- -- Ashcrombe's Teleport
-(15742, 15742, 1),
  -- Attack
 (3606, 3606, 1),
 (3606, 6350, 2),
@@ -13987,6 +14173,35 @@ LOCK TABLES `spell_threat` WRITE;
 /*!40000 ALTER TABLE `spell_threat` DISABLE KEYS */;
 INSERT INTO `spell_threat` VALUES (78,20),(284,39),(285,59),(770,108),(1608,78),(1672,180),(1715,61),(6572,155),(6574,195),(6809,89),(7372,101),(7373,141),(7379,235),(7386,100),(7405,140),(8380,180),(8972,118),(9745,148),(9880,178),(9881,207),(11556,43),(11564,98),(11565,118),(11566,137),(11567,145),(11596,220),(11597,261),(11600,275),(11601,315),(11775,395),(14921,415),(17735,200),(17750,300),(17751,450),(17752,600),(20736,100),(23922,160),(23923,190),(23924,220),(23925,250),(24394,580),(24583,5),(25286,175),(25288,355),(25289,60),(20243,101),(30016,101),(30022,101),(29707,196),(30324,220),(26996,176),(25258,286),(30356,323),(25269,400),(30357,483),(29704,230),(25225,300),(20569,100),(25231,130),(33745,285),(16857,108),(6343,17),(8198,40),(8204,64),(8205,96),(11580,143),(11581,180),(25264,215),(33878,129),(33986,180),(33987,232),(20925,20),(20927,30),(20928,40),(27179,54),(2139,300);
 /*!40000 ALTER TABLE `spell_threat` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `spell_difficulty_dbc`
+--
+
+DROP TABLE IF EXISTS `spelldifficulty_dbc`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `spelldifficulty_dbc` (
+  `id` int(11) unsigned NOT NULL DEFAULT '0',
+  `spellid0` int(11) unsigned NOT NULL DEFAULT '0',
+  `spellid1` int(11) unsigned NOT NULL DEFAULT '0',
+  `spellid2` int(11) unsigned NOT NULL DEFAULT '0',
+  `spellid3` int(11) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `spell_difficulty_dbc`
+--
+
+LOCK TABLES `spell_difficulty_dbc` WRITE;
+/*!40000 ALTER TABLE `spell_difficulty_dbc` DISABLE KEYS */;
+INSERT INTO `spell_difficulty_dbc` VALUES 
+(3000,47772,56935,0,0), -- Magus Telestra - Ice Nova
+(3001,47773,56934,0,0); -- Magus Telestra - Fire Bomb
+/*!40000 ALTER TABLE `spell_difficulty_dbc` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

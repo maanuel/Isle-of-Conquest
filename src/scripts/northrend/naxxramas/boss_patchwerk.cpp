@@ -43,7 +43,7 @@ enum Events
     EVENT_HATEFUL,
     EVENT_SLIME
 };
- 
+
 #define ACHIEVEMENT_MAKE_QUICK_WERK_OF_HIM  RAID_MODE(1856, 1857)
 #define MAX_ENCOUNTER_TIME                    3 * 60 * 1000
 
@@ -66,13 +66,13 @@ struct boss_patchwerkAI : public BossAI
         _JustDied();
         DoScriptText(SAY_DEATH, me);
 
-        if(EncounterTime <= MAX_ENCOUNTER_TIME)
+        if (EncounterTime <= MAX_ENCOUNTER_TIME)
         {
             AchievementEntry const *AchievMakeQuickWerkOfHim = GetAchievementStore()->LookupEntry(ACHIEVEMENT_MAKE_QUICK_WERK_OF_HIM);
-            if(AchievMakeQuickWerkOfHim)
+            if (AchievMakeQuickWerkOfHim)
             {
                 Map *pMap = m_creature->GetMap();
-                if(pMap && pMap->IsDungeon())
+                if (pMap && pMap->IsDungeon())
                 {
                     Map::PlayerList const &players = pMap->GetPlayers();
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
@@ -101,7 +101,7 @@ struct boss_patchwerkAI : public BossAI
 
         EncounterTime += diff;
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {
@@ -111,7 +111,7 @@ struct boss_patchwerkAI : public BossAI
                     //amount of HP within melee distance
                     uint32 MostHP = 0;
                     Unit* pMostHPTarget = NULL;
-                    std::list<HostileReference*>::iterator i = me->getThreatManager().getThreatList().begin();
+                    std::list<HostileReference*>::const_iterator i = me->getThreatManager().getThreatList().begin();
                     for (; i != me->getThreatManager().getThreatList().end(); ++i)
                     {
                         Unit *pTarget = (*i)->getTarget();

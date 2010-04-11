@@ -94,7 +94,7 @@ struct boss_midnightAI : public ScriptedAI
             if (Unit *pAttumen = Unit::GetUnit(*m_creature, Attumen))
                 Mount(pAttumen);
         }
-        else if (Phase ==3)
+        else if (Phase == 3)
         {
             if (Mount_Timer)
             {
@@ -246,7 +246,7 @@ struct boss_attumenAI : public ScriptedAI
                 Unit *pTarget;
                 std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
                 std::vector<Unit *> target_list;
-                for (std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+                for (std::list<HostileReference *>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                     if (pTarget && !pTarget->IsWithinDist(m_creature, ATTACK_DISTANCE, false))

@@ -440,7 +440,7 @@ struct boss_lady_vashjAI : public ScriptedAI
                 bool InMeleeRange = false;
                 Unit *pTarget;
                 std::list<HostileReference *> t_list = m_creature->getThreatManager().getThreatList();
-                for (std::list<HostileReference *>::iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
+                for (std::list<HostileReference *>::const_iterator itr = t_list.begin(); itr!= t_list.end(); ++itr)
                 {
                     pTarget = Unit::GetUnit(*m_creature, (*itr)->getUnitGuid());
                                                             //if in melee range
@@ -909,7 +909,7 @@ bool ItemUse_item_tainted_core(Player* pPlayer, Item* _Item, SpellCastTargets co
     Vashj = (Unit::GetCreature((*pPlayer), pInstance->GetData64(DATA_LADYVASHJ)));
     if (Vashj && CAST_AI(boss_lady_vashjAI, Vashj->AI())->Phase == 2)
     {
-        if (targets.getGOTarget() && targets.getGOTarget()->GetTypeId()==TYPEID_GAMEOBJECT)
+        if (targets.getGOTarget() && targets.getGOTarget()->GetTypeId() == TYPEID_GAMEOBJECT)
         {
             uint32 identifier;
             uint8 channel_identifier;

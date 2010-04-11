@@ -72,7 +72,7 @@ struct boss_salrammAI : public ScriptedAI
     uint32 uiShadowBoltTimer;
     uint32 uiStealFleshTimer;
     uint32 uiSummonGhoulsTimer;
-    
+
     ScriptedInstance* pInstance;
 
     void Reset()
@@ -82,7 +82,7 @@ struct boss_salrammAI : public ScriptedAI
          uiShadowBoltTimer = urand(8000,12000); // approx 10s
          uiStealFleshTimer = 12345;
          uiSummonGhoulsTimer = urand(19000,24000); //on a video approx 24s after aggro
-         
+
          if (pInstance)
              pInstance->SetData(DATA_SALRAMM_EVENT, NOT_STARTED);
     }
@@ -90,7 +90,7 @@ struct boss_salrammAI : public ScriptedAI
     void EnterCombat(Unit* who)
     {
         DoScriptText(SAY_AGGRO, m_creature);
-        
+
         if (pInstance)
              pInstance->SetData(DATA_SALRAMM_EVENT, IN_PROGRESS);
     }
@@ -112,7 +112,7 @@ struct boss_salrammAI : public ScriptedAI
         if (uiShadowBoltTimer <= diff)
         {
             if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                DoCast(pTarget, DUNGEON_MODE(SPELL_SHADOW_BOLT, H_SPELL_SHADOW_BOLT));
+                DoCast(pTarget, SPELL_SHADOW_BOLT);
             uiShadowBoltTimer = urand(8000,12000);
         } else uiShadowBoltTimer -= diff;
 
@@ -140,7 +140,7 @@ struct boss_salrammAI : public ScriptedAI
     void JustDied(Unit* killer)
     {
         DoScriptText(SAY_DEATH, m_creature);
-        
+
         if (pInstance)
             pInstance->SetData(DATA_SALRAMM_EVENT, DONE);
     }

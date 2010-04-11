@@ -166,7 +166,7 @@ struct boss_algalonAI : public ScriptedAI
         if (m_lCollapsingStarGUIDList.empty())
             return;
 
-        for(std::list<uint64>::iterator itr = m_lCollapsingStarGUIDList.begin(); itr != m_lCollapsingStarGUIDList.end(); ++itr)
+        for (std::list<uint64>::const_iterator itr = m_lCollapsingStarGUIDList.begin(); itr != m_lCollapsingStarGUIDList.end(); ++itr)
         {
             if (Creature* pTemp = Unit::GetCreature(*m_creature, *itr))
             {
@@ -234,24 +234,24 @@ struct boss_algalonAI : public ScriptedAI
                 {
                     switch(uiStep)
                     {
-                        case 1: 
-                            DoScriptText(SAY_SUMMON_1, m_creature); 
+                        case 1:
+                            DoScriptText(SAY_SUMMON_1, m_creature);
                             JumpToNextStep(3000);
-                            break; 
-                        case 2: 
-                            DoScriptText(SAY_SUMMON_2, m_creature); 
+                            break;
+                        case 2:
+                            DoScriptText(SAY_SUMMON_2, m_creature);
                             JumpToNextStep(3000);
-                            break; 
-                        case 3: 
-                            DoScriptText(SAY_SUMMON_3, m_creature); 
+                            break;
+                        case 3:
+                            DoScriptText(SAY_SUMMON_3, m_creature);
                             JumpToNextStep(3000);
-                            break; 
-                        case 4: 
-                            DoScriptText(SAY_ENGADED_FOR_FIRTS_TIME, m_creature); 
+                            break;
+                        case 4:
+                            DoScriptText(SAY_ENGADED_FOR_FIRTS_TIME, m_creature);
                             JumpToNextStep(3000);
-                            break; 
-                        case 5: 
-                            m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE); 
+                            break;
+                        case 5:
+                            m_creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             m_creature->SetReactState(REACT_AGGRESSIVE);
                             Summon = true;
                             break;
@@ -314,7 +314,7 @@ struct boss_algalonAI : public ScriptedAI
         {
             if (Enrage)
             {
-                if (Ascend_Timer  <= diff)
+                if (Ascend_Timer <= diff)
                 {
                     DoCast(m_creature, SPELL_ASCEND);
                     DoScriptText(SAY_BERSERK, m_creature);
@@ -333,7 +333,7 @@ struct mob_collapsing_starAI : public ScriptedAI
 {
     mob_collapsing_starAI(Creature *pCreature) : ScriptedAI(pCreature)
     {
-        pInstance = (ScriptedInstance*)pCreature->GetInstanceData();
+        pInstance = pCreature->GetInstanceData();
     }
 
     ScriptedInstance* pInstance;

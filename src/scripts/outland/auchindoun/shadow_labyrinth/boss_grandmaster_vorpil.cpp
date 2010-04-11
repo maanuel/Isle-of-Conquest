@@ -89,7 +89,7 @@ struct mob_voidtravelerAI : public ScriptedAI
         if (move <= diff)
         {
             Creature *Vorpil = Unit::GetCreature(*m_creature, VorpilGUID);
-            if(!Vorpil)
+            if (!Vorpil)
             {
                 VorpilGUID = 0;
                 return;
@@ -274,7 +274,7 @@ struct boss_grandmaster_vorpilAI : public ScriptedAI
             m_creature->GetMap()->CreatureRelocation(m_creature, VorpilPosition[0],VorpilPosition[1],VorpilPosition[2],0.0f);
             DoCast(m_creature, SPELL_DRAW_SHADOWS, true);
 
-            DoCast(m_creature, DUNGEON_MODE(SPELL_RAIN_OF_FIRE, H_SPELL_RAIN_OF_FIRE));
+            DoCast(m_creature, SPELL_RAIN_OF_FIRE);
 
             ShadowBoltVolley_Timer = 6000;
             DrawShadows_Timer = 30000;

@@ -36,10 +36,10 @@
 
 void WorldSession::SendNameQueryOpcode(Player *p)
 {
-    if(!p)
+    if (!p)
         return;
                                                             // guess size
-    WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10) );
+    WorldPacket data(SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+10));
     data.append(p->GetPackGUID());                          // player guid
     data << uint8(0);                                       // added in 3.1
     data << p->GetName();                                   // played name
@@ -47,7 +47,7 @@ void WorldSession::SendNameQueryOpcode(Player *p)
     data << uint8(p->getRace());
     data << uint8(p->getGender());
     data << uint8(p->getClass());
-    if(DeclinedName const* names = p->GetDeclinedNames())
+    if (DeclinedName const* names = p->GetDeclinedNames())
     {
         data << uint8(1);                                   // is declined
         for (int i = 0; i < MAX_DECLINED_NAME_CASES; ++i)
@@ -79,18 +79,18 @@ void WorldSession::SendNameQueryOpcodeFromDB(uint64 guid)
 
 void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult_AutoPtr result, uint32 accountId)
 {
-    if(!result)
+    if (!result)
         return;
 
     WorldSession * session = sWorld.FindSession(accountId);
-    if(!session)
+    if (!session)
         return;
 
     Field *fields = result->Fetch();
     uint32 guid      = fields[0].GetUInt32();
     std::string name = fields[1].GetCppString();
     uint8 pRace = 0, pGender = 0, pClass = 0;
-    if(name == "")
+    if (name == "")
         name         = session->GetTrinityString(LANG_NON_EXIST_CHARACTER);
     else
     {
@@ -99,7 +99,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult_AutoPtr result,
         pClass       = fields[4].GetUInt8();
     }
                                                             // guess size
-    WorldPacket data( SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+1+10) );
+    WorldPacket data(SMSG_NAME_QUERY_RESPONSE, (8+1+1+1+1+1+1+10));
     data.appendPackGUID(MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
     data << uint8(0);                                       // added in 3.1
     data << name;
@@ -109,7 +109,7 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult_AutoPtr result,
     data << uint8(pClass);                                  // class
 
     // if the first declined name field (5) is empty, the rest must be too
-    if(sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
+    if (sWorld.getConfig(CONFIG_DECLINED_NAMES_USED) && fields[5].GetCppString() != "")
     {
         data << uint8(1);                                   // is declined
         for (int i = 5; i < MAX_DECLINED_NAME_CASES+5; ++i)
@@ -118,10 +118,10 @@ void WorldSession::SendNameQueryOpcodeFromDBCallBack(QueryResult_AutoPtr result,
     else
         data << uint8(0);                                   // is not declined
 
-    session->SendPacket( &data );
+    session->SendPacket(&data);
 }
 
-void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
+void WorldSession::HandleNameQueryOpcode(WorldPacket & recv_data)
 {
     uint64 guid;
 
@@ -135,7 +135,7 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
         SendNameQueryOpcodeFromDB(guid);
 }
 
-void WorldSession::HandleQueryTimeOpcode( WorldPacket & /*recv_data*/ )
+void WorldSession::HandleQueryTimeOpcode(WorldPacket & /*recv_data*/)
 {
     SendQueryTimeResponse();
 }
@@ -149,7 +149,7 @@ void WorldSession::SendQueryTimeResponse()
 }
 
 /// Only _static_ data send in this packet !!!
-void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
+void WorldSession::HandleCreatureQueryOpcode(WorldPacket & recv_data)
 {
     uint32 entry;
     recv_data >> entry;
@@ -178,7 +178,7 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
         }
         sLog.outDetail("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u.", ci->Name, entry);
                                                             // guess size
-        WorldPacket data( SMSG_CREATURE_QUERY_RESPONSE, 100 );
+        WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 100);
         data << uint32(entry);                              // creature entry
         data << Name;
         data << uint8(0) << uint8(0) << uint8(0);           // name2, name3, name4, always empty
@@ -200,22 +200,22 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
         for (uint32 i = 0; i < 6; ++i)
             data << uint32(ci->questItems[i]);              // itemId[6], quest drop
         data << uint32(ci->movementId);                     // CreatureMovementInfo.dbc
-        SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_CREATURE_QUERY_RESPONSE" );
+        SendPacket(&data);
+        sLog.outDebug("WORLD: Sent SMSG_CREATURE_QUERY_RESPONSE");
     }
     else
     {
         sLog.outDebug("WORLD: CMSG_CREATURE_QUERY - NO CREATURE INFO! (GUID: %u, ENTRY: %u)",
             GUID_LOPART(guid), entry);
-        WorldPacket data( SMSG_CREATURE_QUERY_RESPONSE, 4 );
+        WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 4);
         data << uint32(entry | 0x80000000);
-        SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_CREATURE_QUERY_RESPONSE" );
+        SendPacket(&data);
+        sLog.outDebug("WORLD: Sent SMSG_CREATURE_QUERY_RESPONSE");
     }
 }
 
 /// Only _static_ data send in this packet !!!
-void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
+void WorldSession::HandleGameObjectQueryOpcode(WorldPacket & recv_data)
 {
     uint32 entryID;
     recv_data >> entryID;
@@ -223,7 +223,7 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
     recv_data >> guid;
 
     const GameObjectInfo *info = objmgr.GetGameObjectInfo(entryID);
-    if(info)
+    if (info)
     {
         std::string Name;
         std::string IconName;
@@ -246,7 +246,7 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
             }
         }
         sLog.outDetail("WORLD: CMSG_GAMEOBJECT_QUERY '%s' - Entry: %u. ", info->name, entryID);
-        WorldPacket data ( SMSG_GAMEOBJECT_QUERY_RESPONSE, 150 );
+        WorldPacket data (SMSG_GAMEOBJECT_QUERY_RESPONSE, 150);
         data << uint32(entryID);
         data << uint32(info->type);
         data << uint32(info->displayId);
@@ -259,17 +259,17 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
         data << float(info->size);                          // go size
         for (uint32 i = 0; i < 6; ++i)
             data << uint32(info->questItems[i]);              // itemId[6], quest drop
-        SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_GAMEOBJECT_QUERY_RESPONSE" );
+        SendPacket(&data);
+        sLog.outDebug("WORLD: Sent SMSG_GAMEOBJECT_QUERY_RESPONSE");
     }
     else
     {
-        sLog.outDebug(  "WORLD: CMSG_GAMEOBJECT_QUERY - Missing gameobject info for (GUID: %u, ENTRY: %u)",
-            GUID_LOPART(guid), entryID );
-        WorldPacket data ( SMSG_GAMEOBJECT_QUERY_RESPONSE, 4 );
+        sLog.outDebug("WORLD: CMSG_GAMEOBJECT_QUERY - Missing gameobject info for (GUID: %u, ENTRY: %u)",
+            GUID_LOPART(guid), entryID);
+        WorldPacket data (SMSG_GAMEOBJECT_QUERY_RESPONSE, 4);
         data << uint32(entryID | 0x80000000);
-        SendPacket( &data );
-        sLog.outDebug( "WORLD: Sent SMSG_GAMEOBJECT_QUERY_RESPONSE" );
+        SendPacket(&data);
+        sLog.outDebug("WORLD: Sent SMSG_GAMEOBJECT_QUERY_RESPONSE");
     }
 }
 
@@ -279,7 +279,7 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket & /*recv_data*/)
 
     Corpse *corpse = GetPlayer()->GetCorpse();
 
-    if(!corpse)
+    if (!corpse)
     {
         WorldPacket data(MSG_CORPSE_QUERY, 1);
         data << uint8(0);                                   // corpse not found
@@ -294,15 +294,15 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket & /*recv_data*/)
     int32 corpsemapid = mapid;
 
     // if corpse at different map
-    if(mapid != _player->GetMapId())
+    if (mapid != _player->GetMapId())
     {
         // search entrance map for proper show entrance
-        if(MapEntry const* corpseMapEntry = sMapStore.LookupEntry(mapid))
+        if (MapEntry const* corpseMapEntry = sMapStore.LookupEntry(mapid))
         {
-            if(corpseMapEntry->IsDungeon() && corpseMapEntry->entrance_map >= 0)
+            if (corpseMapEntry->IsDungeon() && corpseMapEntry->entrance_map >= 0)
             {
                 // if corpse map have entrance
-                if(Map const* entranceMap = MapManager::Instance().CreateBaseMap(corpseMapEntry->entrance_map))
+                if (Map const* entranceMap = MapManager::Instance().CreateBaseMap(corpseMapEntry->entrance_map))
                 {
                     mapid = corpseMapEntry->entrance_map;
                     x = corpseMapEntry->entrance_x;
@@ -324,7 +324,7 @@ void WorldSession::HandleCorpseQueryOpcode(WorldPacket & /*recv_data*/)
     SendPacket(&data);
 }
 
-void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
+void WorldSession::HandleNpcTextQueryOpcode(WorldPacket & recv_data)
 {
     uint32 textID;
     uint64 guid;
@@ -337,7 +337,7 @@ void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
 
     GossipText const* pGossip = objmgr.GetGossipText(textID);
 
-    WorldPacket data( SMSG_NPC_TEXT_UPDATE, 100 );          // guess size
+    WorldPacket data(SMSG_NPC_TEXT_UPDATE, 100);          // guess size
     data << textID;
 
     if (!pGossip)
@@ -385,12 +385,12 @@ void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
         {
             data << pGossip->Options[i].Probability;
 
-            if ( Text_0[i].empty() )
+            if (Text_0[i].empty())
                 data << Text_1[i];
             else
                 data << Text_0[i];
 
-            if ( Text_1[i].empty() )
+            if (Text_1[i].empty())
                 data << Text_0[i];
             else
                 data << Text_1[i];
@@ -405,12 +405,12 @@ void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
         }
     }
 
-    SendPacket( &data );
+    SendPacket(&data);
 
-    sLog.outDebug( "WORLD: Sent SMSG_NPC_TEXT_UPDATE" );
+    sLog.outDebug("WORLD: Sent SMSG_NPC_TEXT_UPDATE");
 }
 
-void WorldSession::HandlePageTextQueryOpcode( WorldPacket & recv_data )
+void WorldSession::HandlePageTextQueryOpcode(WorldPacket & recv_data)
 {
     sLog.outDetail("WORLD: Received CMSG_PAGE_TEXT_QUERY");
     recv_data.hexlike();
@@ -421,9 +421,9 @@ void WorldSession::HandlePageTextQueryOpcode( WorldPacket & recv_data )
 
     while (pageID)
     {
-        PageText const *pPage = sPageTextStore.LookupEntry<PageText>( pageID );
+        PageText const *pPage = sPageTextStore.LookupEntry<PageText>(pageID);
                                                             // guess size
-        WorldPacket data( SMSG_PAGE_TEXT_QUERY_RESPONSE, 50 );
+        WorldPacket data(SMSG_PAGE_TEXT_QUERY_RESPONSE, 50);
         data << pageID;
 
         if (!pPage)
@@ -451,15 +451,15 @@ void WorldSession::HandlePageTextQueryOpcode( WorldPacket & recv_data )
             data << uint32(pPage->Next_Page);
             pageID = pPage->Next_Page;
         }
-        SendPacket( &data );
+        SendPacket(&data);
 
-        sLog.outDebug( "WORLD: Sent SMSG_PAGE_TEXT_QUERY_RESPONSE" );
+        sLog.outDebug("WORLD: Sent SMSG_PAGE_TEXT_QUERY_RESPONSE");
     }
 }
 
-void WorldSession::HandleCorpseMapPositionQuery( WorldPacket & recv_data )
+void WorldSession::HandleCorpseMapPositionQuery(WorldPacket & recv_data)
 {
-    sLog.outDebug( "WORLD: Recv CMSG_CORPSE_MAP_POSITION_QUERY" );
+    sLog.outDebug("WORLD: Recv CMSG_CORPSE_MAP_POSITION_QUERY");
 
     uint32 unk;
     recv_data >> unk;
@@ -476,35 +476,35 @@ void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
 {
     uint32 count;
     recv_data >> count; // quest count, max=25
- 
-    if(count >= MAX_QUEST_LOG_SIZE)
+
+    if (count >= MAX_QUEST_LOG_SIZE)
         return;
- 
+
     WorldPacket data(SMSG_QUEST_POI_QUERY_RESPONSE, 4+(4+4)*count);
     data << uint32(count); // count
- 
-    for(int i = 0; i < count; ++i)
+
+    for (int i = 0; i < count; ++i)
     {
         uint32 questId;
         recv_data >> questId; // quest id
- 
+
         bool questOk = false;
- 
+
         uint16 questSlot = _player->FindQuestSlot(questId);
- 
-        if(questSlot != MAX_QUEST_LOG_SIZE)
+
+        if (questSlot != MAX_QUEST_LOG_SIZE)
             questOk =_player->GetQuestSlotQuestId(questSlot) == questId;
- 
-        if(questOk)
+
+        if (questOk)
         {
             QuestPOIVector const *POI = objmgr.GetQuestPOIVector(questId);
- 
-            if(POI)
+
+            if (POI)
             {
                 data << uint32(questId); // quest ID
                 data << uint32(POI->size()); // POI count
 
-                for(QuestPOIVector::const_iterator itr = POI->begin(); itr != POI->end(); ++itr)
+                for (QuestPOIVector::const_iterator itr = POI->begin(); itr != POI->end(); ++itr)
                 {
                     data << uint32(itr->Id);                // POI index
                     data << int32(itr->ObjectiveIndex);     // objective index
@@ -514,8 +514,8 @@ void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
                     data << uint32(itr->Unk3);              // unknown
                     data << uint32(itr->Unk4);              // unknown
                     data << uint32(itr->points.size());     // POI points count
- 
-                    for(std::vector<QuestPOIPoint>::const_iterator itr2 = itr->points.begin(); itr2 != itr->points.end(); ++itr2)
+
+                    for (std::vector<QuestPOIPoint>::const_iterator itr2 = itr->points.begin(); itr2 != itr->points.end(); ++itr2)
                     {
                         data << int32(itr2->x); // POI point x
                         data << int32(itr2->y); // POI point y
@@ -534,6 +534,6 @@ void WorldSession::HandleQuestPOIQuery(WorldPacket& recv_data)
             data << uint32(0); // POI count
         }
     }
- 
+
     SendPacket(&data);
 }

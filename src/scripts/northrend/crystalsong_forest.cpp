@@ -20,7 +20,7 @@
 SDName: CrystalSongForest
 SDAuthor: Malcrom
 SD%Complete: 99%
-SDComment: 
+SDComment:
 SDCategory: CrystalsongForest
 Script Data End */
 
@@ -35,7 +35,7 @@ enum Spells
     SPELL_TRANSITUS_SHIELD_BEAM = 48310
 };
 
-enum NPCs 
+enum NPCs
 {
     NPC_TRANSITUS_SHIELD_DUMMY   = 27306,
     NPC_WARMAGE_SARINA           = 32369,
@@ -48,7 +48,6 @@ struct npc_warmage_violetstandAI : public Scripted_NoMovementAI
     npc_warmage_violetstandAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature){}
 
     uint32 m_uiTimer;                 //Timer until recast
-    std::list<Creature *> orbList;
 
     void Reset()
     {
@@ -63,16 +62,18 @@ struct npc_warmage_violetstandAI : public Scripted_NoMovementAI
     {
         if (m_uiTimer <= uiDiff)
         {
-            m_creature->CastStop();           
+            m_creature->CastStop();
             Creature* pTarget = GetClosestCreatureWithEntry(me,NPC_TRANSITUS_SHIELD_DUMMY,32.0f);
 
             switch(me->GetEntry())
             {
                 case NPC_WARMAGE_SARINA:
+                {
+                    std::list<Creature*> orbList;
                     GetCreatureListWithEntryInGrid(orbList, m_creature, NPC_TRANSITUS_SHIELD_DUMMY, 32.0f);
                     if (!orbList.empty())
                     {
-                        for (std::list<Creature*>::iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
+                        for (std::list<Creature*>::const_iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
                         {
                             if (Creature* pOrb = *itr)
                                 if (pOrb->GetPositionY() < 1000)
@@ -80,15 +81,16 @@ struct npc_warmage_violetstandAI : public Scripted_NoMovementAI
                         }
                     }
                     m_uiTimer = 90000;
+                }
                     break;
-				case NPC_WARMAGE_HALISTER:
+                case NPC_WARMAGE_HALISTER:
                 case NPC_WARMAGE_ILSUDRIA:
                     if (pTarget)
                         DoCast(pTarget,SPELL_TRANSITUS_SHIELD_BEAM);
                     m_uiTimer = 90000;
                     break;
             }
-        }		
+        }
         else m_uiTimer -= uiDiff;
 
         ScriptedAI::UpdateAI(uiDiff);

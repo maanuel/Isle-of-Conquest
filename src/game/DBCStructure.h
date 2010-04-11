@@ -32,7 +32,7 @@
 // Structures using to access raw DBC data and required packing to portability
 
 // GCC have alternative #pragma pack(N) syntax and old gcc version not support pack(push,N), also any gcc version not support it at some platform
-#if defined( __GNUC__ )
+#if defined(__GNUC__)
 #pragma pack(1)
 #else
 #pragma pack(push,1)
@@ -596,13 +596,13 @@ struct BattlemasterListEntry
     uint32  id;                                             // 0
     int32   mapid[8];                                       // 1-8 mapid
     uint32  type;                                           // 9 (3 - BG, 4 - arena)
-    uint32  maxplayersperteam;                              // 10
-    //uint32 unk1;                                          // 11 (0 or 1)
-    char*   name[16];                                       // 12-27
-                                                            // 28 string flag, unused
-                                                            // 29 unused
-    //uint32 unk2;                                          // 30 new 3.1
-
+    //uint32 canJoinAsGroup;                                // 10 (0 or 1)	
+    char*   name[16];                                       // 11-26	
+    //uint32 nameFlags                                      // 27 string flag, unused	
+    uint32 maxGroupSize;                                    // 28 maxGroupSize, used for checking if queue as group	
+    //uint32 HolidayWorldStateId;                           // 29 new 3.1	
+    //uint32 MinLevel;                                      // 30	
+    //uint32 SomeLevel;                                     // 31, may be max level
 };
 
 #define MAX_OUTFIT_ITEMS 24
@@ -835,12 +835,12 @@ struct FactionTemplateEntry
     // helpers
     bool IsFriendlyTo(FactionTemplateEntry const& entry) const
     {
-        if(ID == entry.ID)
+        if (ID == entry.ID)
             return true;
-        if(entry.faction)
+        if (entry.faction)
         {
             for (int i = 0; i < 4; ++i)
-                if (enemyFaction[i]  == entry.faction)
+                if (enemyFaction[i] == entry.faction)
                     return false;
             for (int i = 0; i < 4; ++i)
                 if (friendFaction[i] == entry.faction)
@@ -850,12 +850,12 @@ struct FactionTemplateEntry
     }
     bool IsHostileTo(FactionTemplateEntry const& entry) const
     {
-        if(ID == entry.ID)
+        if (ID == entry.ID)
             return false;
-        if(entry.faction)
+        if (entry.faction)
         {
             for (int i = 0; i < 4; ++i)
-                if (enemyFaction[i]  == entry.faction)
+                if (enemyFaction[i] == entry.faction)
                     return true;
             for (int i = 0; i < 4; ++i)
                 if (friendFaction[i] == entry.faction)
@@ -871,7 +871,7 @@ struct FactionTemplateEntry
                 return false;
         return hostileMask == 0 && friendlyMask == 0;
     }
-    bool IsContestedGuardFaction() const { return (factionFlags & FACTION_TEMPLATE_FLAG_CONTESTED_GUARD)!=0; }
+    bool IsContestedGuardFaction() const { return (factionFlags & FACTION_TEMPLATE_FLAG_CONTESTED_GUARD) != 0; }
 };
 
 struct GameObjectDisplayInfoEntry
@@ -1148,7 +1148,7 @@ struct MapEntry
 
     bool GetEntrancePos(int32 &mapid, float &x, float &y) const
     {
-        if(entrance_map < 0)
+        if (entrance_map < 0)
             return false;
         mapid = entrance_map;
         x = entrance_x;
@@ -1248,12 +1248,12 @@ struct ScalingStatValuesEntry
     {
         if (mask & 0x4001F)
         {
-            if(mask & 0x00000001) return ssdMultiplier[0];
-            if(mask & 0x00000002) return ssdMultiplier[1];
-            if(mask & 0x00000004) return ssdMultiplier[2];
-            if(mask & 0x00000008) return ssdMultiplier2;
-            if(mask & 0x00000010) return ssdMultiplier[3];
-            if(mask & 0x00040000) return ssdMultiplier3;
+            if (mask & 0x00000001) return ssdMultiplier[0];
+            if (mask & 0x00000002) return ssdMultiplier[1];
+            if (mask & 0x00000004) return ssdMultiplier[2];
+            if (mask & 0x00000008) return ssdMultiplier2;
+            if (mask & 0x00000010) return ssdMultiplier[3];
+            if (mask & 0x00040000) return ssdMultiplier3;
         }
         return 0;
     }
@@ -1262,15 +1262,15 @@ struct ScalingStatValuesEntry
     {
         if (mask & 0x00F001E0)
         {
-            if(mask & 0x00000020) return armorMod[0];
-            if(mask & 0x00000040) return armorMod[1];
-            if(mask & 0x00000080) return armorMod[2];
-            if(mask & 0x00000100) return armorMod[3];
+            if (mask & 0x00000020) return armorMod[0];
+            if (mask & 0x00000040) return armorMod[1];
+            if (mask & 0x00000080) return armorMod[2];
+            if (mask & 0x00000100) return armorMod[3];
 
-            if(mask & 0x00100000) return armorMod2[0];      // cloth
-            if(mask & 0x00200000) return armorMod2[1];      // leather
-            if(mask & 0x00400000) return armorMod2[2];      // mail
-            if(mask & 0x00800000) return armorMod2[3];      // plate
+            if (mask & 0x00100000) return armorMod2[0];      // cloth
+            if (mask & 0x00200000) return armorMod2[1];      // leather
+            if (mask & 0x00400000) return armorMod2[2];      // mail
+            if (mask & 0x00800000) return armorMod2[3];      // plate
         }
         return 0;
     }
@@ -1278,12 +1278,12 @@ struct ScalingStatValuesEntry
     {
         if (mask&0x7E00)
         {
-            if(mask & 0x00000200) return dpsMod[0];
-            if(mask & 0x00000400) return dpsMod[1];
-            if(mask & 0x00000800) return dpsMod[2];
-            if(mask & 0x00001000) return dpsMod[3];
-            if(mask & 0x00002000) return dpsMod[4];
-            if(mask & 0x00004000) return dpsMod[5];         // not used?
+            if (mask & 0x00000200) return dpsMod[0];
+            if (mask & 0x00000400) return dpsMod[1];
+            if (mask & 0x00000800) return dpsMod[2];
+            if (mask & 0x00001000) return dpsMod[3];
+            if (mask & 0x00002000) return dpsMod[4];
+            if (mask & 0x00004000) return dpsMod[5];         // not used?
         }
         return 0;
     }
@@ -1434,8 +1434,8 @@ struct SpellEntry
     int32     EquippedItemInventoryTypeMask;                // 70       m_equippedItemInvTypes (mask)
     uint32    Effect[MAX_SPELL_EFFECTS];                    // 71-73    m_effect
     int32     EffectDieSides[MAX_SPELL_EFFECTS];            // 74-76    m_effectDieSides
-    int32     EffectBaseDice[MAX_SPELL_EFFECTS];            // 77-79    m_effectBaseDice
-    float     EffectDicePerLevel[MAX_SPELL_EFFECTS];        // 80-82    m_effectDicePerLevel
+    //int32     EffectBaseDice[MAX_SPELL_EFFECTS];            // 77-79    m_effectBaseDice
+    //float     EffectDicePerLevel[MAX_SPELL_EFFECTS];        // 80-82    m_effectDicePerLevel
     float     EffectRealPointsPerLevel[MAX_SPELL_EFFECTS];  // 83-85    m_effectRealPointsPerLevel
     int32     EffectBasePoints[MAX_SPELL_EFFECTS];          // 86-88    m_effectBasePoints (don't must be used in spell/auras explicitly, must be used cached Spell::m_currentBasePoints)
     uint32    EffectMechanic[MAX_SPELL_EFFECTS];            // 89-91    m_effectMechanic
@@ -1487,7 +1487,7 @@ struct SpellEntry
     //float   unk_320_4[3];                                 // 235-237  3.2.0
     //uint32  spellDescriptionVariableID;                   // 238      3.2.0
     //uint32  SpellDifficultyId;                            // 239      3.3.0
-  /*  
+  /*
     flag96    EffectSpellClassMask[MAX_SPELL_EFFECTS];      // 127-136
     uint32    SpellVisual[2];                               // 137-138  m_spellVisualID
     uint32    SpellIconID;                                  // 139      m_spellIconID
@@ -1525,7 +1525,7 @@ struct SpellEntry
     //uint32  spellDescriptionVariableID;                   // 238      3.2.0
 */
     // helpers
-    int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(EffectBaseDice[eff]); }
+    int32 CalculateSimpleValue(uint8 eff) const { return EffectBasePoints[eff]+int32(1); }
 
     private:
         // prevent creating custom entries (copy data from original in fact)
@@ -1543,6 +1543,12 @@ struct SpellCastTimesEntry
     int32     CastTime;                                     // 1
     //float     CastTimePerLevel;                           // 2 unsure / per skill?
     //int32     MinCastTime;                                // 3 unsure
+};
+
+struct SpellDifficultyEntry
+{
+    uint32     ID;                                          // 0
+    int32      SpellID[MAX_DIFFICULTY];                     // 1-4 instance modes: 10N,25N,10H,25H or Normal/Heroic if only 1-2 is set, if 3-4 is 0 then Mode-2
 };
 
 struct SpellFocusObjectEntry
@@ -1593,7 +1599,7 @@ struct SpellShapeshiftEntry
     //char*  Name[16];                                      // 2-17 unused
     //uint32 NameFlags;                                     // 18 unused
     uint32 flags1;                                          // 19
-    int32  creatureType;                                    // 20 <=0 humanoid, other normal creature types
+    int32  creatureType;                                    // 20 <= 0 humanoid, other normal creature types
     //uint32 unk1;                                          // 21 unused
     uint32 attackSpeed;                                     // 22
     //uint32 modelID;                                       // 23 unused, alliance modelid (where horde case?)
@@ -1863,7 +1869,7 @@ struct WorldSafeLocsEntry
 };
 
 // GCC have alternative #pragma pack() syntax and old gcc version not support pack(pop), also any gcc version not support it at some platform
-#if defined( __GNUC__ )
+#if defined(__GNUC__)
 #pragma pack()
 #else
 #pragma pack(pop)

@@ -19,7 +19,7 @@
 #include "ScriptedPch.h"
 #include "naxxramas.h"
 
-enum Spells 
+enum Spells
 {
     SPELL_WEB_WRAP              = 28622,
     SPELL_WEB_SPRAY_10          = 29484,
@@ -87,7 +87,7 @@ struct boss_maexxnaAI : public BossAI
 
         events.Update(diff);
 
-        while(uint32 eventId = events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
             switch(eventId)
             {

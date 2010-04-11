@@ -283,7 +283,7 @@ struct npc_sinkhole_kill_creditAI : public ScriptedAI
                     break;
                 case 7:
                     DoCast(m_creature, SPELL_EXPLODE_CART, true);
-                    if(Player *caster = Unit::GetPlayer(casterGuid))
+                    if (Player *caster = Unit::GetPlayer(casterGuid))
                         caster->KilledMonster(m_creature->GetCreatureInfo(),m_creature->GetGUID());
                     uiPhaseTimer = 5000;
                     Phase = 8;
@@ -539,7 +539,7 @@ struct npc_jennyAI : public ScriptedAI
 
     void Reset()
     {
-        if(!setCrateNumber)
+        if (!setCrateNumber)
             setCrateNumber = true;
 
         m_creature->SetReactState(REACT_PASSIVE);
@@ -563,7 +563,7 @@ struct npc_jennyAI : public ScriptedAI
 
     void UpdateAI(const uint32 diff)
     {
-        if(setCrateNumber)
+        if (setCrateNumber)
         {
             m_creature->AddAura(SPELL_CRATES_CARRIED,m_creature);
             setCrateNumber = false;
@@ -653,7 +653,7 @@ struct npc_nesingwary_trapperAI : public ScriptedAI
 {
     npc_nesingwary_trapperAI(Creature *c) : ScriptedAI(c) { c->SetVisibility(VISIBILITY_OFF); }
 
-    GameObject *go_caribou;
+    uint64 go_caribouGUID;
     uint8  Phase;
     uint32 uiPhaseTimer;
 
@@ -662,23 +662,23 @@ struct npc_nesingwary_trapperAI : public ScriptedAI
         m_creature->SetVisibility(VISIBILITY_OFF);
         uiPhaseTimer = 2500;
         Phase = 1;
-        go_caribou = NULL;
+        go_caribouGUID = 0;
     }
     void EnterCombat(Unit *who) {}
     void MoveInLineOfSight(Unit *who) {}
 
     void JustDied(Unit *who)
     {
-        if (go_caribou && go_caribou->GetTypeId() == TYPEID_GAMEOBJECT)
+        if (GameObject *go_caribou = m_creature->GetMap()->GetGameObject(go_caribouGUID))
             go_caribou->SetLootState(GO_JUST_DEACTIVATED);
 
-        if (TempSummon *summon = (TempSummon*)m_creature)
+        if (TempSummon *summon = m_creature->ToTempSummon())
             if (summon->isSummon())
                 if (Unit *pTemp = summon->GetSummoner())
                     if (pTemp->GetTypeId() == TYPEID_PLAYER)
                         CAST_PLR(pTemp)->KilledMonsterCredit(m_creature->GetEntry(),0);
 
-        if (go_caribou && go_caribou->GetTypeId() == TYPEID_GAMEOBJECT)
+        if (GameObject *go_caribou = m_creature->GetMap()->GetGameObject(go_caribouGUID))
             go_caribou->SetGoState(GO_STATE_READY);
     }
 
@@ -723,6 +723,8 @@ struct npc_nesingwary_trapperAI : public ScriptedAI
                     break;
 
                 case 7:
+                {
+                    GameObject *go_caribou = NULL;
                     if ((go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_1, 5.0f)) ||
                         (go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_2, 5.0f)) ||
                         (go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_3, 5.0f)) ||
@@ -738,9 +740,13 @@ struct npc_nesingwary_trapperAI : public ScriptedAI
                         (go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_13, 5.0f)) ||
                         (go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_14, 5.0f)) ||
                         (go_caribou = m_creature->FindNearestGameObject(GO_CARIBOU_TRAP_15, 5.0f)))
+                    {
                         go_caribou->SetGoState(GO_STATE_ACTIVE);
+                        go_caribouGUID = go_caribou->GetGUID();
+                    }
                     Phase = 8;
                     uiPhaseTimer = 1000;
+                }
                     break;
                 case 8:
                     DoCast(m_creature, SPELL_TRAPPED, true);
@@ -871,7 +877,7 @@ bool QuestAccept_npc_lurgglbr(Player* pPlayer, Creature* pCreature, Quest const 
 {
     if (pQuest->GetQuestId() == QUEST_ESCAPE_WINTERFIN_CAVERNS)
     {
-        if(GameObject* pGo = pCreature->FindNearestGameObject(GO_CAGE, 5.0f))
+        if (GameObject* pGo = pCreature->FindNearestGameObject(GO_CAGE, 5.0f))
         {
             pGo->SetRespawnTime(0);
             pGo->SetGoType(GAMEOBJECT_TYPE_BUTTON);
@@ -916,17 +922,15 @@ enum eNexusDrakeHatchling
 
 struct npc_nexus_drake_hatchlingAI : public FollowerAI //The spell who makes the npc follow the player is missing, also we can use FollowerAI!
 {
-    npc_nexus_drake_hatchlingAI(Creature *c) : FollowerAI(c)
-    {
-        pHarpooner = NULL;
-    }
+    npc_nexus_drake_hatchlingAI(Creature *c) : FollowerAI(c) {}
 
-    Player *pHarpooner;
+    uint64 HarpoonerGUID;
     bool WithRedDragonBlood;
 
     void Reset()
     {
        WithRedDragonBlood = false;
+       HarpoonerGUID = 0;
     }
 
     void EnterCombat(Unit* pWho)
@@ -939,7 +943,7 @@ struct npc_nexus_drake_hatchlingAI : public FollowerAI //The spell who makes the
     {
         if (spell->Id == SPELL_DRAKE_HARPOON && caster->GetTypeId() == TYPEID_PLAYER)
         {
-            pHarpooner = CAST_PLR(caster);
+            HarpoonerGUID = caster->GetGUID();
             DoCast(m_creature, SPELL_RED_DRAGONBLOOD, true);
         }
         WithRedDragonBlood = true;
@@ -949,34 +953,40 @@ struct npc_nexus_drake_hatchlingAI : public FollowerAI //The spell who makes the
     {
         FollowerAI::MoveInLineOfSight(pWho);
 
-        if (!pHarpooner || !pHarpooner->IsInWorld())
+        if (!HarpoonerGUID)
             return;
 
         if (m_creature->HasAura(SPELL_SUBDUED) && pWho->GetEntry() == NPC_RAELORASZ)
         {
             if (m_creature->IsWithinDistInMap(pWho, INTERACTION_DISTANCE))
             {
-                pHarpooner->KilledMonsterCredit(26175,0);
-                pHarpooner->RemoveAura(SPELL_DRAKE_HATCHLING_SUBDUED);
-                SetFollowComplete();
-                pHarpooner = NULL;
-                m_creature->DisappearAndDie();
+                if (Player *pHarpooner = Unit::GetPlayer(HarpoonerGUID))
+                {
+                    pHarpooner->KilledMonsterCredit(26175,0);
+                    pHarpooner->RemoveAura(SPELL_DRAKE_HATCHLING_SUBDUED);
+                    SetFollowComplete();
+                    HarpoonerGUID = 0;
+                    m_creature->DisappearAndDie();
+                }
             }
         }
     }
 
     void UpdateAI(const uint32 diff)
     {
-        if (WithRedDragonBlood && pHarpooner && pHarpooner->IsInWorld() && !m_creature->HasAura(SPELL_RED_DRAGONBLOOD))
+        if (WithRedDragonBlood && HarpoonerGUID && !m_creature->HasAura(SPELL_RED_DRAGONBLOOD))
         {
-            EnterEvadeMode();
-            StartFollow(pHarpooner, 35, NULL);
+            if (Player *pHarpooner = Unit::GetPlayer(HarpoonerGUID))
+            {
+                EnterEvadeMode();
+                StartFollow(pHarpooner, 35, NULL);
 
-            DoCast(m_creature, SPELL_SUBDUED, true);
-            pHarpooner->CastSpell(pHarpooner, SPELL_DRAKE_HATCHLING_SUBDUED, true);
+                DoCast(m_creature, SPELL_SUBDUED, true);
+                pHarpooner->CastSpell(pHarpooner, SPELL_DRAKE_HATCHLING_SUBDUED, true);
 
-            m_creature->AttackStop();
-            WithRedDragonBlood = false;
+                m_creature->AttackStop();
+                WithRedDragonBlood = false;
+            }
         }
 
         if (!UpdateVictim())
@@ -1402,8 +1412,8 @@ struct npc_counselor_talbotAI : public ScriptedAI
         pCreature->RestoreFaction();
     }
 
-    Creature* pLeryssa;
-    Creature* pArlos;
+    uint64 LeryssaGUID;
+    uint64 ArlosGUID;
 
     bool bCheck;
 
@@ -1413,8 +1423,8 @@ struct npc_counselor_talbotAI : public ScriptedAI
 
     void Reset()
     {
-        pLeryssa             = NULL;
-        pArlos               = NULL;
+        LeryssaGUID         = 0;
+        ArlosGUID           = 0;
         bCheck              = false;
         uiShadowBoltTimer   = urand(5000,12000);
         uiDeflectionTimer   = urand(20000,25000);
@@ -1422,7 +1432,7 @@ struct npc_counselor_talbotAI : public ScriptedAI
     }
     void MovementInform(uint32 uiType, uint32 uiId)
     {
-        if(uiType != POINT_MOTION_TYPE)
+        if (uiType != POINT_MOTION_TYPE)
             return;
 
         if (m_creature->isSummon())
@@ -1434,9 +1444,11 @@ struct npc_counselor_talbotAI : public ScriptedAI
     {
         if (bCheck)
         {
-            pLeryssa = m_creature->FindNearestCreature(NPC_LERYSSA, 50.0f, true);
-            pArlos   = m_creature->FindNearestCreature(NPC_GENERAL_ARLOS, 50.0f, true);
-            bCheck  = false;
+            if (Creature *pLeryssa = m_creature->FindNearestCreature(NPC_LERYSSA, 50.0f, true))
+                LeryssaGUID = pLeryssa->GetGUID();
+            if (Creature *pArlos = m_creature->FindNearestCreature(NPC_GENERAL_ARLOS, 50.0f, true))
+                ArlosGUID = pArlos->GetGUID();
+            bCheck = false;
         }
 
         if (!UpdateVictim())
@@ -1468,7 +1480,12 @@ struct npc_counselor_talbotAI : public ScriptedAI
 
    void JustDied(Unit* pKiller)
    {
-        if (!pArlos || !pLeryssa)
+        if (!LeryssaGUID || !ArlosGUID)
+            return;
+
+        Creature *pLeryssa = Unit::GetCreature(*m_creature, LeryssaGUID);
+        Creature *pArlos = Unit::GetCreature(*m_creature, ArlosGUID);
+        if (!pLeryssa || !pArlos)
             return;
 
         DoScriptText(SAY_ARLOS_1, pArlos);
@@ -1512,7 +1529,7 @@ struct npc_leryssaAI : public ScriptedAI
 
     void MovementInform(uint32 uiType, uint32 uiId)
     {
-        if(uiType != POINT_MOTION_TYPE)
+        if (uiType != POINT_MOTION_TYPE)
             return;
 
         if (!bDone)
@@ -1701,12 +1718,9 @@ enum eImprisionedBerylSorcerer
 
 struct npc_imprisoned_beryl_sorcererAI : public ScriptedAI
 {
-    npc_imprisoned_beryl_sorcererAI(Creature* pCreature) : ScriptedAI(pCreature)
-    {
-        pCaster = NULL;
-    }
+    npc_imprisoned_beryl_sorcererAI(Creature* pCreature) : ScriptedAI(pCreature) {}
 
-    Player *pCaster;
+    uint64 CasterGUID;
 
     uint32  uiStep;
     uint32  uiPhase;
@@ -1715,6 +1729,7 @@ struct npc_imprisoned_beryl_sorcererAI : public ScriptedAI
     {
         uiStep = 1;
         uiPhase = 0;
+        CasterGUID = NULL;
     }
 
     void EnterCombat(Unit* pWho)
@@ -1722,12 +1737,12 @@ struct npc_imprisoned_beryl_sorcererAI : public ScriptedAI
         return;
     }
 
-    void SpellHit(Unit* pCaster, const SpellEntry* pSpell)
+    void SpellHit(Unit* pUnit, const SpellEntry* pSpell)
     {
-        if (pSpell->Id == SPELL_NEURAL_NEEDLE && pCaster->GetTypeId() == TYPEID_PLAYER)
+        if (pSpell->Id == SPELL_NEURAL_NEEDLE && pUnit->GetTypeId() == TYPEID_PLAYER)
         {
             ++uiPhase;
-            pCaster = CAST_PLR(pCaster);
+            CasterGUID = pUnit->GetGUID();
         }
     }
 
@@ -1778,7 +1793,7 @@ struct npc_imprisoned_beryl_sorcererAI : public ScriptedAI
             case 5:
                 if (uiStep == 5)
                 {
-                    if (pCaster)
+                    if (Player *pCaster = Unit::GetPlayer(CasterGUID))
                     {
                         DoScriptText(SAY_IMPRISIONED_BERYL_5, m_creature);
                         pCaster->KilledMonsterCredit(25478,0);
@@ -1804,9 +1819,6 @@ struct npc_imprisoned_beryl_sorcererAI : public ScriptedAI
                 }
                 break;
         }
-
-        if (!UpdateVictim())
-            return;
     }
 };
 
@@ -1833,7 +1845,7 @@ enum Mootoo_the_Younger_Entries
 };
 bool QuestAccept_npc_mootoo_the_younger(Player* pPlayer, Creature* pCreature, Quest const* quest)
 {
-    if (quest->GetQuestId()==QUEST_ESCAPING_THE_MIST)
+    if (quest->GetQuestId() == QUEST_ESCAPING_THE_MIST)
     {
         switch (pPlayer->GetTeam())
         {
@@ -1918,7 +1930,7 @@ enum Script_Texts_Bonker_Togglevolt
 
 bool QuestAccept_npc_bonker_togglevolt(Player* pPlayer, Creature* pCreature, Quest const* quest)
 {
-    if (quest->GetQuestId()==QUEST_GET_ME_OUTA_HERE)
+    if (quest->GetQuestId() == QUEST_GET_ME_OUTA_HERE)
     {
         switch (pPlayer->GetTeam())
         {
@@ -1955,7 +1967,7 @@ struct npc_bonker_togglevoltAI : public npc_escortAI
     {
         if (GetAttack() && UpdateVictim())
         {
-            if(Bonker_agro==0)
+            if (Bonker_agro == 0)
             {
                 DoScriptText(SAY_bonker_1,m_creature);
                 Bonker_agro++;
@@ -2028,7 +2040,7 @@ struct npc_trapped_mammoth_calfAI : public ScriptedAI
     void Reset()
     {
         GameObject *pTrap;
-        
+
         uiTimer = 1500;
         bStarted = false;
 
@@ -2077,7 +2089,7 @@ struct npc_trapped_mammoth_calfAI : public ScriptedAI
         if (param == 1)
             bStarted = true;
     }
-    
+
     void MovementInform(uint32 uiType, uint32 uiId)
     {
         GameObject* pTrap;
@@ -2172,17 +2184,17 @@ struct npc_seaforium_depth_chargeAI : public ScriptedAI
     {
         if (uiExplosionTimer < diff)
         {
-            DoCast(SPELL_SEAFORIUM_DEPTH_CHARGE_EXPLOSION);          
-            for(uint8 i = 0; i < 4; ++i)
+            DoCast(SPELL_SEAFORIUM_DEPTH_CHARGE_EXPLOSION);
+            for (uint8 i = 0; i < 4; ++i)
             {
-                if(Creature* cCredit = m_creature->FindNearestCreature(25402 + i, 10.0f))//25402-25405 credit markers
+                if (Creature* cCredit = m_creature->FindNearestCreature(25402 + i, 10.0f))//25402-25405 credit markers
                 {
-                    if(Unit* uOwner = m_creature->GetOwner(true))
+                    if (Unit* uOwner = m_creature->GetOwner(true))
                     {
                         Player* pOwner = uOwner->ToPlayer();
-                        if(pOwner && pOwner->GetQuestStatus(QUEST_BURY_THOSE_COCKROACHES) == QUEST_STATUS_INCOMPLETE)
+                        if (pOwner && pOwner->GetQuestStatus(QUEST_BURY_THOSE_COCKROACHES) == QUEST_STATUS_INCOMPLETE)
                             pOwner->KilledMonsterCredit(cCredit->GetEntry(),cCredit->GetGUID());
-                    }                    
+                    }
                 }
             }
             m_creature->Kill(m_creature);
@@ -2196,6 +2208,148 @@ CreatureAI* GetAI_npc_seaforium_depth_charge(Creature* pCreature)
     return new npc_seaforium_depth_chargeAI(pCreature);
 }
 
+/*######
+## Help Those That Cannot Help Themselves, Quest 11876
+######*/
+
+enum eValiancekeepcannons
+{
+    GO_VALIANCE_KEEP_CANNON_1                     = 187560,
+    GO_VALIANCE_KEEP_CANNON_2                     = 188692
+};
+
+struct npc_valiance_keep_cannoneerAI : public ScriptedAI
+{
+    npc_valiance_keep_cannoneerAI(Creature* c) : ScriptedAI(c) {}
+
+    uint32 uiTimer;
+
+    void Reset()
+    {
+        uiTimer = urand(13000,18000);
+    }
+
+    void UpdateAI(const uint32 diff)
+    {
+        if (uiTimer <= diff)
+        {
+            m_creature->HandleEmoteCommand(EMOTE_ONESHOT_KNEEL);
+            GameObject* pCannon;
+            if ((pCannon = m_creature->FindNearestGameObject(GO_VALIANCE_KEEP_CANNON_1,10)) || (pCannon = m_creature->FindNearestGameObject(GO_VALIANCE_KEEP_CANNON_2,10)))
+                pCannon->Use(m_creature);
+            uiTimer = urand(13000,18000);
+        }
+        else uiTimer -= diff;
+
+        if (!UpdateVictim())
+            return;
+    }
+
+};
+
+CreatureAI* GetAI_npc_valiance_keep_cannoneer(Creature* pCreature)
+{
+    return new npc_valiance_keep_cannoneerAI(pCreature);
+}
+
+/*******************************************************
+ * npc_warmage_coldarra
+ *******************************************************/
+
+enum Spells
+{
+    SPELL_TRANSITUS_SHIELD_BEAM = 48310
+};
+
+enum NPCs
+{
+    NPC_TRANSITUS_SHIELD_DUMMY   = 27306,
+    NPC_WARMAGE_HOLLISTER        = 27906,
+    NPC_WARMAGE_CALANDRA         = 27173,
+    NPC_WARMAGE_WATKINS          = 27904
+};
+
+struct npc_warmage_coldarraAI : public Scripted_NoMovementAI
+{
+    npc_warmage_coldarraAI(Creature* pCreature) : Scripted_NoMovementAI(pCreature){}
+
+    uint32 m_uiTimer;                 //Timer until recast
+
+    void Reset()
+    {
+        m_uiTimer = 0;
+    }
+
+    void Aggro(Unit* pWho){}
+
+    void AttackStart(Unit* pWho){}
+
+    void UpdateAI(const uint32 uiDiff)
+    {
+        if (m_uiTimer <= uiDiff)
+        {
+            std::list<Creature*> orbList;
+            GetCreatureListWithEntryInGrid(orbList, m_creature, NPC_TRANSITUS_SHIELD_DUMMY, 32.0f);
+
+            switch(me->GetEntry())
+            {
+                case NPC_WARMAGE_HOLLISTER:
+                {
+                    if (!orbList.empty())
+                    {
+                        for (std::list<Creature*>::const_iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
+                        {
+                            if (Creature* pOrb = *itr)
+                                if (pOrb->GetPositionY() > 6680)
+                                    DoCast(pOrb,SPELL_TRANSITUS_SHIELD_BEAM);
+                        }
+                    }
+                    m_uiTimer = urand(90000,120000);
+                }
+                    break;
+                case NPC_WARMAGE_CALANDRA:
+                {
+                    if (!orbList.empty())
+                    {
+                        for (std::list<Creature*>::const_iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
+                        {
+                            if (Creature* pOrb = *itr)
+                                if ((pOrb->GetPositionY() < 6680) && (pOrb->GetPositionY() > 6630))
+                                    DoCast(pOrb,SPELL_TRANSITUS_SHIELD_BEAM);
+                        }
+                    }
+                    m_uiTimer = urand(90000,120000);
+                }
+                    break;
+                case NPC_WARMAGE_WATKINS:
+                {
+                    if (!orbList.empty())
+                    {
+                        for (std::list<Creature*>::const_iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
+                        {
+                            if (Creature* pOrb = *itr)
+                                if (pOrb->GetPositionY() < 6630)
+                                    DoCast(pOrb,SPELL_TRANSITUS_SHIELD_BEAM);
+                        }
+                    }
+                    m_uiTimer = urand(90000,120000);
+                }
+                    break;
+            }
+        }
+        else m_uiTimer -= uiDiff;
+
+        ScriptedAI::UpdateAI(uiDiff);
+
+        if (!UpdateVictim())
+            return;
+    }
+};
+
+CreatureAI* GetAI_npc_warmage_coldarra(Creature* pCreature)
+{
+    return new npc_warmage_coldarraAI(pCreature);
+}
 
 void AddSC_borean_tundra()
 {
@@ -2346,5 +2500,15 @@ void AddSC_borean_tundra()
     newscript = new Script;
     newscript->Name = "npc_seaforium_depth_charge";
     newscript->GetAI = &GetAI_npc_seaforium_depth_charge;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_valiance_keep_cannoneer";
+    newscript->GetAI = &GetAI_npc_valiance_keep_cannoneer;
+    newscript->RegisterSelf();
+
+    newscript = new Script;
+    newscript->Name = "npc_warmage_coldarra";
+    newscript->GetAI = &GetAI_npc_warmage_coldarra;
     newscript->RegisterSelf();
 }
