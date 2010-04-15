@@ -1198,7 +1198,7 @@ void Player::Update(uint32 p_time)
 
     if (!m_timedquests.empty())
     {
-        std::set<uint32>::iterator iter = m_timedquests.begin();
+        QuestSet::iterator iter = m_timedquests.begin();
         while (iter != m_timedquests.end())
         {
             QuestStatusData& q_status = mQuestStatus[*iter];
@@ -4260,15 +4260,15 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
             if (has_items)
             {
                 // data needs to be at first place for Item::LoadFromDB
-                QueryResult_AutoPtr resultItems = CharacterDatabase.PQuery("SELECT data,item_guid,item_template FROM mail_items JOIN item_instance ON item_guid = guid WHERE mail_id='%u'", mail_id);
+                QueryResult_AutoPtr resultItems = CharacterDatabase.PQuery("SELECT data,text,item_guid,item_template FROM mail_items JOIN item_instance ON item_guid = guid WHERE mail_id='%u'", mail_id);
                 if (resultItems)
                 {
                     do
                     {
                         Field *fields2 = resultItems->Fetch();
 
-                        uint32 item_guidlow = fields2[1].GetUInt32();
-                        uint32 item_template = fields2[2].GetUInt32();
+                        uint32 item_guidlow = fields2[2].GetUInt32();
+                        uint32 item_template = fields2[3].GetUInt32();
 
                         ItemPrototype const* itemProto = objmgr.GetItemPrototype(item_template);
                         if (!itemProto)
@@ -4346,8 +4346,7 @@ void Player::DeleteFromDB(uint64 playerguid, uint32 accountId, bool updateRealmC
                                 "AND achievement NOT IN(1463, 3117, 3259) ", guid); // Realm First Northen Vanguard + Raid Achievements
     CharacterDatabase.PExecute("DELETE FROM character_achievement_progress WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_equipmentsets WHERE guid = '%u'",guid);
-    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u'",guid);
-    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid2 = '%u'",guid);
+    CharacterDatabase.PExecute("DELETE FROM guild_eventlog WHERE PlayerGuid1 = '%u' OR PlayerGuid2 = '%u'",guid, guid);
     CharacterDatabase.PExecute("DELETE FROM guild_bank_eventlog WHERE PlayerGuid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_battleground_data WHERE guid = '%u'",guid);
     CharacterDatabase.PExecute("DELETE FROM character_glyphs WHERE guid = '%u'",guid);
@@ -13579,7 +13578,7 @@ void Player::SendPreparedQuest(uint64 guid)
                 PlayerTalkClass->SendQuestGiverRequestItems(pQuest, guid, CanRewardQuest(pQuest, false), true);
             // Send completable on repeatable and autoCompletable quest if player don't have quest
             // TODO: verify if check for !pQuest->IsDaily() is really correct (possibly not)
-            else if (pQuest->IsAutoComplete() && pQuest->IsRepeatable() && !pQuest->IsDaily())
+            else if (pQuest->IsAutoComplete() && pQuest->IsRepeatable() && !pQuest->IsDailyOrWeekly())
                 PlayerTalkClass->SendQuestGiverRequestItems(pQuest, guid, CanCompleteRepeatableQuest(pQuest), true);
             else
                 PlayerTalkClass->SendQuestGiverQuestDetails(pQuest, guid, true);
@@ -13697,7 +13696,7 @@ bool Player::CanSeeStartQuest(Quest const *pQuest)
     if (SatisfyQuestRace(pQuest, false) && SatisfyQuestSkillOrClass(pQuest, false) &&
         SatisfyQuestExclusiveGroup(pQuest, false) && SatisfyQuestReputation(pQuest, false) &&
         SatisfyQuestPreviousQuest(pQuest, false) && SatisfyQuestNextChain(pQuest, false) &&
-        SatisfyQuestPrevChain(pQuest, false) && SatisfyQuestDay(pQuest, false))
+        SatisfyQuestPrevChain(pQuest, false) && SatisfyQuestDay(pQuest, false) && SatisfyQuestWeek(pQuest, false))
     {
         return getLevel() + sWorld.getConfig(CONFIG_QUEST_HIGH_LEVEL_HIDE_DIFF) >= pQuest->GetMinLevel();
     }
@@ -13712,7 +13711,7 @@ bool Player::CanTakeQuest(Quest const *pQuest, bool msg)
         && SatisfyQuestSkillOrClass(pQuest, msg) && SatisfyQuestReputation(pQuest, msg)
         && SatisfyQuestPreviousQuest(pQuest, msg) && SatisfyQuestTimed(pQuest, msg)
         && SatisfyQuestNextChain(pQuest, msg) && SatisfyQuestPrevChain(pQuest, msg)
-        && SatisfyQuestDay(pQuest, msg);
+        && SatisfyQuestDay(pQuest, msg) && SatisfyQuestWeek(pQuest, msg);
 }
 
 bool Player::CanAddQuest(Quest const *pQuest, bool msg)
@@ -13832,7 +13831,7 @@ bool Player::CanRewardQuest(Quest const *pQuest, bool msg)
         return false;
 
     // daily quest can't be rewarded (25 daily quest already completed)
-    if (!SatisfyQuestDay(pQuest,true))
+    if (!SatisfyQuestDay(pQuest,true) || !SatisfyQuestWeek(pQuest,true))
         return false;
 
     // rewarded and not repeatable quest (only cheating case, then ignore without message)
@@ -14119,13 +14118,16 @@ void Player::RewardQuest(Quest const *pQuest, uint32 reward, Object* questGiver,
 
     // Send reward mail
     if (uint32 mail_template_id = pQuest->GetRewMailTemplateId())
-        MailDraft(mail_template_id).SendMailTo(MailReceiver(this), MailSender(questGiver), MAIL_CHECK_MASK_HAS_BODY, pQuest->GetRewMailDelaySecs());
+        MailDraft(mail_template_id).SendMailTo(this, questGiver, MAIL_CHECK_MASK_HAS_BODY, pQuest->GetRewMailDelaySecs());
 
     if (pQuest->IsDaily())
     {
         SetDailyQuestStatus(quest_id);
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_DAILY_QUEST, 1);
     }
+
+    if (pQuest->IsWeekly())
+        SetWeeklyQuestStatus(quest_id);	
 
     if (!pQuest->IsRepeatable())
         SetQuestStatus(quest_id, QUEST_STATUS_COMPLETE);
@@ -14473,10 +14475,11 @@ bool Player::SatisfyQuestExclusiveGroup(Quest const* qInfo, bool msg)
 
         // not allow have daily quest if daily quest from exclusive group already recently completed
         Quest const* Nquest = objmgr.GetQuestTemplate(exclude_Id);
-        if (!SatisfyQuestDay(Nquest, false))
+        if (!SatisfyQuestDay(Nquest, false) || !SatisfyQuestWeek(Nquest, false))
         {
             if (msg)
                 SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
+
             return false;
         }
 
@@ -14573,6 +14576,15 @@ bool Player::SatisfyQuestDay(Quest const* qInfo, bool msg)
     }
 
     return true;
+}
+
+bool Player::SatisfyQuestWeek( Quest const* qInfo, bool msg )
+{
+    if (!qInfo->IsWeekly() || m_weeklyquests.empty())
+        return true;
+
+    // if not found in cooldown list
+    return m_weeklyquests.find(qInfo->GetQuestId()) == m_weeklyquests.end();
 }
 
 bool Player::GiveQuestSourceItem(Quest const *pQuest)
@@ -15347,50 +15359,9 @@ void Player::SendQuestUpdateAddCreatureOrGo(Quest const* pQuest, uint64 guid, ui
 /***                   LOAD SYSTEM                     ***/
 /*********************************************************/
 
-bool Player::MinimalLoadFromDB(QueryResult_AutoPtr result, uint32 guid)
+void Player::Initialize(uint32 guid)
 {
-    if (!result)
-    {
-        //                                        0     1           2           3           4    5          6          7
-        result = CharacterDatabase.PQuery("SELECT name, position_x, position_y, position_z, map, totaltime, leveltime, at_login FROM characters WHERE guid = '%u'",guid);
-        if (!result)
-            return false;
-    }
-
-    Field *fields = result->Fetch();
-
-    // overwrite possible wrong/corrupted guid
-    SetUInt64Value(OBJECT_FIELD_GUID, MAKE_NEW_GUID(guid, 0, HIGHGUID_PLAYER));
-
-    m_name = fields[0].GetCppString();
-
-    Relocate(fields[1].GetFloat(),fields[2].GetFloat(),fields[3].GetFloat());
-    Map *map = MapManager::Instance().CreateMap(fields[4].GetUInt32(), this, 0);
-    SetMap(map);
-
-    // randomize first save time in range [CONFIG_INTERVAL_SAVE] around [CONFIG_INTERVAL_SAVE]
-    // this must help in case next save after mass player load after server startup
-    m_nextSave = urand(m_nextSave/2,m_nextSave*3/2);
-
-    // the instance id is not needed at character enum
-
-    m_Played_time[PLAYED_TIME_TOTAL] = fields[5].GetUInt32();
-    m_Played_time[PLAYED_TIME_LEVEL] = fields[6].GetUInt32();
-
-    m_atLoginFlags = fields[7].GetUInt32();
-
-    // I don't see these used anywhere ..
-    /*_LoadGroup();
-
-    _LoadBoundInstances();*/
-
-    for (uint8 i = 0; i < PLAYER_SLOTS_COUNT; i++)
-        m_items[i] = NULL;
-
-    if (HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
-        m_deathState = DEAD;
-
-    return true;
+    Object::_Create(guid, 0, HIGHGUID_PLAYER);
 }
 
 void Player::_LoadDeclinedNames(QueryResult_AutoPtr result)
@@ -16048,6 +16019,7 @@ bool Player::LoadFromDB(uint32 guid, SqlQueryHolder *holder)
     // after spell load, learn rewarded spell if need also
     _LoadQuestStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADQUESTSTATUS));
     _LoadDailyQuestStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADDAILYQUESTSTATUS));
+    _LoadWeeklyQuestStatus(holder->GetResult(PLAYER_LOGIN_QUERY_LOADWEKLYQUESTSTATUS));
 
     // after spell and quest load
     InitTalentForLevel();
@@ -16366,7 +16338,7 @@ void Player::LoadCorpse()
 
 void Player::_LoadInventory(QueryResult_AutoPtr result, uint32 timediff)
 {
-    //QueryResult *result = CharacterDatabase.PQuery("SELECT data,bag,slot,item,item_template FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u' ORDER BY bag,slot", GetGUIDLow());
+    //QueryResult *result = CharacterDatabase.PQuery("SELECT data,text,bag,slot,item,item_template FROM character_inventory JOIN item_instance ON character_inventory.item = item_instance.guid WHERE character_inventory.guid = '%u' ORDER BY bag,slot", GetGUIDLow());
     std::map<uint64, Bag*> bagMap;                          // fast guid lookup for bags
     //NOTE: the "order by `bag`" is important because it makes sure
     //the bagMap is filled before items in the bags are loaded
@@ -16384,10 +16356,10 @@ void Player::_LoadInventory(QueryResult_AutoPtr result, uint32 timediff)
         do
         {
             Field *fields = result->Fetch();
-            uint32 bag_guid  = fields[1].GetUInt32();
-            uint8  slot      = fields[2].GetUInt8();
-            uint32 item_guid = fields[3].GetUInt32();
-            uint32 item_id   = fields[4].GetUInt32();
+            uint32 bag_guid  = fields[2].GetUInt32();
+            uint8  slot      = fields[3].GetUInt8();
+            uint32 item_guid = fields[4].GetUInt32();
+            uint32 item_id   = fields[5].GetUInt32();
 
             ItemPrototype const * proto = objmgr.GetItemPrototype(item_id);
 
@@ -16549,7 +16521,7 @@ void Player::_LoadInventory(QueryResult_AutoPtr result, uint32 timediff)
                 draft.AddItem(item);
             }
 
-            draft.SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM));
+            draft.SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_COPIED);
         }
     }
     //if (isAlive())
@@ -16560,15 +16532,15 @@ void Player::_LoadInventory(QueryResult_AutoPtr result, uint32 timediff)
 void Player::_LoadMailedItems(Mail *mail)
 {
     // data needs to be at first place for Item::LoadFromDB
-    QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT data, item_guid, item_template FROM mail_items JOIN item_instance ON item_guid = guid WHERE mail_id='%u'", mail->messageID);
+    QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT data, text, item_guid, item_template FROM mail_items JOIN item_instance ON item_guid = guid WHERE mail_id='%u'", mail->messageID);
     if (!result)
         return;
 
     do
     {
         Field *fields = result->Fetch();
-        uint32 item_guid_low = fields[1].GetUInt32();
-        uint32 item_template = fields[2].GetUInt32();
+        uint32 item_guid_low = fields[2].GetUInt32();
+        uint32 item_template = fields[3].GetUInt32();
 
         mail->AddItem(item_guid_low, item_template);
 
@@ -16819,6 +16791,33 @@ void Player::_LoadDailyQuestStatus(QueryResult_AutoPtr result)
     }
 
     m_DailyQuestChanged = false;
+}
+
+void Player::_LoadWeeklyQuestStatus(QueryResult_AutoPtr result)	
+{
+    m_weeklyquests.clear();
+
+    if (result)	
+    {
+        do
+        {
+            Field *fields = result->Fetch();
+
+            uint32 quest_id = fields[0].GetUInt32();
+
+            Quest const* pQuest = objmgr.GetQuestTemplate(quest_id);
+
+            if (!pQuest)	
+                continue;	
+	
+            m_weeklyquests.insert(quest_id);
+
+            sLog.outDebug("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
+        }
+        while(result->NextRow());
+    }
+
+    m_WeeklyQuestChanged = false;
 }
 
 void Player::_LoadSpells(QueryResult_AutoPtr result)
@@ -17435,6 +17434,7 @@ void Player::SaveToDB()
     _SaveInventory();
     _SaveQuestStatus();
     _SaveDailyQuestStatus();
+    _SaveWeeklyQuestStatus();
     _SaveTalents();
     _SaveSpells();
     _SaveSpellCooldowns();
@@ -17448,6 +17448,11 @@ void Player::SaveToDB()
     _SaveGlyphs();
 
     CharacterDatabase.CommitTransaction();
+
+    // check if stats should only be saved on logout
+    // save stats can be out of transaction
+    if (m_session->isLogingOut() || !sWorld.getConfig(CONFIG_STATS_SAVE_ONLY_ON_LOGOUT))
+        _SaveStats();	
 
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
@@ -17726,6 +17731,24 @@ void Player::_SaveDailyQuestStatus()
                 GetGUIDLow(), GetUInt32Value(PLAYER_FIELD_DAILY_QUESTS_1+quest_daily_idx),uint64(m_lastDailyQuestTime));
 }
 
+void Player::_SaveWeeklyQuestStatus()
+{
+    if (!m_WeeklyQuestChanged || m_weeklyquests.empty())
+        return;
+
+    // we don't need transactions here.
+    CharacterDatabase.PExecute("DELETE FROM character_queststatus_weekly WHERE guid = '%u'",GetGUIDLow());
+
+    for (QuestSet::const_iterator iter = m_weeklyquests.begin(); iter != m_weeklyquests.end(); ++iter)
+    {
+        uint32 quest_id  = *iter;
+
+        CharacterDatabase.PExecute("INSERT INTO character_queststatus_weekly (guid,quest) VALUES ('%u', '%u')", GetGUIDLow(), quest_id);
+    }
+
+    m_WeeklyQuestChanged = false;
+}
+
 void Player::_SaveSkills()
 {
     // we don't need transactions here.
@@ -17788,6 +17811,40 @@ void Player::_SaveSpells()
         }
 
     }
+}
+
+// save player stats -- only for external usage
+// real stats will be recalculated on player login
+void Player::_SaveStats()
+{
+    // check if stat saving is enabled and if char level is high enough
+    if (!sWorld.getConfig(CONFIG_MIN_LEVEL_STAT_SAVE) || getLevel() < sWorld.getConfig(CONFIG_MIN_LEVEL_STAT_SAVE))
+        return;
+
+    CharacterDatabase.PExecute("DELETE FROM character_stats WHERE guid = '%u'", GetGUIDLow());
+    std::ostringstream ss;
+    ss << "INSERT INTO character_stats (guid, maxhealth, maxpower1, maxpower2, maxpower3, maxpower4, maxpower5, maxpower6, maxpower7, "
+        "strength, agility, stamina, intellect, spirit, armor, resHoly, resFire, resNature, resFrost, resShadow, resArcane, "
+        "blockPct, dodgePct, parryPct, critPct, rangedCritPct, spellCritPct, attackPower, rangedAttackPower, spellPower) VALUES ("
+        << GetGUIDLow() << ", "
+        << GetMaxHealth() << ", ";
+    for (int i = 0; i < MAX_POWERS; ++i)
+        ss << GetMaxPower(Powers(i)) << ", ";
+    for (int i = 0; i < MAX_STATS; ++i)
+        ss << GetStat(Stats(i)) << ", ";
+    // armor + school resistances
+    for (int i = 0; i < MAX_SPELL_SCHOOL; ++i)
+        ss << GetResistance(SpellSchools(i)) << ",";
+    ss << GetFloatValue(PLAYER_BLOCK_PERCENTAGE) << ", "
+       << GetFloatValue(PLAYER_DODGE_PERCENTAGE) << ", "
+       << GetFloatValue(PLAYER_PARRY_PERCENTAGE) << ", "
+       << GetFloatValue(PLAYER_CRIT_PERCENTAGE) << ", "
+       << GetFloatValue(PLAYER_RANGED_CRIT_PERCENTAGE) << ", "
+       << GetFloatValue(PLAYER_SPELL_CRIT_PERCENTAGE1) << ", "
+       << GetUInt32Value(UNIT_FIELD_ATTACK_POWER) << ", "
+       << GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) << ", "
+       << GetBaseSpellPowerBonus() << ")";
+    CharacterDatabase.Execute(ss.str().c_str());
 }
 
 void Player::outDebugValues() const
@@ -20867,6 +20924,13 @@ void Player::SetDailyQuestStatus(uint32 quest_id)
     }
 }
 
+
+void Player::SetWeeklyQuestStatus(uint32 quest_id)	
+{
+    m_weeklyquests.insert(quest_id);
+    m_WeeklyQuestChanged = true;
+}
+
 void Player::ResetDailyQuestStatus()
 {
     for (uint32 quest_daily_idx = 0; quest_daily_idx < PLAYER_MAX_DAILY_QUESTS; ++quest_daily_idx)
@@ -20875,6 +20939,16 @@ void Player::ResetDailyQuestStatus()
     // DB data deleted in caller
     m_DailyQuestChanged = false;
     m_lastDailyQuestTime = 0;
+}
+
+void Player::ResetWeeklyQuestStatus()
+{
+    if (m_weeklyquests.empty())
+        return;
+
+    m_weeklyquests.clear();	
+    // DB data deleted in caller
+    m_WeeklyQuestChanged = false;
 }
 
 BattleGround* Player::GetBattleGround() const
@@ -21101,7 +21175,7 @@ void Player::AutoUnequipOffhandIfNeed(bool force /*= false*/)
         CharacterDatabase.CommitTransaction();
 
         std::string subject = GetSession()->GetTrinityString(LANG_NOT_EQUIPPED_ITEM);
-        MailDraft(subject, "There's were problems with equipping this item.").AddItem(offItem).SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM));
+        MailDraft(subject, "There were problems with equipping one or several items").AddItem(offItem).SendMailTo(this, MailSender(this, MAIL_STATIONERY_GM), MAIL_CHECK_MASK_COPIED);
     }
 }
 

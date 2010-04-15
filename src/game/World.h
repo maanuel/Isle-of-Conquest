@@ -274,6 +274,8 @@ enum WorldConfigs
     CONFIG_CLIENTCACHE_VERSION,
     CONFIG_GUILD_EVENT_LOG_COUNT,
     CONFIG_GUILD_BANK_EVENT_LOG_COUNT,
+    CONFIG_MIN_LEVEL_STAT_SAVE,
+    CONFIG_STATS_SAVE_ONLY_ON_LOGOUT,
     CONFIG_VALUE_COUNT
 };
 
@@ -409,6 +411,11 @@ enum RealmZone
     REALM_ZONE_CN2_6_9       = 35,                          // basic-Latin at create, any at login
     REALM_ZONE_CN3_7         = 36,                          // basic-Latin at create, any at login
     REALM_ZONE_CN5_8         = 37                           // basic-Latin at create, any at login
+};
+
+enum WorldStates
+{
+    WS_WEEKLY_QUEST_RESET_TIME = 20002                      // Next weekly reset time
 };
 
 // DB scripting commands
@@ -548,6 +555,7 @@ class World
         void SetRecordDiffInterval(int32 t) { if (t >= 0) m_configs[CONFIG_INTERVAL_LOG_UPDATE] = (uint32)t; }
         /// Next daily quests reset time
         time_t GetNextDailyQuestsResetTime() const { return m_NextDailyQuestReset; }
+        time_t GetNextWeeklyQuestsResetTime() const { return m_NextWeeklyQuestReset; }
 
         /// Get the maximum skill level a player can reach
         uint16 GetConfigMaxSkillValue() const
@@ -668,7 +676,9 @@ class World
         void _UpdateRealmCharCount(QueryResult_AutoPtr resultCharCount, uint32 accountId);
 
         void InitDailyQuestResetTime();
+        void InitWeeklyQuestResetTime();
         void ResetDailyQuests();
+        void ResetWeeklyQuests();
     private:
         static volatile bool m_stopEvent;
         static uint8 m_ExitCode;
@@ -736,6 +746,7 @@ class World
 
         // next daily quests reset time
         time_t m_NextDailyQuestReset;
+        time_t m_NextWeeklyQuestReset;
 
         //Player Queue
         Queue m_QueuedPlayer;

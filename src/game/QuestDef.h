@@ -143,15 +143,15 @@ enum __QuestFlags
     QUEST_FLAGS_AUTO_ACCEPT    = 0x00080000,                // quests in starting areas
 
     // Trinity flags for set SpecialFlags in DB if required but used only at server
-    QUEST_TRINITY_FLAGS_REPEATABLE           = 0x010000,     // Set by 1 in SpecialFlags from DB
-    QUEST_TRINITY_FLAGS_EXPLORATION_OR_EVENT = 0x020000,     // Set by 2 in SpecialFlags from DB (if reequired area explore, spell SPELL_EFFECT_QUEST_COMPLETE casting, table `*_script` command SCRIPT_COMMAND_QUEST_EXPLORED use, set from script)
-    QUEST_TRINITY_FLAGS_DB_ALLOWED = 0xFFFF | QUEST_TRINITY_FLAGS_REPEATABLE | QUEST_TRINITY_FLAGS_EXPLORATION_OR_EVENT,
+    QUEST_TRINITY_FLAGS_REPEATABLE           = 0x00100000,   // Set by 1 in SpecialFlags from DB
+    QUEST_TRINITY_FLAGS_EXPLORATION_OR_EVENT = 0x00200000,   // Set by 2 in SpecialFlags from DB (if reequired area explore, spell SPELL_EFFECT_QUEST_COMPLETE casting, table `*_script` command SCRIPT_COMMAND_QUEST_EXPLORED use, set from script)
+    QUEST_TRINITY_FLAGS_DB_ALLOWED = 0xFFFFF | QUEST_TRINITY_FLAGS_REPEATABLE | QUEST_TRINITY_FLAGS_EXPLORATION_OR_EVENT,
 
     // Trinity flags for internal use only
-    QUEST_TRINITY_FLAGS_DELIVER              = 0x040000,     // Internal flag computed only
-    QUEST_TRINITY_FLAGS_SPEAKTO              = 0x080000,     // Internal flag computed only
-    QUEST_TRINITY_FLAGS_KILL_OR_CAST         = 0x100000,     // Internal flag computed only
-    QUEST_TRINITY_FLAGS_TIMED                = 0x200000,     // Internal flag computed only
+    QUEST_TRINITY_FLAGS_DELIVER              = 0x04000000,   // Internal flag computed only
+    QUEST_TRINITY_FLAGS_SPEAKTO              = 0x08000000,   // Internal flag computed only
+    QUEST_TRINITY_FLAGS_KILL_OR_CAST         = 0x10000000,   // Internal flag computed only
+    QUEST_TRINITY_FLAGS_TIMED                = 0x20000000,   // Internal flag computed only
 };
 
 struct QuestLocale
@@ -241,6 +241,7 @@ class Quest
         uint32 GetFlags() const { return QuestFlags; }
         bool   IsDaily() const { return QuestFlags & QUEST_FLAGS_DAILY; }
         bool   IsWeekly() const { return QuestFlags & QUEST_FLAGS_WEEKLY; }
+        bool   IsDailyOrWeekly() const { return QuestFlags & (QUEST_FLAGS_DAILY | QUEST_FLAGS_WEEKLY); }
         bool   IsAutoAccept() const { return QuestFlags & QUEST_FLAGS_AUTO_ACCEPT; }
 
         // multiple values

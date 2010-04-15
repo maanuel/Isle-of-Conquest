@@ -3656,11 +3656,17 @@ void ObjectMgr::LoadQuests()
         if (qinfo->QuestFlags & ~QUEST_TRINITY_FLAGS_DB_ALLOWED)
         {
             sLog.outErrorDb("Quest %u has `SpecialFlags` = %u > max allowed value. Correct `SpecialFlags` to value <= %u",
-                qinfo->GetQuestId(),qinfo->QuestFlags,QUEST_TRINITY_FLAGS_DB_ALLOWED >> 16);
+                qinfo->GetQuestId(),qinfo->QuestFlags  >> 20, QUEST_TRINITY_FLAGS_DB_ALLOWED >> 20);
             qinfo->QuestFlags &= QUEST_TRINITY_FLAGS_DB_ALLOWED;
         }
 
-        if (qinfo->QuestFlags & (QUEST_FLAGS_DAILY | QUEST_FLAGS_WEEKLY))
+        if (qinfo->QuestFlags & QUEST_FLAGS_DAILY && qinfo->QuestFlags & QUEST_FLAGS_WEEKLY)
+        {
+            sLog.outErrorDb("Weekly Quest %u is marked as daily quest in `QuestFlags`, removed daily flag.",qinfo->GetQuestId());
+            qinfo->QuestFlags &= ~QUEST_FLAGS_DAILY;
+        }
+
+        if (qinfo->QuestFlags & QUEST_FLAGS_DAILY)
         {
             if (!(qinfo->QuestFlags & QUEST_TRINITY_FLAGS_REPEATABLE))
             {
@@ -3669,10 +3675,19 @@ void ObjectMgr::LoadQuests()
             }
         }
 
+        if (qinfo->QuestFlags & QUEST_FLAGS_WEEKLY)
+        {
+            if (!(qinfo->QuestFlags & QUEST_TRINITY_FLAGS_REPEATABLE))
+            {
+                sLog.outErrorDb("Weekly Quest %u not marked as repeatable in `SpecialFlags`, added.",qinfo->GetQuestId());
+                qinfo->QuestFlags |= QUEST_TRINITY_FLAGS_REPEATABLE;
+            }
+        }
+
         if (qinfo->QuestFlags & QUEST_FLAGS_AUTO_REWARDED)
         {
             // at auto-reward can be rewarded only RewChoiceItemId[0]
-            for (uint8 j = 1; j < QUEST_REWARD_CHOICES_COUNT; ++j)
+            for(int j = 1; j < QUEST_REWARD_CHOICES_COUNT; ++j )
             {
                 if (uint32 id = qinfo->RewChoiceItemId[j])
                 {
@@ -4450,7 +4465,6 @@ void ObjectMgr::LoadScripts(ScriptMapMap& scripts, char const* tablename)
                     continue;
                 }
 
-                // if (!objmgr.GetMangosStringLocale(tmp.dataint)) will checked after db_script_string loading
                 break;
             }
 
@@ -4793,41 +4807,6 @@ void ObjectMgr::LoadGossipScripts()
     LoadScripts(sGossipScripts, "gossip_scripts");
 
     // checks are done in LoadGossipMenuItems
-}
-
-void ObjectMgr::LoadItemTexts()
-{
-    QueryResult_AutoPtr result = CharacterDatabase.Query("SELECT id, text FROM item_text");
-
-    uint32 count = 0;
-
-    if (!result)
-    {
-        barGoLink bar(1);
-        bar.step();
-
-        sLog.outString();
-        sLog.outString(">> Loaded %u item pages", count);
-        return;
-    }
-
-    barGoLink bar(result->GetRowCount());
-
-    Field* fields;
-    do
-    {
-        bar.step();
-
-        fields = result->Fetch();
-
-        mItemTexts[ fields[0].GetUInt32() ] = fields[1].GetCppString();
-
-        ++count;
-
-    } while (result->NextRow());
-
-    sLog.outString();
-    sLog.outString(">> Loaded %u item texts", count);
 }
 
 void ObjectMgr::LoadPageTexts()
@@ -5986,10 +5965,6 @@ void ObjectMgr::SetHighestGuids()
     if (result)
         m_mailid = (*result)[0].GetUInt32()+1;
 
-    result = CharacterDatabase.Query("SELECT MAX(id) FROM item_text");
-    if (result)
-        m_ItemTextId = (*result)[0].GetUInt32()+1;
-
     result = CharacterDatabase.Query("SELECT MAX(guid) FROM corpse");
     if (result)
         m_hiCorpseGuid = (*result)[0].GetUInt32()+1;
@@ -6055,19 +6030,6 @@ uint32 ObjectMgr::GenerateMailID()
         World::StopNow(ERROR_EXIT_CODE);
     }
     return m_mailid++;
-}
-
-void ObjectMgr::CreateItemText(uint32 guid, std::string text)
-{
-    // insert new item text to container
-    mItemTexts[ guid ] = text;
-
-    // save new item text
-    CharacterDatabase.escape_string(text);
-
-    std::ostringstream query;
-    query << "INSERT INTO item_text (id,text) VALUES ( '" << guid << "', '" << text << "')";
-    CharacterDatabase.Execute(query.str().c_str());         //needs to be run this way, because mail body may be more than 1024 characters
 }
 
 uint32 ObjectMgr::GenerateLowGuid(HighGuid guidhigh)

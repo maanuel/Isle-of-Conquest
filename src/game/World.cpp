@@ -105,6 +105,7 @@ World::World()
     m_MaxPlayerCount = 0;
     m_resultQueue = NULL;
     m_NextDailyQuestReset = 0;
+    m_NextWeeklyQuestReset = 0;
     m_scheduledScripts = 0;
 
     m_defaultDbcLocale = LOCALE_enUS;
@@ -613,6 +614,14 @@ void World::LoadConfigSettings(bool reload)
     m_configs[CONFIG_GRID_UNLOAD] = sConfig.GetBoolDefault("GridUnload", true);
     m_configs[CONFIG_INTERVAL_SAVE] = sConfig.GetIntDefault("PlayerSaveInterval", 15 * MINUTE * IN_MILISECONDS);
     m_configs[CONFIG_INTERVAL_DISCONNECT_TOLERANCE] = sConfig.GetIntDefault("DisconnectToleranceInterval", 0);
+    m_configs[CONFIG_STATS_SAVE_ONLY_ON_LOGOUT] = sConfig.GetBoolDefault("PlayerSave.Stats.SaveOnlyOnLogout", true);
+
+    m_configs[CONFIG_MIN_LEVEL_STAT_SAVE] = sConfig.GetIntDefault("PlayerSave.Stats.MinLevel", 0);
+    if (m_configs[CONFIG_MIN_LEVEL_STAT_SAVE] > MAX_LEVEL)
+    {
+        sLog.outError("PlayerSave.Stats.MinLevel (%i) must be in range 0..80. Using default, do not save character stats (0).",m_configs[CONFIG_MIN_LEVEL_STAT_SAVE]);
+        m_configs[CONFIG_MIN_LEVEL_STAT_SAVE] = 0;
+    }
 
     m_configs[CONFIG_INTERVAL_GRIDCLEAN] = sConfig.GetIntDefault("GridCleanUpDelay", 5 * MINUTE * IN_MILISECONDS);
     if (m_configs[CONFIG_INTERVAL_GRIDCLEAN] < MIN_GRID_DELAY)
@@ -1350,9 +1359,6 @@ void World::SetInitialWorldSettings()
     sLog.outString("Loading Items...");                   // must be after LoadRandomEnchantmentsTable and LoadPageTexts
     objmgr.LoadItemPrototypes();
 
-    sLog.outString("Loading Item Texts...");
-    objmgr.LoadItemTexts();
-
     sLog.outString("Loading Creature Model Based Info Data...");
     objmgr.LoadCreatureModelInfo();
 
@@ -1675,6 +1681,9 @@ void World::SetInitialWorldSettings()
     sLog.outString("Calculate next daily quest reset time...");
     InitDailyQuestResetTime();
 
+    sLog.outString("Calculate next weekly quest reset time..." );
+    InitWeeklyQuestResetTime();
+
     sLog.outString("Starting objects Pooling system...");
     poolhandler.Initialize();
 
@@ -1838,6 +1847,12 @@ void World::Update(uint32 diff)
         ResetDailyQuests();
         m_NextDailyQuestReset += DAY;
     }
+
+    if (m_gameTime > m_NextWeeklyQuestReset)
+    {
+        ResetWeeklyQuests();	
+        m_NextWeeklyQuestReset += WEEK;
+    }	
 
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
@@ -2481,6 +2496,23 @@ void World::_UpdateRealmCharCount(QueryResult_AutoPtr resultCharCount, uint32 ac
     }
 }
 
+void World::InitWeeklyQuestResetTime()	
+{
+    time_t wtime = uint64(sWorld.getWorldState(WS_WEEKLY_QUEST_RESET_TIME));
+    if (!wtime)
+    {	
+        m_NextWeeklyQuestReset = time_t(m_gameTime + WEEK);
+        sWorld.setWorldState(WS_WEEKLY_QUEST_RESET_TIME, uint64(m_NextWeeklyQuestReset));
+    }
+    else	
+    {	
+        // move to just before if need	
+        time_t cur = time(NULL);	
+        if (m_NextWeeklyQuestReset < cur)
+            m_NextWeeklyQuestReset += WEEK * ((cur - m_NextWeeklyQuestReset) / WEEK);	
+    }	
+}	
+
 void World::InitDailyQuestResetTime()
 {
     time_t mostRecentQuestTime;
@@ -2537,6 +2569,17 @@ void World::UpdateAllowedSecurity()
         sLog.outDebug("Allowed Level: %u Result %u", m_allowedSecurityLevel, result->Fetch()->GetUInt16());
     }
 }
+
+void World::ResetWeeklyQuests()	
+{	
+    CharacterDatabase.Execute("DELETE FROM character_queststatus_weekly");
+    for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)	
+        if (itr->second->GetPlayer())	
+            itr->second->GetPlayer()->ResetWeeklyQuestStatus();
+
+    m_NextWeeklyQuestReset = time_t(m_NextWeeklyQuestReset + WEEK);
+    sWorld.setWorldState(WS_WEEKLY_QUEST_RESET_TIME, uint64(m_NextWeeklyQuestReset));
+}	
 
 void World::SetPlayerLimit(int32 limit, bool needUpdate)
 {
