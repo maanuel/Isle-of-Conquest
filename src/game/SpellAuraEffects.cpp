@@ -756,9 +756,13 @@ void AuraEffect::CalculatePeriodic(Unit * caster, bool create)
         return;
 
     Player* modOwner = caster ? caster->GetSpellModOwner() : NULL;
+
     // Apply casting time mods
     if (modOwner && m_amplitude)
     {
+        // Apply periodic time mod
+        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, m_amplitude);
+
         // For channeled spells
         if (IsChanneledSpell(m_spellProto)) {
             modOwner->ModSpellCastTime(m_spellProto, m_amplitude);
@@ -779,10 +783,6 @@ void AuraEffect::CalculatePeriodic(Unit * caster, bool create)
             }
         }
     }
-
-    // Apply periodic time mod
-    if (modOwner && m_amplitude)
-        modOwner->ApplySpellMod(GetId(), SPELLMOD_ACTIVATION_TIME, m_amplitude);
 
     if (create)
     {
@@ -1295,9 +1295,15 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
                 damage -= target->GetSpellCritDamageReduction(damage);
             }
 
-            // only from players
-            if (IS_PLAYER_GUID(GetCasterGUID()))
-                damage -= target->GetSpellDamageReduction(damage);
+            // Reduce damage from resilience for players and pets only.
+            // As of patch 3.3 pets inherit 100% of master resilience.
+            if (caster->GetSpellModOwner())
+                if (Player* modOwner = target->GetSpellModOwner())
+                {
+                    if (crit)
+                        damage -= modOwner->GetSpellCritDamageReduction(damage);
+                    damage -= modOwner->GetSpellDamageReduction(damage);
+                }
 
             caster->CalcAbsorbResist(target, GetSpellSchoolMask(GetSpellProto()), DOT, damage, &absorb, &resist, m_spellProto);
 
@@ -1368,9 +1374,15 @@ void AuraEffect::PeriodicTick(Unit * target, Unit * caster) const
                 damage = damageReductedArmor;
             }
 
-            // Reduce dot damage from resilience for players.
-            if (target->GetTypeId() == TYPEID_PLAYER)
-                damage-=target->GetSpellDamageReduction(damage);
+            // Reduce damage from resilience for players and pets only.
+            // As of patch 3.3 pets inherit 100% of master resilience.
+            if (caster->GetSpellModOwner())
+                if (Player* modOwner = target->GetSpellModOwner())
+                {
+                    if (crit)
+                        damage -= modOwner->GetSpellCritDamageReduction(damage);
+                    damage -= modOwner->GetSpellDamageReduction(damage);
+                }
 
             caster->CalcAbsorbResist(target, GetSpellSchoolMask(GetSpellProto()), DOT, damage, &absorb, &resist, m_spellProto);
 
@@ -2329,7 +2341,7 @@ void AuraEffect::CleanupTriggeredSpells(Unit * target)
     // needed for spell 43680, maybe others
     // TODO: is there a spell flag, which can solve this in a more sophisticated way?
     if (m_spellProto->EffectApplyAuraName[GetEffIndex()] == SPELL_AURA_PERIODIC_TRIGGER_SPELL &&
-            GetSpellDuration(m_spellProto) == m_spellProto->EffectAmplitude[GetEffIndex()])
+            uint32(GetSpellDuration(m_spellProto)) == m_spellProto->EffectAmplitude[GetEffIndex()])
         return;
 
     target->RemoveAurasDueToSpell(tSpellId, GetCasterGUID());
@@ -5660,6 +5672,9 @@ void AuraEffect::HandleAuraDummy(AuraApplication const * aurApp, uint8 mode, boo
                         case 52172:  // Coyote Spirit Despawn Aura
                         case 60244:  // Blood Parrot Despawn Aura
                             target->CastSpell((Unit*)NULL, GetAmount(), true, NULL, this);
+                            break;
+                        case 68839: // Corrupt Soul
+                            target->CastSpell(target, 68846, true, NULL, this, GetCasterGUID());
                             break;
                     }
                     break;

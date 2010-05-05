@@ -1135,7 +1135,7 @@ void SpellMgr::LoadSpellTargetPositions()
                 if (spellInfo->Effect[i]==SPELL_EFFECT_BIND && spellInfo->EffectMiscValue[i])
                 {
                     uint32 area_id = MapManager::Instance().GetAreaId(st.target_mapId, st.target_X, st.target_Y, st.target_Z);
-                    if (area_id != spellInfo->EffectMiscValue[i])
+                    if (area_id != uint32(spellInfo->EffectMiscValue[i]))
                     {
                         sLog.outErrorDb("Spell (Id: %u) listed in `spell_target_position` expected point to zone %u bit point to zone %u.",Spell_ID, spellInfo->EffectMiscValue[i], area_id);
                         break;
@@ -2604,7 +2604,7 @@ void SpellMgr::LoadSpellAreas()
                 continue;
             }
 
-            if (abs(spellArea.auraSpell) == spellArea.spellId)
+            if (uint32(abs(spellArea.auraSpell)) == spellArea.spellId)
             {
                 sLog.outErrorDb("Spell %u listed in `spell_area` have aura spell (%u) requirement for itself", spell,abs(spellArea.auraSpell));
                 continue;
@@ -3802,6 +3802,10 @@ void SpellMgr::LoadSpellCustomAttr()
             spellInfo->MaxAffectedTargets = 1;
             count++;
             break;
+        case 48743: // Death Pact
+            spellInfo->AttributesEx &= ~SPELL_ATTR_EX_CANT_TARGET_SELF;
+            count++;
+            break;
         // target allys instead of enemies, target A is src_caster, spells with effect like that have ally target
         // this is the only known exception, probably just wrong data
         case 29214: // Wrath of the Plaguebringer
@@ -3945,7 +3949,7 @@ bool SpellMgr::IsSkillTypeSpell(uint32 spellId, SkillType type) const
     SkillLineAbilityMapBounds bounds = GetSkillLineAbilityMapBounds(spellId);
 
     for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
-        if (_spell_idx->second->skillId == type)
+        if (_spell_idx->second->skillId == uint32(type))
             return true;
 
     return false;

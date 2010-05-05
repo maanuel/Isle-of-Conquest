@@ -62,29 +62,22 @@ TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 
 bool VendorItemData::RemoveItem(uint32 item_id)
 {
+    bool found = false;
     for (VendorItemList::iterator i = m_items.begin(); i != m_items.end(); ++i)
     {
         if ((*i)->item == item_id)
         {
-            m_items.erase(i);
-            return true;
+            i = m_items.erase(i);
+            found = true;
         }
     }
-    return false;
+    return found;
 }
 
-size_t VendorItemData::FindItemSlot(uint32 item_id) const
-{
-    for (size_t i = 0; i < m_items.size(); ++i)
-        if (m_items[i]->item == item_id)
-            return i;
-    return m_items.size();
-}
-
-VendorItem const* VendorItemData::FindItem(uint32 item_id) const
+VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, uint32 extendedCost) const
 {
     for (VendorItemList::const_iterator i = m_items.begin(); i != m_items.end(); ++i)
-        if ((*i)->item == item_id)
+        if((*i)->item == item_id && (*i)->ExtendedCost == extendedCost)
             return *i;
     return NULL;
 }
@@ -1783,6 +1776,8 @@ bool Creature::IsVisibleInGridForPlayer(Player const* pl) const
     return false;
 }
 
+
+// select nearest hostile unit within the given distance (regardless of threat list).
 Unit* Creature::SelectNearestTarget(float dist) const
 {
     CellPair p(Trinity::ComputeCellPair(GetPositionX(), GetPositionY()));
@@ -1791,6 +1786,36 @@ Unit* Creature::SelectNearestTarget(float dist) const
     cell.SetNoCreate();
 
     Unit *target = NULL;
+
+    {
+        if (dist == 0.0f || dist > MAX_VISIBILITY_DISTANCE)
+            dist = MAX_VISIBILITY_DISTANCE;
+
+        Trinity::NearestHostileUnitCheck u_check(this, dist);
+        Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck> searcher(this, target, u_check);
+
+        TypeContainerVisitor<Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck>, WorldTypeMapContainer > world_unit_searcher(searcher);
+        TypeContainerVisitor<Trinity::UnitLastSearcher<Trinity::NearestHostileUnitCheck>, GridTypeMapContainer >  grid_unit_searcher(searcher);
+
+        cell.Visit(p, world_unit_searcher, *GetMap(), *this, dist);
+        cell.Visit(p, grid_unit_searcher, *GetMap(), *this, dist);
+    }
+
+    return target;
+}
+
+// select nearest hostile unit within the given attack distance (i.e. distance is ignored if > than ATTACK_DISTANCE), regardless of threat list.
+Unit* Creature::SelectNearestTargetInAttackDistance(float dist) const
+{
+    CellPair p(Trinity::ComputeCellPair(GetPositionX(), GetPositionY()));
+    Cell cell(p);
+    cell.data.Part.reserved = ALL_DISTRICT;
+    cell.SetNoCreate();
+
+    Unit *target = NULL;
+
+    if (dist > ATTACK_DISTANCE)
+        sLog.outError("Creature (GUID: %u Entry: %u) SelectNearestTargetInAttackDistance called with dist > ATTACK_DISTANCE. Extra distance ignored.",GetGUIDLow(),GetEntry());
 
     {
         Trinity::NearestHostileUnitInAttackDistanceCheck u_check(this, dist);

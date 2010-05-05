@@ -6481,25 +6481,26 @@ bool ChatHandler::HandleServerPLimitCommand(const char *args)
         int l = strlen(param);
 
         if (strncmp(param,"player",l) == 0)
-            sWorld.SetPlayerLimit(-SEC_PLAYER);
+            sWorld.SetPlayerSecurityLimit(SEC_PLAYER);
         else if (strncmp(param,"moderator",l) == 0)
-            sWorld.SetPlayerLimit(-SEC_MODERATOR);
+            sWorld.SetPlayerSecurityLimit(SEC_MODERATOR);
         else if (strncmp(param,"gamemaster",l) == 0)
-            sWorld.SetPlayerLimit(-SEC_GAMEMASTER);
+            sWorld.SetPlayerSecurityLimit(SEC_GAMEMASTER);
         else if (strncmp(param,"administrator",l) == 0)
-            sWorld.SetPlayerLimit(-SEC_ADMINISTRATOR);
+            sWorld.SetPlayerSecurityLimit(SEC_ADMINISTRATOR);
         else if (strncmp(param,"reset",l) == 0)
             sWorld.SetPlayerLimit(sConfig.GetIntDefault("PlayerLimit", DEFAULT_PLAYER_LIMIT));
         else
         {
             int val = atoi(param);
-            if (val < -SEC_ADMINISTRATOR) val = -SEC_ADMINISTRATOR;
-
-            sWorld.SetPlayerLimit(val);
+            if (val < 0)
+                sWorld.SetPlayerSecurityLimit(AccountTypes(uint32(-val)));
+            else
+                sWorld.SetPlayerLimit(val);
         }
 
         // kick all low security level players
-        if (sWorld.GetPlayerAmountLimit() > SEC_PLAYER)
+        if (sWorld.GetPlayerSecurityLimit() > SEC_PLAYER)
             sWorld.KickAllLess(sWorld.GetPlayerSecurityLimit());
     }
 
@@ -7241,12 +7242,12 @@ bool ChatHandler::HandleChannelSetPublic(const char *args)
 
     if (val)
     {
-        CharacterDatabase.PExecute("UPDATE channels SET m_public = 1 WHERE m_name LIKE '%s'", channel);
+        CharacterDatabase.PExecute("UPDATE channels SET m_public = 1 WHERE m_name LIKE '%s'", channel.c_str());
         val = 1;
     }
     else
     {
-        CharacterDatabase.PExecute("UPDATE channels SET m_public = 0 WHERE m_name LIKE '%s'", channel);
+        CharacterDatabase.PExecute("UPDATE channels SET m_public = 0 WHERE m_name LIKE '%s'", channel.c_str());
         val = 0;
     }
 
@@ -7417,7 +7418,7 @@ bool ChatHandler::HandleUnFreezeCommand(const char *args)
 bool ChatHandler::HandleListFreezeCommand(const char * /*args*/)
 {
     //Get names from DB
-    QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT characters.name FROM characters LEFT JOIN character_aura ON (characters.guid = character_aura.guid) WHERE character_aura.spell = 9454");
+    QueryResult_AutoPtr result = CharacterDatabase.Query("SELECT characters.name FROM characters LEFT JOIN character_aura ON (characters.guid = character_aura.guid) WHERE character_aura.spell = 9454");
     if (!result)
     {
         SendSysMessage(LANG_COMMAND_NO_FROZEN_PLAYERS);

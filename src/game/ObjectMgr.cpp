@@ -2172,12 +2172,12 @@ void ObjectMgr::LoadItemPrototypes()
                 const_cast<ItemPrototype*>(proto)->Spells[0].SpellId = 0;
                 const_cast<ItemPrototype*>(proto)->Spells[1].SpellTrigger = ITEM_SPELLTRIGGER_ON_USE;
             }
-            else
+            else if (proto->Spells[1].SpellId != -1)
             {
                 SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[1].SpellId);
                 if (!spellInfo)
                 {
-                    sLog.outErrorDb("Item (Entry: %u) has wrong (not existing) spell in spellid_%d (%u)",i,1+1,proto->Spells[1].SpellId);
+                    sLog.outErrorDb("Item (Entry: %u) has wrong (not existing) spell in spellid_%d (%d)",i,1+1,proto->Spells[1].SpellId);
                     const_cast<ItemPrototype*>(proto)->Spells[0].SpellId = 0;
                     const_cast<ItemPrototype*>(proto)->Spells[1].SpellId = 0;
                     const_cast<ItemPrototype*>(proto)->Spells[1].SpellTrigger = ITEM_SPELLTRIGGER_ON_USE;
@@ -2185,7 +2185,7 @@ void ObjectMgr::LoadItemPrototypes()
                 // allowed only in special format
                 else if ((proto->Spells[1].SpellId == 483) || (proto->Spells[1].SpellId == 55884))
                 {
-                    sLog.outErrorDb("Item (Entry: %u) has broken spell in spellid_%d (%u)",i,1+1,proto->Spells[1].SpellId);
+                    sLog.outErrorDb("Item (Entry: %u) has broken spell in spellid_%d (%d)",i,1+1,proto->Spells[1].SpellId);
                     const_cast<ItemPrototype*>(proto)->Spells[0].SpellId = 0;
                     const_cast<ItemPrototype*>(proto)->Spells[1].SpellId = 0;
                     const_cast<ItemPrototype*>(proto)->Spells[1].SpellTrigger = ITEM_SPELLTRIGGER_ON_USE;
@@ -2203,7 +2203,7 @@ void ObjectMgr::LoadItemPrototypes()
                 }
                 else if (proto->Spells[j].SpellId != 0)
                 {
-                    sLog.outErrorDb("Item (Entry: %u) has wrong spell in spellid_%d (%u) for learning special format",i,j+1,proto->Spells[j].SpellId);
+                    sLog.outErrorDb("Item (Entry: %u) has wrong spell in spellid_%d (%d) for learning special format",i,j+1,proto->Spells[j].SpellId);
                     const_cast<ItemPrototype*>(proto)->Spells[j].SpellId = 0;
                 }
             }
@@ -2220,18 +2220,18 @@ void ObjectMgr::LoadItemPrototypes()
                     const_cast<ItemPrototype*>(proto)->Spells[j].SpellTrigger = ITEM_SPELLTRIGGER_ON_USE;
                 }
 
-                if (proto->Spells[j].SpellId)
+                if (proto->Spells[j].SpellId && proto->Spells[j].SpellId != -1)
                 {
                     SpellEntry const* spellInfo = sSpellStore.LookupEntry(proto->Spells[j].SpellId);
                     if (!spellInfo)
                     {
-                        sLog.outErrorDb("Item (Entry: %u) has wrong (not existing) spell in spellid_%d (%u)",i,j+1,proto->Spells[j].SpellId);
+                        sLog.outErrorDb("Item (Entry: %u) has wrong (not existing) spell in spellid_%d (%d)",i,j+1,proto->Spells[j].SpellId);
                         const_cast<ItemPrototype*>(proto)->Spells[j].SpellId = 0;
                     }
                     // allowed only in special format
                     else if ((proto->Spells[j].SpellId == 483) || (proto->Spells[j].SpellId == 55884))
                     {
-                        sLog.outErrorDb("Item (Entry: %u) has broken spell in spellid_%d (%u)",i,j+1,proto->Spells[j].SpellId);
+                        sLog.outErrorDb("Item (Entry: %u) has broken spell in spellid_%d (%d)",i,j+1,proto->Spells[j].SpellId);
                         const_cast<ItemPrototype*>(proto)->Spells[j].SpellId = 0;
                     }
                 }
@@ -3687,7 +3687,7 @@ void ObjectMgr::LoadQuests()
         if (qinfo->QuestFlags & QUEST_FLAGS_AUTO_REWARDED)
         {
             // at auto-reward can be rewarded only RewChoiceItemId[0]
-            for(int j = 1; j < QUEST_REWARD_CHOICES_COUNT; ++j )
+            for (int j = 1; j < QUEST_REWARD_CHOICES_COUNT; ++j )
             {
                 if (uint32 id = qinfo->RewChoiceItemId[j])
                 {
@@ -5575,7 +5575,7 @@ WorldSafeLocsEntry const *ObjectMgr::GetClosestGraveYard(float x, float y, float
             // if find graveyard at different map from where entrance placed (or no entrance data), use any first
             if (!mapEntry ||
                  mapEntry->entrance_map < 0 ||
-                 mapEntry->entrance_map != entry->map_id ||
+                 uint32(mapEntry->entrance_map) != entry->map_id ||
                 (mapEntry->entrance_x == 0 && mapEntry->entrance_y == 0))
             {
                 // not have any corrdinates for check distance anyway
@@ -5899,21 +5899,35 @@ void ObjectMgr::LoadAccessRequirements()
 }
 
 /*
- * Searches for the areatrigger which teleports players out of the given map
+ * Searches for the areatrigger which teleports players out of the given map with instance_template.parent field support
  */
 AreaTrigger const* ObjectMgr::GetGoBackTrigger(uint32 Map) const
 {
+    bool useParentDbValue = false;
+    uint32 parentId = 0;
     const MapEntry *mapEntry = sMapStore.LookupEntry(Map);
-    if (!mapEntry) return NULL;
-    for (AreaTriggerMap::const_iterator itr = mAreaTriggers.begin(); itr != mAreaTriggers.end(); ++itr)
+    if (!mapEntry || mapEntry->entrance_map < 0)
+        return NULL;
+
+    if (mapEntry->IsDungeon())
     {
-        if (itr->second.target_mapId == mapEntry->entrance_map)
+        const InstanceTemplate *iTemplate = objmgr.GetInstanceTemplate(Map);
+
+        if (!iTemplate)
+            return NULL;
+
+        parentId = iTemplate->parent;
+        useParentDbValue = true;
+    }
+
+    uint32 entrance_map = uint32(mapEntry->entrance_map);
+    for (AreaTriggerMap::const_iterator itr = mAreaTriggers.begin(); itr != mAreaTriggers.end(); ++itr)
+        if ((!useParentDbValue && itr->second.target_mapId == entrance_map) || (useParentDbValue && itr->second.target_mapId == parentId))
         {
             AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(itr->first);
             if (atEntry && atEntry->mapid == Map)
                 return &itr->second;
         }
-    }
     return NULL;
 }
 
@@ -8093,7 +8107,7 @@ void ObjectMgr::LoadMailLevelRewards()
     sLog.outString(">> Loaded %u level dependent mail rewards,", count);
 }
 
-bool ObjectMgr::AddSpellToTrainer(int32 entry, int32 spell, Field *fields, std::set<uint32> *skip_trainers, std::set<uint32> *talentIds)
+bool ObjectMgr::AddSpellToTrainer(uint32 entry, uint32 spell, Field *fields, std::set<uint32> *skip_trainers, std::set<uint32> *talentIds)
 {
     if (entry >= TRINITY_TRAINER_START_REF)
         return false;
@@ -8181,7 +8195,7 @@ bool ObjectMgr::AddSpellToTrainer(int32 entry, int32 spell, Field *fields, std::
     }
     return true;
 }
-int ObjectMgr::LoadReferenceTrainer(int32 trainer, int32 spell, std::set<uint32> *skip_trainers, std::set<uint32> *talentIds)
+int ObjectMgr::LoadReferenceTrainer(uint32 trainer, int32 spell, std::set<uint32> *skip_trainers, std::set<uint32> *talentIds)
 {
     QueryResult_AutoPtr result = WorldDatabase.PQuery("SELECT entry, spell,spellcost,reqskill,reqskillvalue,reqlevel FROM npc_trainer WHERE entry='%d'", spell);
     if (!result)
@@ -8196,7 +8210,7 @@ int ObjectMgr::LoadReferenceTrainer(int32 trainer, int32 spell, std::set<uint32>
         int32 spell  = fields[1].GetInt32();
         if (spell < 0)
             count += this->LoadReferenceTrainer(trainer, -spell, skip_trainers, talentIds);
-        else if (this->AddSpellToTrainer(trainer, spell, fields, skip_trainers, talentIds))
+        else if (this->AddSpellToTrainer(trainer, uint32(spell), fields, skip_trainers, talentIds))
             ++count;
     } while (result->NextRow());
 
@@ -8240,7 +8254,7 @@ void ObjectMgr::LoadTrainerSpell()
         int32 spell  = fields[1].GetInt32();
         if (spell < 0)
             count += this->LoadReferenceTrainer(entry, -spell, &skip_trainers, &talentIds);
-        else if (this->AddSpellToTrainer(entry, spell, fields, &skip_trainers, &talentIds))
+        else if (this->AddSpellToTrainer(entry, uint32(spell), fields, &skip_trainers, &talentIds))
             ++count;
 
     } while (result->NextRow());
@@ -8252,7 +8266,7 @@ void ObjectMgr::LoadTrainerSpell()
 int ObjectMgr::LoadReferenceVendor(int32 vendor, int32 item, std::set<uint32> *skip_vendors)
 {
     // find all items from the reference vendor
-    QueryResult_AutoPtr result = WorldDatabase.PQuery("SELECT item, maxcount, incrtime, ExtendedCost FROM npc_vendor WHERE entry='%d'", item);
+    QueryResult_AutoPtr result = WorldDatabase.PQuery("SELECT item, maxcount, incrtime, ExtendedCost FROM npc_vendor WHERE entry='%d' ORDER BY slot ASC", item);
     if (!result)
     {
         barGoLink bar(1);
@@ -8303,7 +8317,7 @@ void ObjectMgr::LoadVendors()
 
     std::set<uint32> skip_vendors;
 
-    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, item, maxcount, incrtime, ExtendedCost FROM npc_vendor");
+    QueryResult_AutoPtr result = WorldDatabase.Query("SELECT entry, item, maxcount, incrtime, ExtendedCost FROM npc_vendor ORDER BY entry, slot ASC");
     if (!result)
     {
         barGoLink bar(1);
@@ -8617,10 +8631,9 @@ bool ObjectMgr::RemoveVendorItem(uint32 entry,uint32 item, bool savetodb)
     if (iter == m_mCacheVendorItemMap.end())
         return false;
 
-    if (!iter->second.FindItem(item))
+    if(!iter->second.RemoveItem(item))
         return false;
 
-    iter->second.RemoveItem(item);
     if (savetodb) WorldDatabase.PExecuteLog("DELETE FROM npc_vendor WHERE entry='%u' AND item='%u'",entry, item);
     return true;
 }
@@ -8691,12 +8704,12 @@ bool ObjectMgr::IsVendorItemValid(uint32 vendor_entry, uint32 item_id, int32 max
     if (!vItems)
         return true;                                        // later checks for non-empty lists
 
-    if (vItems->FindItem(item_id))
+    if(vItems->FindItemCostPair(item_id,ExtendedCost))
     {
         if (pl)
-            ChatHandler(pl).PSendSysMessage(LANG_ITEM_ALREADY_IN_LIST,item_id);
+            ChatHandler(pl).PSendSysMessage(LANG_ITEM_ALREADY_IN_LIST, item_id, ExtendedCost);
         else
-            sLog.outErrorDb("Table `(game_event_)npc_vendor` has duplicate items %u for vendor (Entry: %u), ignore", item_id, vendor_entry);
+            sLog.outErrorDb( "Table `npc_vendor` has duplicate items %u (with extended cost %u) for vendor (Entry: %u), ignoring", item_id, ExtendedCost, vendor_entry);
         return false;
     }
 
@@ -8943,7 +8956,7 @@ void ObjectMgr::LoadGMTickets()
 
     } while (result->NextRow());
 
-    result = CharacterDatabase.PQuery("SELECT MAX(guid) from gm_tickets");
+    result = CharacterDatabase.Query("SELECT MAX(guid) from gm_tickets");
 
     if (result)
     {

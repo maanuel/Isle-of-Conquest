@@ -2093,11 +2093,13 @@ DROP TABLE IF EXISTS `game_event_npc_vendor`;
 CREATE TABLE `game_event_npc_vendor` (
   `event` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `guid` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `slot` smallint(6) unsigned NOT NULL DEFAULT '0',
   `item` mediumint(8) NOT NULL DEFAULT '0',
   `maxcount` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `incrtime` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `ExtendedCost` mediumint(8) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`guid`,`item`)
+  PRIMARY KEY (`guid`,`item`),
+  INDEX (`slot`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -3687,11 +3689,13 @@ DROP TABLE IF EXISTS `npc_vendor`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `npc_vendor` (
   `entry` mediumint(8) unsigned NOT NULL DEFAULT '0',
+  `slot` smallint(6) unsigned NOT NULL DEFAULT '0',
   `item` mediumint(8) unsigned NOT NULL DEFAULT '0',
   `maxcount` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `incrtime` int(10) unsigned NOT NULL DEFAULT '0',
   `ExtendedCost` mediumint(8) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`entry`,`item`)
+  PRIMARY KEY (`entry`,`item`,`extendedCost`),
+  INDEX (`slot`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 ROW_FORMAT=FIXED COMMENT='Npc System';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -4384,7 +4388,7 @@ CREATE TABLE `quest_template` (
   `RequiredMaxRepValue` mediumint(9) NOT NULL DEFAULT '0',
   `SuggestedPlayers` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `LimitTime` int(10) unsigned NOT NULL DEFAULT '0',
-  `QuestFlags` smallint(5) unsigned NOT NULL DEFAULT '0',
+  `QuestFlags` int(10) unsigned NOT NULL DEFAULT '0',
   `SpecialFlags` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `CharTitleId` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `PlayersSlain` tinyint(3) unsigned NOT NULL DEFAULT '0',
@@ -14648,7 +14652,7 @@ INSERT INTO `trinity_string` (`entry`,`content_default`,`content_loc1`,`content_
 (207, 'Item ''%i'' not found in database.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (208, 'Item ''%i'' ''%s'' deleted from vendor list', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (209, 'Item ''%i'' not found in vendor list.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(210, 'Item ''%i'' already in vendor list.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(210, 'Item ''%i'' (with extended cost %u) already in vendor list.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (211, 'Spells of %s reset.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (212, 'Spells of %s will reset at next login.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (213, 'Talents of %s reset.', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),

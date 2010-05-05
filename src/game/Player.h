@@ -167,11 +167,10 @@ enum ActionButtonType
 
 struct ActionButton
 {
-    ActionButton() : packedData(0), uState(ACTIONBUTTON_NEW), canRemoveByClient(true){}
+    ActionButton() : packedData(0), uState(ACTIONBUTTON_NEW) {}
 
     uint32 packedData;
     ActionButtonUpdateState uState;
-    bool canRemoveByClient;
 
     // helpers
     ActionButtonType GetType() const { return ActionButtonType(ACTION_BUTTON_TYPE(packedData)); }
@@ -1252,7 +1251,7 @@ class Player : public Unit, public GridObject<Player>
             return mainItem && mainItem->GetProto()->InventoryType == INVTYPE_2HWEAPON && !CanTitanGrip();
         }
         void SendNewItem(Item *item, uint32 count, bool received, bool created, bool broadcast = false);
-        bool BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot);
+        bool BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot);
 
         float GetReputationPriceDiscount(Creature const* pCreature) const;
         Player* GetTrader() const { return pTrader; }
@@ -1273,6 +1272,7 @@ class Player : public Unit, public GridObject<Player>
         void AddEnchantmentDuration(Item *item,EnchantmentSlot slot,uint32 duration);
         void ApplyEnchantment(Item *item,EnchantmentSlot slot,bool apply, bool apply_dur = true, bool ignore_condition = false);
         void ApplyEnchantment(Item *item,bool apply);
+        void UpdateSkillEnchantments(uint16 skill_id, uint16 curr_value, uint16 new_value);
         void SendEnchantmentDurations();
         void BuildEnchantmentsInfoData(WorldPacket *data);
         void AddItemDurations(Item *item);
@@ -1667,8 +1667,11 @@ class Player : public Unit, public GridObject<Player>
 
         ActionButton* addActionButton(uint8 button, uint32 action, uint8 type);
         void removeActionButton(uint8 button);
-        void SendInitialActionButtons() const { SendActionButtons(0); }
+        uint32 GetActionButtonSpell(uint8 button) const;
+        ActionButton const* GetActionButton(uint8 button);
+        void SendInitialActionButtons() const { SendActionButtons(1); }
         void SendActionButtons(uint32 state) const;
+        bool IsActionButtonDataValid(uint8 button, uint32 action, uint8 type);
 
         PvPInfo pvpInfo;
         void UpdatePvPState(bool onlyFFA = false);
@@ -2263,6 +2266,7 @@ class Player : public Unit, public GridObject<Player>
         void SendSavedInstances();
         static void ConvertInstancesToGroup(Player *player, Group *group = NULL, uint64 player_guid = 0);
         bool Satisfy(AccessRequirement const*, uint32 target_map, bool report = false);
+        bool CheckInstanceLoginValid();
 
         // last used pet number (for BG's)
         uint32 GetLastPetNumber() const { return m_lastpetnumber; }
@@ -2336,11 +2340,6 @@ class Player : public Unit, public GridObject<Player>
 
         //bool isActiveObject() const { return true; }
         bool canSeeSpellClickOn(Creature const* creature) const;
-        uint32 GetActionButtonSpell(uint8 button) const
-        {
-            ActionButtonList::const_iterator ab = m_actionButtons.find(button);
-            return ab != m_actionButtons.end() && ab->second.uState != ACTIONBUTTON_DELETED && ab->second.GetType() == ACTION_BUTTON_SPELL ? ab->second.GetAction() : 0;
-        }
 
         uint32 GetChampioningFaction() const { return m_ChampioningFaction; }
         void SetChampioningFaction(uint32 faction) { m_ChampioningFaction = faction; }
@@ -2384,7 +2383,7 @@ class Player : public Unit, public GridObject<Player>
         /***                   LOAD SYSTEM                     ***/
         /*********************************************************/
 
-        void _LoadActions(QueryResult_AutoPtr result, bool startup);
+        void _LoadActions(QueryResult_AutoPtr result);
         void _LoadAuras(QueryResult_AutoPtr result, uint32 timediff);
         void _LoadGlyphAuras();
         void _LoadBoundInstances(QueryResult_AutoPtr result);
@@ -2592,6 +2591,8 @@ class Player : public Unit, public GridObject<Player>
         Item* _StoreItem(uint16 pos, Item *pItem, uint32 count, bool clone, bool update);
 
         std::set<uint64> m_refundableItems;
+        void SendRefundInfo(Item* item);
+        void RefundItem(Item* item);
 
         void UpdateKnownCurrencies(uint32 itemId, bool apply);
         int32 CalculateReputationGain(uint32 creatureOrQuestLevel, int32 rep, int32 faction, bool for_quest);

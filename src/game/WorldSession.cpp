@@ -180,7 +180,7 @@ bool WorldSession::Update(uint32 /*diff*/)
                         LookupOpcodeName(packet->GetOpcode()),
                         packet->GetOpcode());
         #endif*/
-        
+
         if (packet->GetOpcode() >= NUM_MSG_TYPES)
         {
             sLog.outError("SESSION: received non-existed opcode %s (0x%.4X)",
@@ -287,10 +287,10 @@ bool WorldSession::Update(uint32 /*diff*/)
     if (!m_Socket || (ShouldLogOut(currTime) && !m_playerLoading))
         LogoutPlayer(true);
 
-    ///- If necessary, kick the player from the character select screen    
+    ///- If necessary, kick the player from the character select screen
     if (IsConnectionIdle())
         return false;
-        
+
     if (!m_Socket)
         return false;                                       //Will remove this session from the world session map
 
@@ -550,9 +550,10 @@ void WorldSession::SendAuthWaitQue(uint32 position)
     }
     else
     {
-        WorldPacket packet(SMSG_AUTH_RESPONSE, 5);
+        WorldPacket packet(SMSG_AUTH_RESPONSE, 6);
         packet << uint8(AUTH_WAIT_QUEUE);
-        packet << uint32 (position);
+        packet << uint32(position);
+        packet << uint8(0);                                 // unk
         SendPacket(&packet);
     }
 }

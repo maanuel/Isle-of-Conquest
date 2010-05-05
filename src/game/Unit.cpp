@@ -1083,13 +1083,8 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
 
                 if (critPctDamageMod != 0)
                     damage = int32(damage * float((100.0f + critPctDamageMod)/100.0f));
-
-                // Resilience - reduce crit damage
-                if (attackType != RANGED_ATTACK)
-                    damage -= pVictim->GetMeleeCritDamageReduction(damage);
-                else
-                    damage -= pVictim->GetRangedCritDamageReduction(damage);
             }
+
             // Spell weapon based damage CAN BE crit & blocked at same time
             if (blocked)
             {
@@ -1101,6 +1096,24 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
                     damageInfo->blocked = damage;
                 damage -= damageInfo->blocked;
             }
+
+            // Reduce damage from resilience for players and pets only.
+            // As of patch 3.3 pets inherit 100% of master resilience.
+            if (GetSpellModOwner())
+                if (Player* modOwner = pVictim->GetSpellModOwner())
+                {
+                    if (crit)
+                    {
+                        if (attackType != RANGED_ATTACK)
+                            damage -= modOwner->GetMeleeCritDamageReduction(damage);
+                        else
+                            damage -= modOwner->GetRangedCritDamageReduction(damage);
+                    }
+                    if (attackType != RANGED_ATTACK)
+                        damage -= modOwner->GetMeleeDamageReduction(damage);
+                    else
+                        damage -= modOwner->GetRangedDamageReduction(damage);
+                }
         }
         break;
         // Magical Attacks
@@ -1110,18 +1123,22 @@ void Unit::CalculateSpellDamageTaken(SpellNonMeleeDamage *damageInfo, int32 dama
             // If crit add critical bonus
             if (crit)
             {
-                damageInfo->HitInfo|= SPELL_HIT_TYPE_CRIT;
+                damageInfo->HitInfo |= SPELL_HIT_TYPE_CRIT;
                 damage = SpellCriticalDamageBonus(spellInfo, damage, pVictim);
-                // Resilience - reduce crit damage
-                damage -= pVictim->GetSpellCritDamageReduction(damage);
             }
+
+            // Reduce damage from resilience for players and pets only.
+            // As of patch 3.3 pets inherit 100% of master resilience.
+            if (GetSpellModOwner())
+                if (Player* modOwner = pVictim->GetSpellModOwner())
+                {
+                    if (crit)
+                        damage -= modOwner->GetSpellCritDamageReduction(damage);
+                    damage -= modOwner->GetSpellDamageReduction(damage);
+                }
         }
         break;
     }
-
-    // only from players
-    if (GetTypeId() == TYPEID_PLAYER)
-        damage -= pVictim->GetSpellDamageReduction(damage);
 
     // Calculate absorb resist
     if (damage > 0)
@@ -1295,10 +1312,20 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
             if (mod != 0)
                 damageInfo->damage = int32((damageInfo->damage) * float((100.0f + mod)/100.0f));
 
-            // Resilience - reduce crit damage
-            uint32 resilienceReduction = pVictim->GetMeleeCritDamageReduction(damageInfo->damage);
-            damageInfo->damage      -= resilienceReduction;
-            damageInfo->cleanDamage += resilienceReduction;
+            // Reduce damage from resilience for players and pets only.
+            // As of patch 3.3 pets inherit 100% of master resilience.
+            if (GetSpellModOwner())
+                if (Player* modOwner = pVictim->GetSpellModOwner())
+                {
+                    uint32 resilienceReduction;
+                    if (attackType != RANGED_ATTACK)
+                        resilienceReduction = modOwner->GetMeleeCritDamageReduction(damageInfo->damage);
+                    else
+                        resilienceReduction = modOwner->GetRangedCritDamageReduction(damageInfo->damage);
+
+                    damageInfo->damage      -= resilienceReduction;
+                    damageInfo->cleanDamage += resilienceReduction;
+                }
             break;
         }
         case MELEE_HIT_PARRY:
@@ -1360,9 +1387,20 @@ void Unit::CalculateMeleeDamage(Unit *pVictim, uint32 damage, CalcDamageInfo *da
             break;
     }
 
-    // only from players
-    if (GetTypeId() == TYPEID_PLAYER)
-        damage -= pVictim->GetMeleeDamageReduction(damage);
+    // Reduce damage from resilience for players and pets only.
+    // As of patch 3.3 pets inherit 100% of master resilience.
+    if (GetSpellModOwner())
+        if (Player* modOwner = pVictim->GetSpellModOwner())
+        {
+            uint32 resilienceReduction;
+            if (attackType != RANGED_ATTACK)
+                resilienceReduction = modOwner->GetMeleeDamageReduction(damageInfo->damage);
+            else
+                resilienceReduction = modOwner->GetRangedDamageReduction(damageInfo->damage);
+
+            damageInfo->damage      -= resilienceReduction;
+            damageInfo->cleanDamage += resilienceReduction;
+        }
 
     // Calculate absorb resist
     if (int32(damageInfo->damage) > 0)
@@ -2453,7 +2491,7 @@ uint32 Unit::CalculateDamage(WeaponAttackType attType, bool normalized, bool add
 
 float Unit::CalculateLevelPenalty(SpellEntry const* spellProto) const
 {
-    if (spellProto->spellLevel <= 0)
+    if (spellProto->spellLevel <= 0 || spellProto->spellLevel >= spellProto->maxLevel)
         return 1.0f;
 
     float LvlPenalty = 0.0f;
@@ -3101,13 +3139,18 @@ float Unit::GetUnitCriticalChance(WeaponAttackType attackType, const Unit *pVict
     // reduce crit chance from Rating for players
     if (attackType != RANGED_ATTACK)
     {
-        crit -= pVictim->GetMeleeCritChanceReduction();
-     // Glyph of barkskin
-     if (pVictim->HasAura(63057) && pVictim->HasAura(22812))
-         crit-=25.0f;
+        // Reduce crit chance from resilience for players and pets only.
+        // As of patch 3.3 pets inherit 100% of master resilience.
+        if (GetSpellModOwner())
+            if (Player* modOwner = pVictim->GetSpellModOwner())
+                crit -= modOwner->GetMeleeCritChanceReduction();
+        // Glyph of barkskin
+        if (pVictim->HasAura(63057) && pVictim->HasAura(22812))
+            crit -= 25.0f;
     }
-    else
-        crit -= pVictim->GetRangedCritChanceReduction();
+    else if (GetSpellModOwner())
+        if (Player* modOwner = pVictim->GetSpellModOwner())
+            crit -= modOwner->GetRangedCritChanceReduction();
 
     // Apply crit chance from defence skill
     crit += (int32(GetMaxSkillValueForLevel(pVictim)) - int32(pVictim->GetDefenseSkillValue(this))) * 0.04f;
@@ -3990,7 +4033,7 @@ void Unit::RemoveAurasDueToSpellByDispel(uint32 spellId, uint64 casterGUID, Unit
                 {
                     int32 damage = aurEff->GetAmount()*9;
                     // backfire damage and silence
-                    dispeller->CastCustomSpell(dispeller, 31117, &damage, NULL, NULL, true, NULL, NULL, GetGUID());
+                    dispeller->CastCustomSpell(dispeller, 31117, &damage, NULL, NULL, true, NULL, NULL, aura->GetCasterGUID());
                 }
             }
             // Flame Shock
@@ -4207,7 +4250,7 @@ void Unit::RemoveAurasWithFamily(SpellFamilyNames family, uint32 familyFlag1, ui
         if (!casterGUID || aura->GetCasterGUID() == casterGUID)
         {
             SpellEntry const *spell = aura->GetSpellProto();
-            if (spell->SpellFamilyName == family && spell->SpellFamilyFlags.HasFlag(familyFlag1, familyFlag2, familyFlag3))
+            if (spell->SpellFamilyName == uint32(family) && spell->SpellFamilyFlags.HasFlag(familyFlag1, familyFlag2, familyFlag3))
             {
                 RemoveAura(iter);
                 continue;
@@ -4398,7 +4441,7 @@ AuraEffect* Unit::GetAuraEffect(AuraType type, SpellFamilyNames name, uint32 ico
         if (effIndex != (*itr)->GetEffIndex())
             continue;
         SpellEntry const * spell = (*itr)->GetSpellProto();
-        if (spell->SpellIconID == iconId && spell->SpellFamilyName == name && !spell->SpellFamilyFlags)
+        if (spell->SpellIconID == iconId && spell->SpellFamilyName == uint32(name) && !spell->SpellFamilyFlags)
             return *itr;
     }
     return NULL;
@@ -4410,7 +4453,7 @@ AuraEffect* Unit::GetAuraEffect(AuraType type, SpellFamilyNames family, uint32 f
     for (AuraEffectList::const_iterator i = auras.begin(); i != auras.end(); ++i)
     {
         SpellEntry const *spell = (*i)->GetSpellProto();
-        if (spell->SpellFamilyName == family && spell->SpellFamilyFlags.HasFlag(familyFlag1, familyFlag2, familyFlag3))
+        if (spell->SpellFamilyName == uint32(family) && spell->SpellFamilyFlags.HasFlag(familyFlag1, familyFlag2, familyFlag3))
         {
             if (casterGUID && (*i)->GetCasterGUID() != casterGUID)
                 continue;
@@ -4479,7 +4522,7 @@ bool Unit::HasAuraType(AuraType auraType) const
     return (!m_modAuras[auraType].empty());
 }
 
-bool Unit::HasAuraTypeWithMiscvalue(AuraType auratype, uint32 miscvalue) const
+bool Unit::HasAuraTypeWithMiscvalue(AuraType auratype, int32 miscvalue) const
 {
     AuraEffectList const& mTotalAuraList = GetAuraEffectsByType(auratype);
     for (AuraEffectList::const_iterator i = mTotalAuraList.begin(); i != mTotalAuraList.end(); ++i)
@@ -4488,7 +4531,7 @@ bool Unit::HasAuraTypeWithMiscvalue(AuraType auratype, uint32 miscvalue) const
     return false;
 }
 
-bool Unit::HasAuraTypeWithValue(AuraType auratype, uint32 value) const
+bool Unit::HasAuraTypeWithValue(AuraType auratype, int32 value) const
 {
     AuraEffectList const& mTotalAuraList = GetAuraEffectsByType(auratype);
     for (AuraEffectList::const_iterator i = mTotalAuraList.begin(); i != mTotalAuraList.end(); ++i)
@@ -8214,7 +8257,7 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage, AuraEffect* trig
         if (this->GetTypeId() != TYPEID_PLAYER || !plr || plr->getClass() != CLASS_DEATH_KNIGHT)
             return false;
 
-        if(!plr->IsBaseRuneSlotsOnCooldown(RUNE_BLOOD))
+        if (!plr->IsBaseRuneSlotsOnCooldown(RUNE_BLOOD))
             return false;
     }
 
@@ -9033,7 +9076,7 @@ void Unit::ModifyAuraState(AuraState flag, bool apply)
                     if (itr->second->state == PLAYERSPELL_REMOVED || itr->second->disabled) continue;
                     SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                     if (!spellInfo || !IsPassiveSpell(itr->first)) continue;
-                    if (spellInfo->CasterAuraState == flag)
+                    if (spellInfo->CasterAuraState == uint32(flag))
                         CastSpell(this, itr->first, true, NULL);
                 }
             }
@@ -9045,7 +9088,7 @@ void Unit::ModifyAuraState(AuraState flag, bool apply)
                     if (itr->second.state == PETSPELL_REMOVED) continue;
                     SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
                     if (!spellInfo || !IsPassiveSpell(itr->first)) continue;
-                    if (spellInfo->CasterAuraState == flag)
+                    if (spellInfo->CasterAuraState == uint32(flag))
                         CastSpell(this, itr->first, true, NULL);
                 }
             }
@@ -9063,7 +9106,7 @@ void Unit::ModifyAuraState(AuraState flag, bool apply)
                 for (Unit::AuraApplicationMap::iterator itr = tAuras.begin(); itr != tAuras.end();)
                 {
                     SpellEntry const* spellProto = (*itr).second->GetBase()->GetSpellProto();
-                    if (spellProto->CasterAuraState == flag)
+                    if (spellProto->CasterAuraState == uint32(flag))
                         RemoveAura(itr);
                     else
                         ++itr;
@@ -9229,8 +9272,11 @@ void Unit::SetMinion(Minion *minion, bool apply)
             {
             }
         }
-        //else if (minion->m_Properties && minion->m_Properties->Type == SUMMON_TYPE_MINIPET)
-        //    AddUInt64Value(UNIT_FIELD_CRITTER, minion->GetGUID());
+
+        if (minion->m_Properties && minion->m_Properties->Type == SUMMON_TYPE_MINIPET)
+        {
+            SetCritterGUID(minion->GetGUID());
+        }
 
         // PvP, FFAPvP
         minion->SetByteValue(UNIT_FIELD_BYTES_2, 1, GetByteValue(UNIT_FIELD_BYTES_2, 1));
@@ -9262,6 +9308,12 @@ void Unit::SetMinion(Minion *minion, bool apply)
 
         m_Controlled.erase(minion);
 
+        if (minion->m_Properties && minion->m_Properties->Type == SUMMON_TYPE_MINIPET)
+        {
+            if (GetCritterGUID() == minion->GetGUID())
+                SetCritterGUID(0);
+        }
+
         if (minion->IsGuardianPet())
         {
             if (GetPetGUID() == minion->GetGUID())
@@ -9270,14 +9322,14 @@ void Unit::SetMinion(Minion *minion, bool apply)
         else if (minion->isTotem())
         {
             // All summoned by totem minions must disappear when it is removed.
-      if (const SpellEntry* spInfo = sSpellStore.LookupEntry(minion->ToTotem()->GetSpell()))
-                for (int i = 0; i < MAX_SPELL_EFFECTS; ++i)
-                {
-                    if (spInfo->Effect[i] != SPELL_EFFECT_SUMMON)
-                        continue;
+        if (const SpellEntry* spInfo = sSpellStore.LookupEntry(minion->ToTotem()->GetSpell()))
+            for (int i = 0; i < MAX_SPELL_EFFECTS; ++i)
+            {
+                if (spInfo->Effect[i] != SPELL_EFFECT_SUMMON)
+                    continue;
 
-                    this->RemoveAllMinionsByEntry(spInfo->EffectMiscValue[i]);
-                }
+                this->RemoveAllMinionsByEntry(spInfo->EffectMiscValue[i]);
+            }
         }
 
         if (GetTypeId() == TYPEID_PLAYER)
@@ -9327,8 +9379,6 @@ void Unit::SetMinion(Minion *minion, bool apply)
                 }
             }
         }
-        //else if (minion->m_Properties && minion->m_Properties->Type == SUMMON_TYPE_MINIPET)
-        //    RemoveUInt64Value(UNIT_FIELD_CRITTER, minion->GetGUID());
     }
 }
 
@@ -10216,8 +10266,11 @@ bool Unit::isSpellCrit(Unit *pVictim, SpellEntry const *spellProto, SpellSchoolM
                     crit_chance += pVictim->GetTotalAuraModifierByMiscMask(SPELL_AURA_MOD_ATTACKER_SPELL_CRIT_CHANCE, schoolMask);
                     // Modify critical chance by victim SPELL_AURA_MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE
                     crit_chance += pVictim->GetTotalAuraModifier(SPELL_AURA_MOD_ATTACKER_SPELL_AND_WEAPON_CRIT_CHANCE);
-                    // Modify by player victim resilience
-                    crit_chance -= pVictim->GetSpellCritChanceReduction();
+                    // Reduce crit chance from resilience for players and pets only.
+                    // As of patch 3.3 pets inherit 100% of master resilience.
+                    if (GetSpellModOwner())
+                        if (Player* modOwner = pVictim->GetSpellModOwner())
+                            crit_chance -= modOwner->GetSpellCritChanceReduction();
                 }
                 // scripted (increase crit chance ... against ... target by x%
                 AuraEffectList const& mOverrideClassScript = GetAuraEffectsByType(SPELL_AURA_OVERRIDE_CLASS_SCRIPTS);
@@ -11607,7 +11660,7 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
 
     if (uint32 mask = (m_detectInvisibilityMask & u->m_invisibilityMask))
     {
-        for (uint32 i = 0; i < 10; ++i)
+        for (uint8 i = 0; i < 10; ++i)
         {
             if (((1 << i) & mask) == 0)
                 continue;
@@ -11616,7 +11669,7 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
             uint32 invLevel = 0;
             Unit::AuraEffectList const& iAuras = u->GetAuraEffectsByType(SPELL_AURA_MOD_INVISIBILITY);
             for (Unit::AuraEffectList::const_iterator itr = iAuras.begin(); itr != iAuras.end(); ++itr)
-                if (((*itr)->GetMiscValue()) == i && invLevel < (*itr)->GetAmount())
+                if (uint8((*itr)->GetMiscValue()) == i && invLevel < (*itr)->GetAmount())
                     invLevel = (*itr)->GetAmount();
 
             // find invisibility detect level
@@ -11629,7 +11682,7 @@ bool Unit::canDetectInvisibilityOf(Unit const* u) const
             {
                 Unit::AuraEffectList const& dAuras = GetAuraEffectsByType(SPELL_AURA_MOD_INVISIBILITY_DETECTION);
                 for (Unit::AuraEffectList::const_iterator itr = dAuras.begin(); itr != dAuras.end(); ++itr)
-                    if (((*itr)->GetMiscValue()) == i && detectLevel < (*itr)->GetAmount())
+                    if (uint8((*itr)->GetMiscValue()) == i && detectLevel < (*itr)->GetAmount())
                         detectLevel = (*itr)->GetAmount();
             }
 
@@ -12200,7 +12253,7 @@ Unit* Creature::SelectVictim()
     // search nearby enemy before enter evade mode
     if (HasReactState(REACT_AGGRESSIVE))
     {
-        target = SelectNearestTarget();
+        target = SelectNearestTargetInAttackDistance();
         if (target && _IsTargetAcceptable(target))
                 return target;
     }
@@ -12621,8 +12674,6 @@ bool Unit::HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, f
         return false;
     }
 
-    float val = 1.0f;
-
     switch (modifierType)
     {
         case BASE_VALUE:
@@ -12631,14 +12682,7 @@ bool Unit::HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, f
             break;
         case BASE_PCT:
         case TOTAL_PCT:
-            if (amount <= -100.0f)                           //small hack-fix for -100% modifiers
-                amount = -200.0f;
-
-            val = (100.0f + amount) / 100.0f;
-            m_auraModifiersGroup[unitMod][modifierType] *= apply ? val : (1.0f/val);
-            break;
-
-        default:
+            m_auraModifiersGroup[unitMod][modifierType] += (apply ? amount : -amount) / 100.0f;
             break;
     }
 
@@ -13738,12 +13782,12 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit * pTarget, uint32 procFlag,
                     break;
                 case SPELL_AURA_MECHANIC_IMMUNITY:
                     // Compare mechanic
-                    if (procSpell && procSpell->Mechanic == triggeredByAura->GetMiscValue())
+                    if (procSpell && procSpell->Mechanic == uint32(triggeredByAura->GetMiscValue()))
                         takeCharges = true;
                     break;
                 case SPELL_AURA_MOD_MECHANIC_RESISTANCE:
                     // Compare mechanic
-                    if (procSpell && procSpell->Mechanic == triggeredByAura->GetMiscValue())
+                    if (procSpell && procSpell->Mechanic == uint32(triggeredByAura->GetMiscValue()))
                         takeCharges = true;
                     break;
                 case SPELL_AURA_MOD_DAMAGE_FROM_CASTER:
@@ -15130,17 +15174,21 @@ void Unit::RemoveCharmedBy(Unit *charmer)
     if (GetTypeId() == TYPEID_UNIT)
     {
         this->ToCreature()->AI()->OnCharmed(false);
-        this->ToCreature()->AIM_Initialize();
 
-        if (this->ToCreature()->AI() && charmer && charmer->isAlive())
-            this->ToCreature()->AI()->AttackStart(charmer);
-        /*if (isAlive() && this->ToCreature()->IsAIEnabled)
+        if (type != CHARM_TYPE_VEHICLE)//Vehicles' AI is never modified
         {
-            if (charmer && !IsFriendlyTo(charmer))
+            this->ToCreature()->AIM_Initialize();
+
+            if (this->ToCreature()->AI() && charmer && charmer->isAlive())
                 this->ToCreature()->AI()->AttackStart(charmer);
-            else
-                this->ToCreature()->AI()->EnterEvadeMode();
-        }*/
+            /*if (isAlive() && this->ToCreature()->IsAIEnabled)
+            {
+                if (charmer && !IsFriendlyTo(charmer))
+                    this->ToCreature()->AI()->AttackStart(charmer);
+                else
+                    this->ToCreature()->AI()->EnterEvadeMode();
+            }*/
+        }
     }
     else
         this->ToPlayer()->SetClientControl(this, 1);

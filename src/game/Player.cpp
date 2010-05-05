@@ -734,7 +734,7 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
 
     // original action bar
     for (PlayerCreateInfoActions::const_iterator action_itr = info->action.begin(); action_itr != info->action.end(); ++action_itr)
-        addActionButton(action_itr->button,action_itr->action,action_itr->type);
+        addActionButton(action_itr->button,action_itr->action, action_itr->type);
 
     // original items
     CharStartOutfitEntry const* oEntry = NULL;
@@ -782,12 +782,6 @@ bool Player::Create(uint32 guidlow, const std::string& name, uint8 race, uint8 c
                 if (iProto->Stackable < count)
                     count = iProto->Stackable;
             }
-            // special amount for daggers
-            else if (iProto->Class == ITEM_CLASS_WEAPON && iProto->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER)
-            {
-                count = 2;                                  // will placed to 2 slots
-            }
-
             StoreNewItemInBestSlots(item_id, count);
         }
     }
@@ -1217,6 +1211,8 @@ void Player::Update(uint32 p_time)
             }
         }
     }
+
+    GetAchievementMgr().UpdateTimedAchievements(p_time);
 
     if (hasUnitState(UNIT_STAT_MELEE_ATTACKING) && !hasUnitState(UNIT_STAT_CASTING))
     {
@@ -1824,7 +1820,7 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
         // Check enter rights before map getting to avoid creating instance copy for player
         // this check not dependent from map instance copy and same for all instance copies of selected map
-        if (!MapManager::Instance().CanPlayerEnter(mapid, this))
+        if (!MapManager::Instance().CanPlayerEnter(mapid, this, false))
             return false;
 
         // If the map is not created, assume it is possible to enter it.
@@ -2446,9 +2442,9 @@ bool Player::IsGroupVisibleFor(Player* p) const
 
 bool Player::IsInSameGroupWith(Player const* p) const
 {
-    return  (p == this || (GetGroup() != NULL &&
+    return p == this || (GetGroup() != NULL &&
         GetGroup() == p->GetGroup() &&
-        GetGroup()->SameSubGroup((Player*)this, (Player*)p)));
+        GetGroup()->SameSubGroup(this, p));
 }
 
 ///- If the player is invited, remove him. If the group if then only 1 person, disband the group.
@@ -3438,7 +3434,7 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
 
     bool learning = addSpell(spell_id,active,true,dependent,false);
 
-    // learn all disabled higher ranks (recursive)
+    // learn all disabled higher ranks and required spells (recursive)
     if (disabled)
     {
         SpellChainNode const* node = spellmgr.GetSpellChainNode(spell_id);
@@ -3447,6 +3443,14 @@ void Player::learnSpell(uint32 spell_id, bool dependent)
             PlayerSpellMap::iterator iter = m_spells.find(node->next);
             if (iter != m_spells.end() && iter->second->disabled)
                 learnSpell(node->next, false);
+        }
+
+        SpellsRequiringSpellMapBounds spellsRequiringSpell = spellmgr.GetSpellsRequiringSpellBounds(spell_id);
+        for (SpellsRequiringSpellMap::const_iterator itr2 = spellsRequiringSpell.first; itr2 != spellsRequiringSpell.second; ++itr2)
+        {
+            PlayerSpellMap::iterator iter2 = m_spells.find(itr2->second);
+            if (iter2 != m_spells.end() && iter2->second->disabled)
+                learnSpell(itr2->second, false);
         }
     }
 
@@ -3880,11 +3884,11 @@ bool Player::resetTalents(bool no_cost)
             // skip non-existant talent ranks
             if (talentInfo->RankID[rank] == 0)
                 continue;
-            removeSpell(talentInfo->RankID[rank], true);
+            removeSpell(talentInfo->RankID[rank]);
             if (const SpellEntry *_spellEntry = sSpellStore.LookupEntry(talentInfo->RankID[rank]))
                 for (uint8 i = 0; i < MAX_SPELL_EFFECTS; ++i)                  // search through the SpellEntry for valid trigger spells
                     if (_spellEntry->EffectTriggerSpell[i] > 0 && _spellEntry->Effect[i] == SPELL_EFFECT_LEARN_SPELL)
-                        removeSpell(_spellEntry->EffectTriggerSpell[i], true); // and remove any spells that the talent teaches
+                        removeSpell(_spellEntry->EffectTriggerSpell[i]); // and remove any spells that the talent teaches
             // if this talent rank can be found in the PlayerTalentMap, mark the talent as removed so it gets deleted
             PlayerTalentMap::iterator plrTalent = m_talents[m_activeSpec]->find(talentInfo->RankID[rank]);
             if (plrTalent != m_talents[m_activeSpec]->end())
@@ -5400,6 +5404,7 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
         SetUInt32Value(valueIndex,MAKE_SKILL_VALUE(new_value,max));
         if (itr->second.uState != SKILL_NEW)
             itr->second.uState = SKILL_CHANGED;
+        UpdateSkillEnchantments(skill_id, value, new_value);
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,skill_id);
         return true;
     }
@@ -5540,6 +5545,7 @@ bool Player::UpdateSkillPro(uint16 SkillId, int32 Chance, uint32 step)
                 break;
             }
         }
+        UpdateSkillEnchantments(SkillId, SkillValue, new_value);
         GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,SkillId);
         sLog.outDebug("Player::UpdateSkillPro Chance=%3.1f%% taken", Chance/10.0);
         return true;
@@ -5718,30 +5724,40 @@ void Player::UpdateSkillsToMaxSkillsForLevel()
 
 // This functions sets a skill line value (and adds if doesn't exist yet)
 // To "remove" a skill line, set it's values to zero
-void Player::SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal)
+void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
 {
     if (!id)
         return;
 
+    uint16 currVal;
     SkillStatusMap::iterator itr = mSkillStatus.find(id);
 
     //has skill
     if (itr != mSkillStatus.end() && itr->second.uState != SKILL_DELETED)
     {
-        if (currVal)
+        currVal = SKILL_VALUE(GetUInt32Value(PLAYER_SKILL_VALUE_INDEX(itr->second.pos)));
+        if (newVal)
         {
+            // if skill value is going down, update enchantments before setting the new value
+            if (newVal < currVal)
+                UpdateSkillEnchantments(id, currVal, newVal);
             // update step
-            SetUInt32Value(PLAYER_SKILL_INDEX(itr->second.pos), MAKE_PAIR32(id, step));
+            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(itr->second.pos), MAKE_PAIR32(id, step));
             // update value
-            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(itr->second.pos),MAKE_SKILL_VALUE(currVal,maxVal));
+            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(itr->second.pos),MAKE_SKILL_VALUE(newVal,maxVal));
             if (itr->second.uState != SKILL_NEW)
                 itr->second.uState = SKILL_CHANGED;
-            learnSkillRewardedSpells(id, currVal);
+            learnSkillRewardedSpells(id, newVal);
+            // if skill value is going up, update enchantments after setting the new value
+            if (newVal > currVal)
+                UpdateSkillEnchantments(id, currVal, newVal);
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL,id);
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL,id);
         }
         else                                                //remove
         {
+            //remove enchantments needing this skill
+            UpdateSkillEnchantments(id, currVal, 0);
             // clear skill fields
             SetUInt32Value(PLAYER_SKILL_INDEX(itr->second.pos),0);
             SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(itr->second.pos),0);
@@ -5760,8 +5776,9 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal)
                         removeSpell(spellmgr.GetFirstSpellInChain(pAbility->spellId));
         }
     }
-    else if (currVal)                                        //add
+    else if (newVal)                                        //add
     {
+        currVal = 0;
         for (int i=0; i < PLAYER_MAX_SKILLS; ++i)
             if (!GetUInt32Value(PLAYER_SKILL_INDEX(i)))
         {
@@ -5773,7 +5790,8 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal)
             }
 
             SetUInt32Value(PLAYER_SKILL_INDEX(i), MAKE_PAIR32(id, step));
-            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(i),MAKE_SKILL_VALUE(currVal, maxVal));
+            SetUInt32Value(PLAYER_SKILL_VALUE_INDEX(i),MAKE_SKILL_VALUE(newVal, maxVal));
+            UpdateSkillEnchantments(id, currVal, newVal);
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, id);
             GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LEVEL, id);
 
@@ -5802,7 +5820,7 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 currVal, uint16 maxVal)
                         (*j)->HandleEffect(this, 0, true);
 
             // Learn all spells for skill
-            learnSkillRewardedSpells(id, currVal);
+            learnSkillRewardedSpells(id, newVal);
             return;
         }
     }
@@ -5930,7 +5948,13 @@ void Player::SendActionButtons(uint32 state) const
     sLog.outDetail("Sending Action Buttons for '%u' spec '%u'", GetGUIDLow(), m_activeSpec);
 
     WorldPacket data(SMSG_ACTION_BUTTONS, 1+(MAX_ACTION_BUTTONS*4));
-    data << uint8(state);                                       // can be 0, 1, 2
+    data << uint8(state);
+    /*
+        state can be 0, 1, 2
+        0 - Looks to be sent when initial action buttons get sent, however on Trinity we use 1 since 0 had some difficulties
+        1 - Used in any SMSG_ACTION_BUTTONS packet with button data on Trinity. Only used after spec swaps on retail.
+        2 - Clears the action bars client sided. This is sent during spec swap before unlearning and before sending the new buttons
+    */
     if (state != 2)
     {
         for (uint16 button = 0; button < MAX_ACTION_BUTTONS; ++button)
@@ -5947,18 +5971,18 @@ void Player::SendActionButtons(uint32 state) const
     sLog.outDetail("Action Buttons for '%u' spec '%u' Sent", GetGUIDLow(), m_activeSpec);
 }
 
-ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
+bool Player::IsActionButtonDataValid(uint8 button, uint32 action, uint8 type)
 {
     if (button >= MAX_ACTION_BUTTONS)
     {
-        sLog.outError("Action %u not added into button %u for player %s: button must be < 144", action, button, GetName());
-        return NULL;
+        sLog.outError( "Action %u not added into button %u for player %s: button must be < %u", action, button, GetName(), MAX_ACTION_BUTTONS );
+        return false;
     }
 
     if (action >= MAX_ACTION_BUTTON_ACTION_VALUE)
     {
-        sLog.outError("Action %u not added into button %u for player %s: action must be < %u", action, button, GetName(), MAX_ACTION_BUTTON_ACTION_VALUE);
-        return NULL;
+        sLog.outError( "Action %u not added into button %u for player %s: action must be < %u", action, button, GetName(), MAX_ACTION_BUTTON_ACTION_VALUE );
+        return false;
     }
 
     switch (type)
@@ -5966,26 +5990,34 @@ ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
         case ACTION_BUTTON_SPELL:
             if (!sSpellStore.LookupEntry(action))
             {
-                sLog.outError("Action %u not added into button %u for player %s: spell not exist", action, button, GetName());
-                return NULL;
+                sLog.outError( "Spell action %u not added into button %u for player %s: spell not exist", action, button, GetName() );
+                return false;
             }
 
             if (!HasSpell(action))
             {
-                sLog.outError("Action %u not added into button %u for player %s: player don't known this spell", action, button, GetName());
-                return NULL;
+                sLog.outError( "Spell action %u not added into button %u for player %s: player don't known this spell", action, button, GetName() );
+                return false;
             }
             break;
         case ACTION_BUTTON_ITEM:
             if (!objmgr.GetItemPrototype(action))
             {
-                sLog.outError("Action %u not added into button %u for player %s: item not exist", action, button, GetName());
-                return NULL;
+                sLog.outError( "Item action %u not added into button %u for player %s: item not exist", action, button, GetName() );
+                return false;
             }
             break;
         default:
-            break;                                          // pther cases not checked at this moment
+            break;                                          // other cases not checked at this moment
     }
+
+    return true;
+}
+
+ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
+{
+    if (!IsActionButtonDataValid(button, action, type))
+        return NULL;
 
     // it create new button (NEW state) if need or return existed
     ActionButton& ab = m_actionButtons[button];
@@ -6000,20 +6032,24 @@ ActionButton* Player::addActionButton(uint8 button, uint32 action, uint8 type)
 void Player::removeActionButton(uint8 button)
 {
     ActionButtonList::iterator buttonItr = m_actionButtons.find(button);
-    if (buttonItr == m_actionButtons.end())
+    if (buttonItr == m_actionButtons.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
         return;
 
-    if (!buttonItr->second.canRemoveByClient)
-    {
-        buttonItr->second.canRemoveByClient = true;
-        return;
-    }
     if (buttonItr->second.uState == ACTIONBUTTON_NEW)
         m_actionButtons.erase(buttonItr);                   // new and not saved
     else
         buttonItr->second.uState = ACTIONBUTTON_DELETED;    // saved, will deleted at next save
 
     sLog.outDetail("Action Button '%u' Removed from Player '%u'", button, GetGUIDLow());
+}
+
+ActionButton const* Player::GetActionButton(uint8 button)
+{
+    ActionButtonList::iterator buttonItr = m_actionButtons.find(button);
+    if (buttonItr == m_actionButtons.end() || buttonItr->second.uState == ACTIONBUTTON_DELETED)
+        return NULL;
+
+    return &buttonItr->second;
 }
 
 bool Player::SetPosition(float x, float y, float z, float orientation, bool teleport)
@@ -11015,7 +11051,7 @@ uint8 Player::CanUseItem(Item *pItem, bool not_loading) const
                     // In fact it's a visual bug, everything works properly... I need sniffs of operations with
                     // binded to account items from off server.
 
-                    switch (this->getClass())
+                    switch (getClass())
                     {
                         case CLASS_HUNTER:
                         case CLASS_SHAMAN:
@@ -11984,8 +12020,13 @@ void Player::SplitItem(uint16 src, uint16 dst, uint32 count)
 
     if (IsInventoryPos(dst))
     {
+        bool isRefundable = pSrcItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
+       
         // change item amount before check (for unique max count check)
         pSrcItem->SetCount(pSrcItem->GetCount() - count);
+        
+        if (isRefundable)
+            SendRefundInfo(pSrcItem);
 
         ItemPosCountVec dest;
         uint8 msg = CanStoreItem(dstbag, dstslot, dest, pNewItem, false);
@@ -12001,11 +12042,24 @@ void Player::SplitItem(uint16 src, uint16 dst, uint32 count)
             pSrcItem->SendUpdateToPlayer(this);
         pSrcItem->SetState(ITEM_CHANGED, this);
         StoreItem(dest, pNewItem, true);
+        if (isRefundable)
+        {
+            pNewItem->SetPaidExtendedCost(pSrcItem->GetPaidExtendedCost());
+            pNewItem->SetPaidMoney(pSrcItem->GetPaidMoney());
+            pNewItem->SetRefundRecipient(GetGUIDLow());
+            pNewItem->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, pSrcItem->GetPlayedTime());
+            pNewItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
+        }
     }
     else if (IsBankPos (dst))
     {
+        bool isRefundable = pSrcItem->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
+        
         // change item amount before check (for unique max count check)
         pSrcItem->SetCount(pSrcItem->GetCount() - count);
+
+        if (isRefundable)
+            SendRefundInfo(pSrcItem);
 
         ItemPosCountVec dest;
         uint8 msg = CanBankItem(dstbag, dstslot, dest, pNewItem, false);
@@ -12021,6 +12075,15 @@ void Player::SplitItem(uint16 src, uint16 dst, uint32 count)
             pSrcItem->SendUpdateToPlayer(this);
         pSrcItem->SetState(ITEM_CHANGED, this);
         BankItem(dest, pNewItem, true);
+        if (isRefundable)
+        {
+            AddRefundReference(pNewItem->GetGUID());
+            pNewItem->SetPaidExtendedCost(pSrcItem->GetPaidExtendedCost());
+            pNewItem->SetPaidMoney(pSrcItem->GetPaidMoney());
+            pNewItem->SetRefundRecipient(GetGUIDLow());
+            pNewItem->SetUInt32Value(ITEM_FIELD_CREATE_PLAYED_TIME, pSrcItem->GetPlayedTime());
+            pNewItem->SetFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE);
+        }
     }
     else if (IsEquipmentPos (dst))
     {
@@ -12213,6 +12276,7 @@ void Player::SwapItem(uint16 src, uint16 dst)
                     pDstItem->SendUpdateToPlayer(this);
                 }
             }
+            SendRefundInfo(pDstItem);
             return;
         }
     }
@@ -12702,10 +12766,7 @@ void Player::ApplyEnchantment(Item *item,bool apply)
 
 void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool apply_dur, bool ignore_condition)
 {
-    if (!item)
-        return;
-
-    if (!item->IsEquipped())
+    if (!item || !item->IsEquipped())
         return;
 
     if (!CanUseAttackType(Player::GetAttackBySlot(item->GetSlot())))
@@ -12722,17 +12783,14 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
     if (!pEnchant)
         return;
 
-    if (!ignore_condition && pEnchant->EnchantmentCondition && !this->ToPlayer()->EnchantmentFitsRequirements(pEnchant->EnchantmentCondition, -1))
+    if (!ignore_condition && pEnchant->EnchantmentCondition && !EnchantmentFitsRequirements(pEnchant->EnchantmentCondition, -1))
         return;
 
-    if ((pEnchant->requiredLevel) > this->ToPlayer()->getLevel())
+    if (pEnchant->requiredLevel > getLevel())
         return;
 
-    if ((pEnchant->requiredSkill) > 0)
-    {
-       if ((pEnchant->requiredSkillValue) > (this->ToPlayer()->GetSkillValue(pEnchant->requiredSkill)))
+    if (pEnchant->requiredSkill > 0 && pEnchant->requiredSkillValue > GetSkillValue(pEnchant->requiredSkill))
         return;
-    }
 
     if (!item->IsBroken())
     {
@@ -12864,111 +12922,111 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             ApplyStatBuffMod(STAT_STAMINA, enchant_amount, apply);
                             break;
                         case ITEM_MOD_DEFENSE_SKILL_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_DEFENSE_SKILL, enchant_amount, apply);
+                            ApplyRatingMod(CR_DEFENSE_SKILL, enchant_amount, apply);
                             sLog.outDebug("+ %u DEFENCE", enchant_amount);
                             break;
                         case  ITEM_MOD_DODGE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_DODGE, enchant_amount, apply);
+                            ApplyRatingMod(CR_DODGE, enchant_amount, apply);
                             sLog.outDebug("+ %u DODGE", enchant_amount);
                             break;
                         case ITEM_MOD_PARRY_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_PARRY, enchant_amount, apply);
+                            ApplyRatingMod(CR_PARRY, enchant_amount, apply);
                             sLog.outDebug("+ %u PARRY", enchant_amount);
                             break;
                         case ITEM_MOD_BLOCK_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_BLOCK, enchant_amount, apply);
+                            ApplyRatingMod(CR_BLOCK, enchant_amount, apply);
                             sLog.outDebug("+ %u SHIELD_BLOCK", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_MELEE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
                             sLog.outDebug("+ %u MELEE_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_RANGED_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
                             sLog.outDebug("+ %u RANGED_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_HIT_SPELL_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u SPELL_HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_MELEE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
                             sLog.outDebug("+ %u MELEE_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RANGED_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
                             sLog.outDebug("+ %u RANGED_CRIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_SPELL_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u SPELL_CRIT", enchant_amount);
                             break;
 //                        Values from ITEM_STAT_MELEE_HA_RATING to ITEM_MOD_HASTE_RANGED_RATING are never used
 //                        in Enchantments
 //                        case ITEM_MOD_HIT_TAKEN_MELEE_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_MELEE, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_MELEE, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_HIT_TAKEN_RANGED_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_RANGED, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_RANGED, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_HIT_TAKEN_SPELL_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_SPELL, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_SPELL, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_CRIT_TAKEN_MELEE_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_CRIT_TAKEN_RANGED_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_CRIT_TAKEN_SPELL_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_HASTE_MELEE_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_HASTE_RANGED_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
 //                            break;
                         case ITEM_MOD_HASTE_SPELL_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
                             break;
                         case ITEM_MOD_HIT_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_HIT_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u HIT", enchant_amount);
                             break;
                         case ITEM_MOD_CRIT_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u CRITICAL", enchant_amount);
                             break;
 //                        Values ITEM_MOD_HIT_TAKEN_RATING and ITEM_MOD_CRIT_TAKEN_RATING are never used in Enchantment
 //                        case ITEM_MOD_HIT_TAKEN_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_MELEE, enchant_amount, apply);
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_RANGED, enchant_amount, apply);
-//                            this->ToPlayer()->ApplyRatingMod(CR_HIT_TAKEN_SPELL, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_MELEE, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_RANGED, enchant_amount, apply);
+//                            ApplyRatingMod(CR_HIT_TAKEN_SPELL, enchant_amount, apply);
 //                            break;
 //                        case ITEM_MOD_CRIT_TAKEN_RATING:
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
-//                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
+//                            ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
 //                            break;
                         case ITEM_MOD_RESILIENCE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_TAKEN_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_TAKEN_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_CRIT_TAKEN_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u RESILIENCE", enchant_amount);
                             break;
                         case ITEM_MOD_HASTE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
-                            this->ToPlayer()->ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
+                            ApplyRatingMod(CR_HASTE_MELEE, enchant_amount, apply);
+                            ApplyRatingMod(CR_HASTE_RANGED, enchant_amount, apply);
+                            ApplyRatingMod(CR_HASTE_SPELL, enchant_amount, apply);
                             sLog.outDebug("+ %u HASTE", enchant_amount);
                             break;
                         case ITEM_MOD_EXPERTISE_RATING:
-                            this->ToPlayer()->ApplyRatingMod(CR_EXPERTISE, enchant_amount, apply);
+                            ApplyRatingMod(CR_EXPERTISE, enchant_amount, apply);
                             sLog.outDebug("+ %u EXPERTISE", enchant_amount);
                             break;
                         case ITEM_MOD_ATTACK_POWER:
@@ -12981,23 +13039,23 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
                             sLog.outDebug("+ %u RANGED_ATTACK_POWER", enchant_amount);
                             break;
 //                        case ITEM_MOD_FERAL_ATTACK_POWER:
-//                            ((Player*)this)->ApplyFeralAPBonus(enchant_amount, apply);
+//                            ApplyFeralAPBonus(enchant_amount, apply);
 //                            sLog.outDebug("+ %u FERAL_ATTACK_POWER", enchant_amount);
 //                            break;
                         case ITEM_MOD_MANA_REGENERATION:
-                            ((Player*)this)->ApplyManaRegenBonus(enchant_amount, apply);
+                            ApplyManaRegenBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u MANA_REGENERATION", enchant_amount);
                             break;
                         case ITEM_MOD_ARMOR_PENETRATION_RATING:
-                            ((Player*)this)->ApplyRatingMod(CR_ARMOR_PENETRATION, enchant_amount, apply);
+                            ApplyRatingMod(CR_ARMOR_PENETRATION, enchant_amount, apply);
                             sLog.outDebug("+ %u ARMOR PENETRATION", enchant_amount);
                             break;
                         case ITEM_MOD_SPELL_POWER:
-                            ((Player*)this)->ApplySpellPowerBonus(enchant_amount, apply);
+                            ApplySpellPowerBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u SPELL_POWER", enchant_amount);
                             break;
                         case ITEM_MOD_HEALTH_REGEN:
-                            ((Player*)this)->ApplyHealthRegenBonus(enchant_amount, apply);
+                            ApplyHealthRegenBonus(enchant_amount, apply);
                             sLog.outDebug("+ %u HEALTH_REGENERATION", enchant_amount);
                             break;
                         case ITEM_MOD_SPELL_HEALING_DONE:   // deprecated
@@ -13058,6 +13116,35 @@ void Player::ApplyEnchantment(Item *item, EnchantmentSlot slot, bool apply, bool
         {
             // duration == 0 will remove EnchantDuration
             AddEnchantmentDuration(item, slot, 0);
+        }
+    }
+}
+
+void Player::UpdateSkillEnchantments(uint16 skill_id, uint16 curr_value, uint16 new_value)
+{
+    for (uint8 i = 0; i < INVENTORY_SLOT_BAG_END; ++i)
+    {
+        if (m_items[i])
+        {
+            for (uint8 slot = 0; slot < MAX_ENCHANTMENT_SLOT; ++slot)
+            {
+                uint32 ench_id = m_items[i]->GetEnchantmentId(EnchantmentSlot(slot));
+                if (!ench_id)
+                    continue;
+
+                SpellItemEnchantmentEntry const *Enchant = sSpellItemEnchantmentStore.LookupEntry(ench_id);
+                if (!Enchant)
+                    return;
+
+                if (Enchant->requiredSkill == skill_id)
+                {
+                    // Checks if the enchantment needs to be applied or removed
+                    if (curr_value < Enchant->requiredSkillValue && new_value >= Enchant->requiredSkillValue)
+                        ApplyEnchantment(m_items[i], EnchantmentSlot(slot), true);
+                    else if (new_value < Enchant->requiredSkillValue && curr_value >= Enchant->requiredSkillValue)
+                        ApplyEnchantment(m_items[i], EnchantmentSlot(slot), false);
+                }
+            }
         }
     }
 }
@@ -13394,8 +13481,8 @@ void Player::OnGossipSelect(WorldObject* pSource, uint32 gossipListId, uint32 me
 
                     // Cast spells that teach dual spec
                     // Both are also ImplicitTarget self and must be cast by player
-                    this->CastSpell(this, 63680, true, NULL, NULL, this->GetGUID());
-                    this->CastSpell(this, 63624, true, NULL, NULL, this->GetGUID());
+                    CastSpell(this, 63680, true, NULL, NULL, GetGUID());
+                    CastSpell(this, 63624, true, NULL, NULL, GetGUID());
 
                     // Should show another Gossip text with "Congratulations..."
                     PlayerTalkClass->CloseGossip();
@@ -13580,10 +13667,23 @@ void Player::SendPreparedQuest(uint64 guid)
                 PlayerTalkClass->SendQuestGiverRequestItems(pQuest, guid, CanRewardQuest(pQuest, false), true);
             // Send completable on repeatable and autoCompletable quest if player don't have quest
             // TODO: verify if check for !pQuest->IsDaily() is really correct (possibly not)
-            else if (pQuest->IsAutoComplete() && pQuest->IsRepeatable() && !pQuest->IsDailyOrWeekly())
-                PlayerTalkClass->SendQuestGiverRequestItems(pQuest, guid, CanCompleteRepeatableQuest(pQuest), true);
             else
-                PlayerTalkClass->SendQuestGiverQuestDetails(pQuest, guid, true);
+            {
+                Object* pObject = ObjectAccessor::GetObjectByTypeMask(*this, guid,TYPEMASK_UNIT|TYPEMASK_GAMEOBJECT|TYPEMASK_ITEM);
+                if (!pObject||!pObject->hasQuest(quest_id) && !pObject->hasInvolvedQuest(quest_id))
+                {
+                    PlayerTalkClass->CloseGossip();
+                    return;
+                }
+
+                if (pQuest->HasFlag(QUEST_FLAGS_AUTO_ACCEPT) && CanAddQuest(pQuest, true))
+                    AddQuest(pQuest, pObject);
+
+                if ((pQuest->IsAutoComplete() && pQuest->IsRepeatable() && !pQuest->IsDailyOrWeekly()) || pQuest->HasFlag(QUEST_FLAGS_AUTOCOMPLETE))
+                    PlayerTalkClass->SendQuestGiverRequestItems(pQuest, guid, CanCompleteRepeatableQuest(pQuest), true);
+                else
+                    PlayerTalkClass->SendQuestGiverQuestDetails(pQuest, guid, true);
+            }
         }
     }
     // multiply entries
@@ -13959,6 +14059,8 @@ void Player::AddQuest(Quest const *pQuest, Object *questGiver)
 
     if (questStatusData.uState != QUEST_NEW)
         questStatusData.uState = QUEST_CHANGED;
+
+    GetAchievementMgr().StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_QUEST, quest_id);
 
     //starting initial quest script
     if (questGiver && pQuest->GetQuestStartScript() != 0)
@@ -14884,7 +14986,9 @@ void Player::KilledMonsterCredit(uint32 entry, uint64 guid)
             real_entry = killed->GetEntry();
     }
 
+    GetAchievementMgr().StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_CREATURE, real_entry);   // MUST BE CALLED FIRST
     GetAchievementMgr().UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, real_entry, addkillcount);
+
     for (uint8 i = 0; i < MAX_QUEST_LOG_SIZE; ++i)
     {
         uint32 questid = GetQuestSlotQuestId(i);
@@ -16051,7 +16155,7 @@ bool Player::LoadFromDB(uint32 guid, SqlQueryHolder *holder)
     // update items with duration and realtime
     UpdateItemDuration(time_diff, true);
 
-    _LoadActions(holder->GetResult(PLAYER_LOGIN_QUERY_LOADACTIONS), true);
+    _LoadActions(holder->GetResult(PLAYER_LOGIN_QUERY_LOADACTIONS));
 
     // unread mails and next delivery time, actual mails not loaded
     _LoadMailInit(holder->GetResult(PLAYER_LOGIN_QUERY_LOADMAILCOUNT), holder->GetResult(PLAYER_LOGIN_QUERY_LOADMAILDATE));
@@ -16139,7 +16243,7 @@ bool Player::LoadFromDB(uint32 guid, SqlQueryHolder *holder)
                 break;
         }
 
-        switch (sWorld.getConfig(CONFIG_GM_WISPERING_TO))
+        switch (sWorld.getConfig(CONFIG_GM_WHISPERING_TO))
         {
             default:
             case 0:                          break;         // disable
@@ -16212,8 +16316,10 @@ bool Player::isAllowedToLoot(const Creature* creature)
     return false;
 }
 
-void Player::_LoadActions(QueryResult_AutoPtr result, bool /*startup*/)
+void Player::_LoadActions(QueryResult_AutoPtr result)
 {
+    m_actionButtons.clear();
+
     if (result)
     {
         do
@@ -16832,7 +16938,7 @@ void Player::_LoadWeeklyQuestStatus(QueryResult_AutoPtr result)
 
             sLog.outDebug("Weekly quest {%u} cooldown for player (GUID: %u)", quest_id, GetGUIDLow());
         }
-        while(result->NextRow());
+        while (result->NextRow());
     }
 
     m_WeeklyQuestChanged = false;
@@ -17235,6 +17341,31 @@ bool Player::Satisfy(AccessRequirement const *ar, uint32 target_map, bool report
     return true;
 }
 
+bool Player::CheckInstanceLoginValid()
+{
+    if (!GetMap())
+        return false;
+
+    if (!GetMap()->IsDungeon() || isGameMaster())
+        return true;
+
+    if (GetMap()->IsRaid())
+    {
+        // cannot be in raid instance without a raid group
+        if (!GetGroup() || !GetGroup()->isRaidGroup())
+            return false;
+    }
+    else
+    {
+        // cannot be in normal instance without a group and more players than 1 in instance
+        if (!GetGroup() && GetMap()->GetPlayersCountExceptGMs() > 1)
+            return false;
+    }
+
+    // do checks for satisfy accessreqs, instance full, encounter in progress (raid), perm bind group != perm bind player
+    return MapManager::Instance().CanPlayerEnter(GetMap()->GetId(), this, true);
+}
+
 bool Player::_LoadHomeBind(QueryResult_AutoPtr result)
 {
     PlayerInfo const *info = objmgr.GetPlayerInfo(getRace(), getClass());
@@ -17468,16 +17599,17 @@ void Player::SaveToDB()
     GetSession()->SaveTutorialsData();                      // changed only while character in game
     _SaveGlyphs();
 
-    CharacterDatabase.CommitTransaction();
-
     // check if stats should only be saved on logout
     // save stats can be out of transaction
     if (m_session->isLogingOut() || !sWorld.getConfig(CONFIG_STATS_SAVE_ONLY_ON_LOGOUT))
         _SaveStats();
 
+    CharacterDatabase.CommitTransaction();
+
     // save pet (hunter pet level and experience and all type pets health/mana).
     if (Pet* pet = GetPet())
         pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+
 }
 
 // fast save function for item/money cheating preventing - save only inventory and money state
@@ -17500,18 +17632,18 @@ void Player::_SaveActions()
         {
             case ACTIONBUTTON_NEW:
                 CharacterDatabase.PExecute("INSERT INTO character_action (guid,spec,button,action,type) VALUES ('%u', '%u', '%u', '%u', '%u')",
-                    GetGUIDLow(), (uint32)m_activeSpec, (uint32)itr->first, (uint32)itr->second.GetAction(), (uint32)itr->second.GetType());
+                    GetGUIDLow(), m_activeSpec, (uint32)itr->first, (uint32)itr->second.GetAction(), (uint32)itr->second.GetType());
                 itr->second.uState = ACTIONBUTTON_UNCHANGED;
                 ++itr;
                 break;
             case ACTIONBUTTON_CHANGED:
                 CharacterDatabase.PExecute("UPDATE character_action SET action = '%u', type = '%u' WHERE guid = '%u' AND button = '%u' AND spec = '%u'",
-                    (uint32)itr->second.GetAction(), (uint32)itr->second.GetType(), GetGUIDLow(), (uint32)itr->first, (uint32)m_activeSpec);
+                    (uint32)itr->second.GetAction(), (uint32)itr->second.GetType(), GetGUIDLow(), (uint32)itr->first, m_activeSpec);
                 itr->second.uState = ACTIONBUTTON_UNCHANGED;
                 ++itr;
                 break;
             case ACTIONBUTTON_DELETED:
-                CharacterDatabase.PExecute("DELETE FROM character_action WHERE guid = '%u' and button = '%u' and spec = '%u'", GetGUIDLow(), (uint32)itr->first, (uint32)m_activeSpec);
+                CharacterDatabase.PExecute("DELETE FROM character_action WHERE guid = '%u' and button = '%u' and spec = '%u'", GetGUIDLow(), (uint32)itr->first, m_activeSpec);
                 m_actionButtons.erase(itr++);
                 break;
             default:
@@ -17594,7 +17726,7 @@ void Player::_SaveInventory()
         }
         else
         {
-            sLog.outError("Can't find item guid " UI64FMTD " but is in refundable storage for player %u ! Removing.", (*itr), GetGUIDLow());
+            sLog.outError("Can't find item guid " UI64FMTD " but is in refundable storage for player %u ! Removing.", *itr, GetGUIDLow());
             m_refundableItems.erase(itr);
         }
     }
@@ -17645,13 +17777,16 @@ void Player::_SaveInventory()
         Bag *container = item->GetContainer();
         uint32 bag_guid = container ? container->GetGUIDLow() : 0;
 
-        switch(item->GetState())
+        switch (item->GetState())
         {
             case ITEM_NEW:
                 CharacterDatabase.PExecute("INSERT INTO character_inventory (guid,bag,slot,item,item_template) VALUES ('%u', '%u', '%u', '%u', '%u')", GetGUIDLow(), bag_guid, item->GetSlot(), item->GetGUIDLow(), item->GetEntry());
                 break;
             case ITEM_CHANGED:
-                CharacterDatabase.PExecute("UPDATE character_inventory SET guid='%u', bag='%u', slot='%u', item_template='%u' WHERE item='%u'", GetGUIDLow(), bag_guid, item->GetSlot(), item->GetEntry(), item->GetGUIDLow());
+                CharacterDatabase.BeginTransaction();
+                CharacterDatabase.PExecute("DELETE FROM character_inventory WHERE item = '%u'", item->GetGUIDLow());
+                CharacterDatabase.PExecute("INSERT INTO character_inventory (guid,bag,slot,item,item_template) VALUES ('%u', '%u', '%u', '%u', '%u')", GetGUIDLow(), bag_guid, item->GetSlot(), item->GetGUIDLow(), item->GetEntry());
+                CharacterDatabase.CommitTransaction();
                 break;
             case ITEM_REMOVED:
                 CharacterDatabase.PExecute("DELETE FROM character_inventory WHERE item = '%u'", item->GetGUIDLow());
@@ -19286,7 +19421,7 @@ void Player::InitDisplayIds()
 }
 
 // Return true is the bought item has a max count to force refresh of window by caller
-bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint8 bag, uint8 slot)
+bool Player::BuyItemFromVendorSlot(uint64 vendorguid, uint32 vendorslot, uint32 item, uint8 count, uint8 bag, uint8 slot)
 {
     // cheating attempt
     if (count < 1) count = 1;
@@ -19320,14 +19455,19 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
         return false;
     }
 
-    size_t vendor_slot = vItems->FindItemSlot(item);
-    if (vendor_slot >= vItems->GetItemCount())
+    if (vendorslot >= vItems->GetItemCount())
+    {
+        SendBuyError( BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
+        return false;
+    }
+
+    VendorItem const* crItem = vItems->GetItem(vendorslot);
+    // store diff item (cheating)
+    if(!crItem || crItem->item != item)
     {
         SendBuyError(BUY_ERR_CANT_FIND_ITEM, pCreature, item, 0);
         return false;
     }
-
-    VendorItem const* crItem = vItems->m_items[vendor_slot];
 
     // check current item amount if it limited
     if (crItem->maxcount != 0)
@@ -19440,7 +19580,7 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
 
             WorldPacket data(SMSG_BUY_ITEM, (8+4+4+4));
             data << uint64(pCreature->GetGUID());
-            data << uint32(vendor_slot+1);                  // numbered from 1 at client
+            data << uint32(vendorslot+1);                   // numbered from 1 at client
             data << int32(crItem->maxcount > 0 ? new_count : 0xFFFFFFFF);
             data << uint32(count);
             GetSession()->SendPacket(&data);
@@ -19495,7 +19635,7 @@ bool Player::BuyItemFromVendor(uint64 vendorguid, uint32 item, uint8 count, uint
 
             WorldPacket data(SMSG_BUY_ITEM, (8+4+4+4));
             data << uint64(pCreature->GetGUID());
-            data << uint32(vendor_slot + 1);                // numbered from 1 at client
+            data << uint32(vendorslot + 1);                 // numbered from 1 at client
             data << int32(crItem->maxcount > 0 ? new_count : 0xFFFFFFFF);
             data << uint32(count);
             GetSession()->SendPacket(&data);
@@ -19652,7 +19792,7 @@ void Player::AddSpellAndCategoryCooldowns(SpellEntry const* spellInfo, uint32 it
         {
             for (uint8 idx = 0; idx < 5; ++idx)
             {
-                if (proto->Spells[idx].SpellId == spellInfo->Id)
+                if (uint32(proto->Spells[idx].SpellId) == spellInfo->Id)
                 {
                     cat    = proto->Spells[idx].SpellCategory;
                     rec    = proto->Spells[idx].SpellCooldown;
@@ -20798,7 +20938,7 @@ void Player::learnQuestRewardedSpells(Quest const* quest)
     // if RewSpellCast = -1 we remove aura do to SrcSpell from player.
     if (spell_id == -1 && src_spell_id)
     {
-        this->RemoveAurasDueToSpell(src_spell_id);
+        RemoveAurasDueToSpell(src_spell_id);
         return;
     }
 
@@ -23311,25 +23451,30 @@ void Player::_SaveTalents()
 
 void Player::UpdateSpecCount(uint8 count)
 {
-    if (GetSpecsCount() == count)
+    uint32 curCount = GetSpecsCount();
+    if (curCount == count)
         return;
 
-    if (count == MIN_TALENT_SPECS)
-    {
-        _SaveActions(); // make sure the button list is cleaned up
-        // active spec becomes only spec?
-        CharacterDatabase.PExecute("DELETE FROM character_action WHERE spec<>'%u' AND guid='%u'",m_activeSpec, GetGUIDLow());
-        m_activeSpec = 0;
-    }
-    else if (count == MAX_TALENT_SPECS)
+    if (m_activeSpec >= count)
+        ActivateSpec(0);
+
+    // Copy spec data
+    if (count > curCount)
     {
         _SaveActions(); // make sure the button list is cleaned up
         for (ActionButtonList::iterator itr = m_actionButtons.begin(); itr != m_actionButtons.end(); ++itr)
             CharacterDatabase.PExecute("INSERT INTO character_action (guid,button,action,type,spec) VALUES ('%u', '%u', '%u', '%u', '%u')",
-                GetGUIDLow(), uint32(itr->first), uint32(itr->second.GetAction()), uint32(itr->second.GetType()), 1);
+            GetGUIDLow(), uint32(itr->first), uint32(itr->second.GetAction()), uint32(itr->second.GetType()), 1);
+
     }
-    else
-        return;
+    // Delete spec data for removed spec.
+    else if (count < curCount)
+    {
+        _SaveActions();
+        CharacterDatabase.PExecute("DELETE FROM character_action WHERE spec<>'%u' AND guid='%u'",m_activeSpec, GetGUIDLow());
+        m_activeSpec = 0;
+    }
+
 
     SetSpecsCount(count);
 
@@ -23341,16 +23486,18 @@ void Player::ActivateSpec(uint8 spec)
     if (GetActiveSpec() == spec)
         return;
 
-    if (GetSpecsCount() != MAX_TALENT_SPECS)
+    if (spec > GetSpecsCount())
         return;
 
+    // TODO:
+    // HACK: this shouldn't be checked at such a low level function but rather at the moment the spell is casted
     if (GetMap()->IsBattleGround() && !HasAura(44521)) // In BattleGround with no Preparation buff
         return;
 
-    _SaveActions();
-
     if (IsNonMeleeSpellCasted(false))
         InterruptNonMeleeSpells(false);
+
+    _SaveActions();
 
     UnsummonPetTemporaryIfAny();
     ClearComboPointHolders();
@@ -23361,13 +23508,12 @@ void Player::ActivateSpec(uint8 spec)
     if (GetPet())
         GetPet()->RemoveAllAurasOnDeath();*/
 
-    //RemoveAllAuras(this->GetGUID(), NULL, false, true); // removes too many auras
+    //RemoveAllAuras(GetGUID(), NULL, false, true); // removes too many auras
     //ExitVehicle(); // should be impossible to switch specs from inside a vehicle..
 
     // Let client clear his current Actions
     SendActionButtons(2);
-    m_actionButtons.clear();
-
+    // m_actionButtons.clear() is called in the next _LoadActionButtons
     for (uint32 i = 0; i < sTalentStore.GetNumRows(); ++i)
     {
         TalentEntry const *talentInfo = sTalentStore.LookupEntry(i);
@@ -23460,8 +23606,10 @@ void Player::ActivateSpec(uint8 spec)
     m_usedTalentCount = spentTalents;
     InitTalentForLevel();
 
-    if (QueryResult_AutoPtr result = CharacterDatabase.PQuery("SELECT button,action,type FROM character_action WHERE guid = '%u' AND spec = '%u' ORDER BY button", GetGUIDLow(), m_activeSpec))
-        _LoadActions(result, false);
+    if (QueryResult_AutoPtr result =
+        CharacterDatabase.PQuery("SELECT button,action,type FROM character_action WHERE guid = '%u' AND spec = '%u' ORDER BY button", GetGUIDLow(), m_activeSpec))
+        _LoadActions(result);
+
 
     ResummonPetTemporaryUnSummonedIfAny();
     SendActionButtons(1);
@@ -23519,5 +23667,163 @@ void Player::AddRefundReference(uint64 it)
 
 void Player::DeleteRefundReference(uint64 it)
 {
-    m_refundableItems.erase(it);
+    std::set<uint64>::iterator itr = m_refundableItems.find(it);
+    if (itr != m_refundableItems.end())
+    {
+        m_refundableItems.erase(itr);
+    }
+}
+
+void Player::SendRefundInfo(Item *item)
+{
+    // This function call unsets ITEM_FLAGS_REFUNDABLE if played time is over 2 hours.
+    item->UpdatePlayedTime(this);
+
+    if (!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+    {
+        sLog.outDebug("Item refund: item not refundable!");
+        return;
+    }
+
+    if (GetGUIDLow() != item->GetRefundRecipient()) // Formerly refundable item got traded
+    {
+        sLog.outDebug("Item refund: item was traded!");
+        item->SetNotRefundable(this);
+        return;
+    }
+
+    ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(item->GetPaidExtendedCost());
+    if (!iece)
+    {
+        sLog.outDebug("Item refund: cannot find extendedcost data.");
+        return;
+    }
+
+    uint32 itemCount = item->GetCount();
+
+    WorldPacket data(SMSG_ITEM_REFUND_INFO_RESPONSE, 8+4+4+4+4*4+4*4+4+4);
+    data << uint64(item->GetGUID());                    // item guid
+    data << uint32(item->GetPaidMoney() * itemCount);   // money cost
+    data << uint32(iece->reqhonorpoints * itemCount);   // honor point cost
+    data << uint32(iece->reqarenapoints * itemCount);   // arena point cost
+    for (uint8 i = 0; i < 5; ++i)                       // item cost data
+    {
+        data << iece->reqitem[i];
+        data << (iece->reqitemcount[i] * itemCount);
+    }
+    data << uint32(0);
+    data << uint32(GetTotalPlayedTime() - item->GetPlayedTime());
+    GetSession()->SendPacket(&data);
+}
+
+void Player::RefundItem(Item *item)
+{
+    if (!item->HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAGS_REFUNDABLE))
+    {
+        sLog.outDebug("Item refund: item not refundable!");
+        return;
+    }
+
+    if (item->IsRefundExpired())    // item refund has expired
+    {
+        item->SetNotRefundable(this);
+        WorldPacket data(SMSG_ITEM_REFUND_RESULT, 8+4);
+        data << uint64(item->GetGUID());             // Guid
+        data << uint32(10);                          // Error!
+        GetSession()->SendPacket(&data);
+        return;
+    }
+
+    if (GetGUIDLow() != item->GetRefundRecipient()) // Formerly refundable item got traded
+    {
+        sLog.outDebug("Item refund: item was traded!");
+        item->SetNotRefundable(this);
+        return;
+    }
+
+    ItemExtendedCostEntry const* iece = sItemExtendedCostStore.LookupEntry(item->GetPaidExtendedCost());
+    if (!iece)
+    {
+        sLog.outDebug("Item refund: cannot find extendedcost data.");
+        return;
+    }
+
+    uint32 itemCount = item->GetCount(); // stacked refundable items.
+    uint32 moneyRefund = item->GetPaidMoney()*itemCount;
+
+    bool store_error = false;
+    for (uint8 i = 0; i < 5; ++i)
+    {
+        uint32 count = iece->reqitemcount[i] * itemCount;
+        uint32 itemid = iece->reqitem[i];
+
+        if (count && itemid)
+        {
+            ItemPosCountVec dest;
+            uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemid, count);
+            if (msg != EQUIP_ERR_OK)
+            {
+                store_error = true;
+                break;
+            }
+         }
+    }
+
+    if (store_error)
+    {
+        WorldPacket data(SMSG_ITEM_REFUND_RESULT, 8+4);
+        data << uint64(item->GetGUID());                 // Guid
+        data << uint32(10);                              // Error!
+        GetSession()->SendPacket(&data);
+        return;
+    }
+
+    WorldPacket data(SMSG_ITEM_REFUND_RESULT, 8+4+4+4+4+4*4+4*4);
+    data << uint64(item->GetGUID());                    // item guid
+    data << uint32(0);                                  // 0, or error code
+    data << uint32(moneyRefund);                        // money cost
+    data << uint32(iece->reqhonorpoints * itemCount);   // honor point cost
+    data << uint32(iece->reqarenapoints * itemCount);   // arena point cost
+    for (uint8 i = 0; i < 5; ++i)                       // item cost data
+    {
+        data << iece->reqitem[i];
+        data << (iece->reqitemcount[i] * itemCount);
+    }
+    GetSession()->SendPacket(&data);
+
+    // Delete any references to the refund data
+    item->SetNotRefundable(this);
+
+    // Destroy item
+    DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
+
+    // Grant back extendedcost items
+    for (uint8 i = 0; i < 5; ++i)
+    {
+        uint32 count = iece->reqitemcount[i] * itemCount;
+        uint32 itemid = iece->reqitem[i];
+        if (count && itemid)
+        {
+            ItemPosCountVec dest;
+            uint8 msg = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemid, count);
+            ASSERT(msg == EQUIP_ERR_OK) /// Already checked before
+            Item* it = StoreNewItem(dest, itemid, true);
+            SendNewItem(it, count, true, false, true);
+        }
+    }
+
+    // Grant back money
+    if (moneyRefund)
+        ModifyMoney(moneyRefund);
+
+    // Grant back Honor points
+    uint32 honorRefund = iece->reqhonorpoints * itemCount;
+    if (honorRefund)
+        ModifyHonorPoints(honorRefund);
+
+    // Grant back Arena points
+    uint32 arenaRefund = iece->reqarenapoints * itemCount;
+    if (arenaRefund)
+        ModifyArenaPoints(arenaRefund);
+
 }

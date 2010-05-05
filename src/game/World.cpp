@@ -873,7 +873,7 @@ void World::LoadConfigSettings(bool reload)
     m_configs[CONFIG_GM_VISIBLE_STATE]     = sConfig.GetIntDefault("GM.Visible", 2);
     //m_configs[CONFIG_GM_ACCEPT_TICKETS]    = sConfig.GetIntDefault("GM.AcceptTickets", 2);
     m_configs[CONFIG_GM_CHAT]              = sConfig.GetIntDefault("GM.Chat", 2);
-    m_configs[CONFIG_GM_WISPERING_TO]      = sConfig.GetIntDefault("GM.WhisperingTo", 2);
+    m_configs[CONFIG_GM_WHISPERING_TO]      = sConfig.GetIntDefault("GM.WhisperingTo", 2);
 
     m_configs[CONFIG_GM_LEVEL_IN_GM_LIST]  = sConfig.GetIntDefault("GM.InGMList.Level", SEC_ADMINISTRATOR);
     m_configs[CONFIG_GM_LEVEL_IN_WHO_LIST] = sConfig.GetIntDefault("GM.InWhoList.Level", SEC_ADMINISTRATOR);
@@ -1278,7 +1278,7 @@ void World::SetInitialWorldSettings()
     loginDatabase.PExecute("UPDATE realmlist SET icon = %u, timezone = %u WHERE id = '%d'", server_type, realm_zone, realmID);
 
     ///- Remove the bones after a restart
-    CharacterDatabase.PExecute("DELETE FROM corpse WHERE corpse_type = '0'");
+    CharacterDatabase.Execute("DELETE FROM corpse WHERE corpse_type = '0'");
 
     ///- Load the DBC files
     sLog.outString("Initialize data stores...");
@@ -1711,7 +1711,7 @@ void World::SetInitialWorldSettings()
 
 void World::DetectDBCLang()
 {
-    uint32 m_lang_confid = sConfig.GetIntDefault("DBC.Locale", 255);
+    uint8 m_lang_confid = sConfig.GetIntDefault("DBC.Locale", 255);
 
     if (m_lang_confid != 255 && m_lang_confid >= MAX_LOCALE)
     {
@@ -1723,8 +1723,8 @@ void World::DetectDBCLang()
 
     std::string availableLocalsStr;
 
-    int default_locale = MAX_LOCALE;
-    for (int i = MAX_LOCALE-1; i >= 0; --i)
+    uint8 default_locale = MAX_LOCALE;
+    for (uint8 i = default_locale-1; i < MAX_LOCALE; --i)  // -1 will be 255 due to uint8
     {
         if (strlen(race->name[i]) > 0)                     // check by race names
         {
@@ -1852,10 +1852,7 @@ void World::Update(uint32 diff)
     }
 
     if (m_gameTime > m_NextWeeklyQuestReset)
-    {
         ResetWeeklyQuests();
-        m_NextWeeklyQuestReset += WEEK;
-    }
 
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_AUCTIONS].Passed())
@@ -2501,19 +2498,9 @@ void World::_UpdateRealmCharCount(QueryResult_AutoPtr resultCharCount, uint32 ac
 
 void World::InitWeeklyQuestResetTime()
 {
-    time_t wtime = uint64(sWorld.getWorldState(WS_WEEKLY_QUEST_RESET_TIME));
-    if (!wtime)
-    {
-        m_NextWeeklyQuestReset = time_t(m_gameTime + WEEK);
-        sWorld.setWorldState(WS_WEEKLY_QUEST_RESET_TIME, uint64(m_NextWeeklyQuestReset));
-    }
-    else
-    {
-        // move to just before if need
-        time_t cur = time(NULL);
-        if (m_NextWeeklyQuestReset < cur)
-            m_NextWeeklyQuestReset += WEEK * ((cur - m_NextWeeklyQuestReset) / WEEK);
-    }
+    time_t wstime = uint64(sWorld.getWorldState(WS_WEEKLY_QUEST_RESET_TIME));
+    time_t curtime = time(NULL);
+    m_NextWeeklyQuestReset = wstime < curtime ? curtime : time_t(wstime);
 }
 
 void World::InitDailyQuestResetTime()

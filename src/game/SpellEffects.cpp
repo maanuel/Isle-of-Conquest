@@ -500,7 +500,12 @@ void Spell::SpellDamageSchoolDmg(uint32 effect_idx)
                     {
                         uint32 pdamage = aura->GetAmount() > 0 ? aura->GetAmount() : 0;
                         pdamage = m_caster->SpellDamageBonus(unitTarget, aura->GetSpellProto(), pdamage, DOT, aura->GetBase()->GetStackAmount());
-                        damage += pdamage * aura->GetTotalTicks() * 60 / 100;
+                        uint32 pct_dir = m_caster->CalculateSpellDamage(unitTarget, m_spellInfo, (effect_idx + 1));
+                        damage += pdamage * aura->GetTotalTicks() * pct_dir / 100;
+
+                        uint32 pct_dot = m_caster->CalculateSpellDamage(unitTarget, m_spellInfo, (effect_idx + 2)) / 3;
+                        m_currentBasePoints[1] = pdamage * aura->GetTotalTicks() * pct_dot / 100;
+
                         apply_direct_bonus = false;
                         // Glyph of Conflagrate
                         if (!m_caster->HasAura(56235))
@@ -1253,6 +1258,14 @@ void Spell::EffectDummy(uint32 i)
                 {
                     // Emissary of Hate Credit
                     m_caster->CastSpell(m_caster, 45088, true);
+                    return;
+                }
+                case 47170:                                 // Impale Leviroth
+                {
+                    if (!unitTarget && unitTarget->GetEntry() != 26452 && ((unitTarget->GetHealth() / unitTarget->GetMaxHealth()) * 100.0f) > 95.0f)
+                    return;
+
+                    m_caster->DealDamage(unitTarget, unitTarget->GetMaxHealth()*0.93f);
                     return;
                 }
                 case 49625:                                 // Brave's Flare
@@ -2048,7 +2061,8 @@ void Spell::EffectDummy(uint32 i)
             // Scourge Strike
             if (m_spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_DK_SCOURGE_STRIKE)
             {
-                m_damage = float (m_damage) * (float(damage * unitTarget->GetDiseasesByCaster(m_caster->GetGUID()) + 100.0f) / 100.0f);
+                int32 bp = (m_damage * damage * unitTarget->GetDiseasesByCaster(m_caster->GetGUID())) / 100;
+                m_caster->CastCustomSpell(unitTarget, 70890, &bp, NULL, NULL, true);
                 return;
             }
             // Death Coil
@@ -4494,7 +4508,7 @@ void Spell::SpellDamageWeaponDmg(uint32 i)
         case SPELLFAMILY_ROGUE:
         {
             // Fan of Knives, Hemorrhage, Ghostly Strike
-            if ((m_spellInfo->SpellFamilyFlags[1] & 0x40000) 
+            if ((m_spellInfo->SpellFamilyFlags[1] & 0x40000)
                 || (m_spellInfo->SpellFamilyFlags[0] & 0x6000000))
             {
                 // Hemorrhage
@@ -7596,24 +7610,26 @@ void Spell::EffectCastButtons(uint32 i)
 
     for (; n_buttons; n_buttons--, button_id++)
     {
-        if (uint32 spell_id = p_caster->GetActionButtonSpell(button_id))
-        {
-            if (!spell_id)
-                continue;
+        ActionButton const* ab = p_caster->GetActionButton(button_id);
+        if (!ab || ab->GetType() != ACTION_BUTTON_SPELL)
+            continue;
 
-            if (p_caster->HasSpellCooldown(spell_id))
-                continue;
+        uint32 spell_id = ab->GetAction();
+        if (!spell_id)
+            continue;
 
-            SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
-            uint32 cost = CalculatePowerCost(spellInfo, m_caster, GetSpellSchoolMask(spellInfo));
+        if (p_caster->HasSpellCooldown(spell_id))
+            continue;
 
-            if (m_caster->GetPower(POWER_MANA) < cost)
-                break;
+        SpellEntry const *spellInfo = sSpellStore.LookupEntry(spell_id);
+        uint32 cost = CalculatePowerCost(spellInfo, m_caster, GetSpellSchoolMask(spellInfo));
+
+        if (m_caster->GetPower(POWER_MANA) < cost)
+            break;
 
         m_caster->CastSpell(unitTarget, spell_id, true);
         m_caster->ModifyPower(POWER_MANA, -(int32)cost);
         p_caster->AddSpellAndCategoryCooldowns(spellInfo, 0);
-        }
     }
 }
 

@@ -284,7 +284,7 @@ class WorldSession
         uint32 GetLatency() const { return m_latency; }
         void SetLatency(uint32 latency) { m_latency = latency; }
         uint32 getDialogStatus(Player *pPlayer, Object* questgiver, uint32 defstatus);
-        
+
         time_t m_timeOutTime;
         void UpdateTimeOutTime(bool b)
         {
@@ -299,7 +299,7 @@ class WorldSession
                 return true;
             return false;
         }
-        
+
 
     public:                                                 // opcodes handlers
 
@@ -661,6 +661,7 @@ class WorldSession
         void HandleSetPlayerDeclinedNames(WorldPacket& recv_data);
 
         void HandleTotemDestroyed(WorldPacket& recv_data);
+        void HandleDismissCritter(WorldPacket& recv_data);
 
         //BattleGround
         void HandleBattlemasterHelloOpcode(WorldPacket &recv_data);

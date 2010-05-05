@@ -554,7 +554,7 @@ int32 Item::GenerateItemRandomPropertyId(uint32 item_id)
     // RandomProperty case
     if (itemProto->RandomProperty)
     {
-        int32 randomPropId = GetItemEnchantMod(itemProto->RandomProperty);
+        uint32 randomPropId = GetItemEnchantMod(itemProto->RandomProperty);
         ItemRandomPropertiesEntry const *random_id = sItemRandomPropertiesStore.LookupEntry(randomPropId);
         if (!random_id)
         {
@@ -1057,15 +1057,11 @@ void Item::BuildUpdate(UpdateDataMapType& data_map)
 
 void Item::SaveRefundDataToDB()
 {
-    std::ostringstream ss;
-    ss << "INSERT INTO item_refund_instance VALUES(";
-    ss << GetGUIDLow() << ",";
-    ss << GetRefundRecipient() << ",";
-    ss << GetPaidMoney() << ",";
-    ss << GetPaidExtendedCost();
-    ss << ")";
-
-    CharacterDatabase.Execute(ss.str().c_str());
+    CharacterDatabase.BeginTransaction();
+    CharacterDatabase.PExecute("DELETE FROM item_refund_instance WHERE item_guid = '%u'", GetGUIDLow());
+    CharacterDatabase.PExecute("INSERT INTO item_refund_instance (`item_guid`,`player_guid`,`paidMoney`,`paidExtendedCost`)"
+    " VALUES('%u','%u','%u','%u')", GetGUIDLow(), GetRefundRecipient(), GetPaidMoney(), GetPaidExtendedCost());
+    CharacterDatabase.CommitTransaction();
 }
 
 void Item::DeleteRefundDataFromDB()

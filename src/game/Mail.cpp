@@ -354,8 +354,7 @@ void WorldSession::HandleMailReturnToSender(WorldPacket & recv_data)
     //we can return mail now
     //so firstly delete the old one
     CharacterDatabase.BeginTransaction();
-    CharacterDatabase.PExecute("DELETE FROM mail WHERE id = '%u'", mailId);
-                                                            // needed?
+    CharacterDatabase.PExecute("DELETE FROM mail WHERE id = '%u'", mailId);             // needed?
     CharacterDatabase.PExecute("DELETE FROM mail_items WHERE mail_id = '%u'", mailId);
     CharacterDatabase.CommitTransaction();
     pl->RemoveMail(mailId);
@@ -672,7 +671,7 @@ void WorldSession::HandleMailCreateTextItem(WorldPacket & recv_data)
     }
 
     // in mail template case we need create new item text
-    if(m->mailTemplateId)
+    if (m->mailTemplateId)
     {
         MailTemplateEntry const* mailTemplateEntry = sMailTemplateStore.LookupEntry(m->mailTemplateId);
         if (!mailTemplateEntry)
