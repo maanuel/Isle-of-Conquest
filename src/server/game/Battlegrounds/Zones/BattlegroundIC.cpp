@@ -23,13 +23,14 @@
 
 BattlegroundIC::BattlegroundIC()
 {
-    m_BgCreatures.resize(2);
+    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS);
+    /*m_BgCreatures.resize(2);
     m_BgObjects.resize(5);
     //TODO FIX ME!
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_WS_START_TWO_MINUTES;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_WS_START_HALF_MINUTE;
-    m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;
+    m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;*/
 }
 
 BattlegroundIC::~BattlegroundIC()
@@ -84,30 +85,31 @@ void BattlegroundIC::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 
 bool BattlegroundIC::SetupBattleground()
 {
-    AddObject(0, 195157, 459.72f, -419.93f, 42.55f, 0, 0, 0, 0.9996573f, 0.02617699f, 10*MINUTE);
-    AddObject(1, 195158, 797.72f, -1009.48f, 138.52f, 0, 0, 0, 0.9996573f, 0.02617699f, 10*MINUTE);
-    AddObject(2, 195338, 418.98f, -838.33f, 51.09f, 0, 0, 0, 0.9996573f, 0.02617699f, 10*MINUTE);
-    AddObject(3, 195343, 1267.45f, -390.88f, 24.23f, 0, 0, 0, 0.9996573f, 0.02617699f, 10*MINUTE);
-    AddObject(4, 195333, 769.27f, -833.53f, 9.57f, 0, 0, 0, 0.9996573f, 0.02617699f, 10*MINUTE);
-    SpawnLeader(ALLIANCE);
-    SpawnLeader(HORDE);
+    for (uint8 i = 0; i < GAMEOBJECT_MAX_SPAWNS - 1; i++)
+    {
+        if (!AddObject(i,BG_IC_ObjEntries[i],
+            BG_IC_ObjSpawnlocs[i][0],BG_IC_ObjSpawnlocs[i][1],
+            BG_IC_ObjSpawnlocs[i][2],BG_IC_ObjSpawnlocs[i][3],
+            0,0,0,0,RESPAWN_ONE_DAY))
+        return false;
+    }
     return true;
 }
 
-void BattlegroundIC::SpawnLeader(uint32 teamid)
+/*void BattlegroundIC::SpawnLeader(uint32 teamid)
 {
     if (teamid == ALLIANCE)
         AddCreature(34924, 0, ALLIANCE, 307.03f, -833.04f, 48.91f, 6.23f, 10*MINUTE);
     else
         AddCreature(34922, 1, HORDE, 1264.42f, -766.80f, 48.91f, 3.28f, 10*MINUTE);
-}
+}*/
 
 void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
        return;
 
-    uint32 entry = unit->GetEntry();
+    /*uint32 entry = unit->GetEntry();
     if (entry == 34924)
     {
         RewardHonorToTeam(500,HORDE);
@@ -117,7 +119,7 @@ void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
     {
         RewardHonorToTeam(500,ALLIANCE);
         EndBattleground(ALLIANCE);
-    }
+    }*/
 }
 
 void BattlegroundIC::EndBattleground(uint32 winner)
