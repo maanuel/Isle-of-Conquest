@@ -24,13 +24,14 @@
 BattlegroundIC::BattlegroundIC()
 {
     m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS);
+    m_BgCreatures.resize(0);
     /*m_BgCreatures.resize(2);
-    m_BgObjects.resize(5);
+    m_BgObjects.resize(5);*/
     //TODO FIX ME!
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_WS_START_TWO_MINUTES;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_WS_START_ONE_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_WS_START_HALF_MINUTE;
-    m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;*/
+    m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_WS_HAS_BEGUN;
 }
 
 BattlegroundIC::~BattlegroundIC()
@@ -85,14 +86,24 @@ void BattlegroundIC::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 
 bool BattlegroundIC::SetupBattleground()
 {
-    for (uint8 i = 0; i < GAMEOBJECT_MAX_SPAWNS - 1; i++)
+    for (uint8 i = 0; i < GAMEOBJECT_MAX_SPAWNS; i++)
     {
         if (!AddObject(i,BG_IC_ObjEntries[i],
             BG_IC_ObjSpawnlocs[i][0],BG_IC_ObjSpawnlocs[i][1],
             BG_IC_ObjSpawnlocs[i][2],BG_IC_ObjSpawnlocs[i][3],
             0,0,0,0,RESPAWN_ONE_DAY))
-        return false;
+        {
+            sLog.outError("Isle of Conquest: There was an error spawning gameobject %u",BG_IC_ObjEntries[i]);
+            return false;      
+        }
     }
+
+    // Show Full Gate Displays
+    GetBGObject(1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
+    GetBGObject(2)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
+    GetBGObject(50)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
+    GetBGObject(51)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
+
     return true;
 }
 
