@@ -8716,6 +8716,8 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 4384:
             NumberOfFields = 30;
             break;
+        case 4710:
+            NumberOfFields = 100;
          default:
             NumberOfFields = 12;
             break;
@@ -9207,6 +9209,10 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 data << uint32(0xe11) << uint32(0x0);           // 8 green
                 data << uint32(0xe1a) << uint32(0x0);           // 9 show
             }
+            break;
+        case 4710:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_IC)
+                bg->FillInitialWorldStates(data);
             break;
         default:
             data << uint32(0x914) << uint32(0x0);           // 7

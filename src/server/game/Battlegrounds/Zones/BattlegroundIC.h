@@ -121,7 +121,122 @@ enum gameobjectsIC
     GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01 = 195491
 };
 
-#define GAMEOBJECT_MAX_SPAWNS 86
+#define GAMEOBJECT_MAX_SPAWNS BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01+1
+
+enum BG_IC_GOs
+{
+    BG_IC_GO_ALLIANCE_BANNER = 0,
+
+    BG_IC_GO_ALLIANCE_GATE_1, 
+    BG_IC_GO_ALLIANCE_GATE_2,
+    BG_IC_GO_ALLIANCE_GATE_3,
+
+    BG_IC_GO_BENCH_1,
+    BG_IC_GO_BENCH_2,
+    BG_IC_GO_BENCH_3,
+    BG_IC_GO_BENCH_4,
+    BG_IC_GO_BENCH_5,
+
+    BG_IC_GO_BONFIRE_1,
+    BG_IC_GO_BONFIRE_2,
+    BG_IC_GO_BONFIRE_3,
+    BG_IC_GO_BONFIRE_4,
+    BG_IC_GO_BONFIRE_5,
+    BG_IC_GO_BONFIRE_6,
+
+    BG_IC_GO_BRAZIER_1,
+    BG_IC_GO_BRAZIER_2,
+    BG_IC_GO_BRAZIER_3,
+    BG_IC_GO_BRAZIER_4,
+
+    BG_IC_GO_CHAIR_1, 
+    BG_IC_GO_CHAIR_2,
+    BG_IC_GO_CHAIR_3_1,
+    BG_IC_GO_CHAIR_4, 
+    BG_IC_GO_CHAIR_5, 
+    BG_IC_GO_CHAIR_6_1, 
+    BG_IC_GO_CHAIR_7,
+    BG_IC_GO_CHAIR_3_2,
+    BG_IC_GO_CHAIR_6_2,
+    BG_IC_GO_CHAIR_8_1,
+    BG_IC_GO_CHAIR_8_2,
+    BG_IC_GO_CHAIR_9,
+
+    BG_IC_GO_DOCKS_BANNER,
+
+    BG_IC_GO_DOODAD_HU_PORTCULLIS01_1, 
+    BG_IC_GO_DOODAD_HU_PORTCULLIS01_2,
+
+    BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01, 
+
+    BG_IC_GO_DOODAD_PORTCULLISACTIVE01,
+
+    BG_IC_GO_DOODAD_PORTCULLISACTIVE02,
+
+    BG_IC_GO_DOODAD_VR_PORTCULLIS01_1,
+    BG_IC_GO_DOODAD_VR_PORTCULLIS01_2, 
+
+    BG_IC_GO_FLAGPOLE_1_1,
+    BG_IC_GO_FLAGPOLE_2_1, 
+    BG_IC_GO_FLAGPOLE_2_2,
+    BG_IC_GO_FLAGPOLE_1_2, 
+    BG_IC_GO_FLAGPOLE_1_3, 
+    BG_IC_GO_FLAGPOLE_1_4, 
+    BG_IC_GO_FLAGPOLE_1_5,
+
+    BG_IC_GO_HANGAR_BANNER,
+
+    BG_IC_GO_HORDE_BANNER, 
+
+    BG_IC_GO_HORDE_GATE_1, 
+    BG_IC_GO_HORDE_GATE_2, 
+    BG_IC_GO_HORDE_GATE_3, 
+
+    BG_IC_GO_HORDE_KEEP_PORTCULLIS,
+    
+    BG_IC_GO_QUARRY_BANNER,
+
+    BG_IC_GO_SEAFORIUM_BOMBS_1, 
+    BG_IC_GO_SEAFORIUM_BOMBS_2,
+
+    BG_IC_GO_STOVE_1_1, 
+    BG_IC_GO_STOVE_2_1, 
+    BG_IC_GO_STOVE_1_2, 
+    BG_IC_GO_STOVE_2_2,
+
+    BG_IC_GO_TELEPORTER_1_1, 
+    BG_IC_GO_TELEPORTER_1_2,
+    BG_IC_GO_TELEPORTER_2_1, 
+    BG_IC_GO_TELEPORTER_3_1, 
+    BG_IC_GO_TELEPORTER_2_2, 
+    BG_IC_GO_TELEPORTER_4_1, 
+    BG_IC_GO_TELEPORTER_3_2,
+    BG_IC_GO_TELEPORTER_3_3, 
+    BG_IC_GO_TELEPORTER_4_2,
+    BG_IC_GO_TELEPORTER_4_3,
+    BG_IC_GO_TELEPORTER_1_3,
+    BG_IC_GO_TELEPORTER_2_3, 
+    
+    BG_IC_GO_TELEPORTER_EFFECTS_A_1,
+    BG_IC_GO_TELEPORTER_EFFECTS_A_2, 
+    BG_IC_GO_TELEPORTER_EFFECTS_A_3, 
+    BG_IC_GO_TELEPORTER_EFFECTS_A_4,
+    BG_IC_GO_TELEPORTER_EFFECTS_A_5,
+    BG_IC_GO_TELEPORTER_EFFECTS_A_6, 
+    
+    BG_IC_GO_TELEPORTER_EFFECTS_H_1,
+    BG_IC_GO_TELEPORTER_EFFECTS_H_2, 
+    BG_IC_GO_TELEPORTER_EFFECTS_H_3,
+    BG_IC_GO_TELEPORTER_EFFECTS_H_4,
+    BG_IC_GO_TELEPORTER_EFFECTS_H_5, 
+    BG_IC_GO_TELEPORTER_EFFECTS_H_6, 
+
+    BG_IC_GO_WORKSHOP_BANNER,
+
+    BG_IC_GO_REFINERY_BANNER,
+
+    BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01
+};
 
 const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
 {
@@ -131,14 +246,16 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_ALLIANCE_GATE_2, // 3
     GO_ALLIANCE_GATE_3, // 4
 
-    /*GO_ALLIANCE_GUNSHIP_PORTAL, // 5
+    /*
+    GO_ALLIANCE_GUNSHIP_PORTAL, // 5
     GO_ALLIANCE_GUNSHIP_PORTAL, // 6
     GO_ALLIANCE_GUNSHIP_PORTAL, // 7
 
     GO_ALLIANCE_GUNSHIP_PORTAL_EFFECTS, // 8
     GO_ALLIANCE_GUNSHIP_PORTAL_EFFECTS, // 9
     GO_ALLIANCE_GUNSHIP_PORTAL_EFFECTS, // 10
-    GO_ALLIANCE_GUNSHIP_PORTAL_EFFECTS, // 11*/
+    GO_ALLIANCE_GUNSHIP_PORTAL_EFFECTS, // 11
+    */
 
     GO_BENCH_1, // 5
     GO_BENCH_2, // 6
@@ -171,7 +288,7 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_CHAIR_8, // 30
     GO_CHAIR_9, // 31
 
-    GO_DOCKS_BANNER,  // 32
+    GO_DOCKS_BANNER, // 32
 
     GO_DOODAD_HU_PORTCULLIS01,  // 33
     GO_DOODAD_HU_PORTCULLIS01,  // 34
@@ -180,9 +297,9 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
 
     GO_DOODAD_PORTCULLISACTIVE01,  // 36
 
-    GO_DOODAD_PORTCULLISACTIVE02,  // 37
+    GO_DOODAD_PORTCULLISACTIVE02, // 37
 
-    GO_DOODAD_VR_PORTCULLIS01,  // 38
+    GO_DOODAD_VR_PORTCULLIS01, // 38
     GO_DOODAD_VR_PORTCULLIS01, // 39
 
     GO_FLAGPOLE_1, // 40
@@ -193,11 +310,13 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_FLAGPOLE_1, // 45
     GO_FLAGPOLE_1, // 46
 
-    /*GO_GUNSHIP_PORTAL_1, // 53
+    /*
+    GO_GUNSHIP_PORTAL_1, // 53
     GO_GUNSHIP_PORTAL_2, // 54
     GO_GUNSHIP_PORTAL_1, // 55
     GO_GUNSHIP_PORTAL_1, // 56
-    GO_GUNSHIP_PORTAL_1, // 57*/
+    GO_GUNSHIP_PORTAL_1, // 57
+    */
 
     GO_HANGAR_BANNER, // 47
 
@@ -207,7 +326,8 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_HORDE_GATE_2, // 50 
     GO_HORDE_GATE_3, // 51
 
-    /*GO_HORDE_GUNSHIP_PORTAL, // 63
+    /*
+    GO_HORDE_GUNSHIP_PORTAL, // 63
 
     GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 64
     GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 65
@@ -216,7 +336,8 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 68
     GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 69
     GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 70
-    GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 71*/
+    GO_HORDE_GUNSHIP_PORTAL_EFFECTS, // 71
+    */
 
     GO_HORDE_KEEP_PORTCULLIS, // 52
     
@@ -242,26 +363,26 @@ const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
     GO_TELEPORTER_4, // 69
     GO_TELEPORTER_1, // 70
     GO_TELEPORTER_2, // 71
+    
+    GO_TELEPORTER_EFFECTS_A, // 72
+    GO_TELEPORTER_EFFECTS_A, // 73
+    GO_TELEPORTER_EFFECTS_A, // 74
+    GO_TELEPORTER_EFFECTS_A, // 75
+    GO_TELEPORTER_EFFECTS_A, // 76
+    GO_TELEPORTER_EFFECTS_A, // 77
+    
+    GO_TELEPORTER_EFFECTS_H, // 78
+    GO_TELEPORTER_EFFECTS_H, // 79
+    GO_TELEPORTER_EFFECTS_H, // 80
+    GO_TELEPORTER_EFFECTS_H, // 81
+    GO_TELEPORTER_EFFECTS_H, // 82
+    GO_TELEPORTER_EFFECTS_H, // 83
 
-   GO_TELEPORTER_EFFECTS_A, // 72
-   GO_TELEPORTER_EFFECTS_A, // 73
-   GO_TELEPORTER_EFFECTS_A, // 74
-   GO_TELEPORTER_EFFECTS_A, // 75
-   GO_TELEPORTER_EFFECTS_A, // 76
-   GO_TELEPORTER_EFFECTS_A, // 77
+    GO_WORKSHOP_BANNER, // 84
 
-   GO_TELEPORTER_EFFECTS_H, // 78
-   GO_TELEPORTER_EFFECTS_H, // 79
-   GO_TELEPORTER_EFFECTS_H, // 80
-   GO_TELEPORTER_EFFECTS_H, // 81
-   GO_TELEPORTER_EFFECTS_H, // 82
-   GO_TELEPORTER_EFFECTS_H, // 83
+    GO_REFINERY_BANNER, // 85
 
-   GO_WORKSHOP_BANNER, // 84
-
-   GO_REFINERY_BANNER, // 85
-
-   GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01 // 86
+    GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01 // 86
 };
 
 const float BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS][4] =
@@ -273,30 +394,30 @@ const float BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS][4] =
     {413.479f,-833.95f,48.5238f,3.14159f}, // Alliance Gate
 
     // This is spawned when the hangar is captured
-    /*{827.958f,-994.467f,134.071f,0.0f}, // Alliance Gunship Portal
+    /*
+    {827.958f,-994.467f,134.071f,0.0f}, // Alliance Gunship Portal
     {738.613f,-1106.58f,134.745f,2.54818f}, // Alliance Gunship Portal
     {672.283f,-1156.99f,133.706f,1.37881f}, // Alliance Gunship Portal
 
     {827.962f,-994.476f,134.07f,3.14159f}, // Alliance Gunship Portal Effects
     {839.227f,-1188.85f,278.93f,3.91978f}, // Alliance Gunship Portal Effects
     {672.264f,-1157.03f,133.706f,3.14159f}, // Alliance Gunship Portal Effects
-    {738.795f,-1106.75f,134.743f,3.14159f}, // Alliance Gunship Portal Effects*/
+    {738.795f,-1106.75f,134.743f,3.14159f}, // Alliance Gunship Portal Effects
+    */
 
     {834.208f,-461.826f,22.3067f,1.5708f}, // Bench
     {826.153f,-461.985f,22.5149f,1.5708f}, // Bench
     {817.446f,-470.47f,25.372f,-1.56207f}, // Bench
     {827.001f,-474.415f,25.372f,1.57952f}, // Bench
     {819.264f,-461.961f,22.7614f,1.57952f}, // Bench
-
-
+    
     {1162.91f,-734.578f,48.8948f,-2.9845f}, // Bonfire
     {1282.34f,-799.762f,87.1357f,-3.13286f}, // Bonfire
     {1358.06f,-732.178f,87.1606f,-3.13284f}, // Bonfire
     {1281.76f,-732.844f,87.1574f,-3.13246f}, // Bonfire
     {1358.81f,-797.899f,87.2953f,3.13312f}, // Bonfire
     {1162.21f,-790.543f,48.9162f,2.27765f}, // Bonfire
-
-
+    
     {1262.21f,-751.358f,48.8133f,2.26893f}, // Brazier
     {1262.58f,-781.861f,48.8132f,2.04203f}, // Brazier
     {223.818f,-839.352f,60.7917f,1.09083f}, // Brazier
@@ -338,12 +459,13 @@ const float BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS][4] =
     {251.016f,-1159.32f,17.2376f,-2.25147f}, // Flagpole
 
     // {374.14f,-820.467f,48.9162f,-0.899281f}, // Great Feast
-
-    /*{839.242f,-1188.83f,278.93f,3.91978f}, // Gunship Portal
+    /*
+    {839.242f,-1188.83f,278.93f,3.91978f}, // Gunship Portal
     {663.394f,-1252.59f,288.892f,3.18979f}, // Gunship Portal
     {1125.53f,-598.052f,201.667f,1.97711f}, // Gunship Portal
     {1472.64f,-786.956f,191.414f,6.15762f}, // Gunship Portal
-    {1458.37f,-730.522f,190.091f,0.398611f}, // Gunship Portal*/
+    {1458.37f,-730.522f,190.091f,0.398611f}, // Gunship Portal
+    */
 
     {807.78f,-1000.07f,132.381f,-1.93732f}, // Hangar Banner
     {1284.76f,-705.668f,48.9163f,-3.08918f}, // Horde Banner
@@ -353,8 +475,9 @@ const float BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS][4] =
     {1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate
 
     // This is spawned when the hangar is captured
-    /*{827.922f,-993.325f,134.197f,3.14159f}, // Horde Gunship Portal
-
+    /*
+    {827.922f,-993.325f,134.197f,3.14159f}, // Horde Gunship Portal
+    
     {663.373f,-1252.56f,288.891f,3.18979f}, // Horde Gunship Portal Effects
     {666.134f,-1262.39f,289.365f,3.24939f},  // Horde Gunship Portal Effects
     {739.014f,-1106.66f,134.755f,3.14159f}, // Horde Gunship Portal Effects
@@ -362,7 +485,8 @@ const float BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS][4] =
     {827.924f,-993.299f,134.2f,3.14159f}, // Horde Gunship Portal Effects
     {673.861f,-1286.67f,290.061f,3.32091f}, // Horde Gunship Portal Effects
     {668.571f,-1270.32f,289.659f,3.28327f}, // Horde Gunship Portal Effects
-    {684.257f,-1363.85f,289.922f,2.90662f}, // Horde Gunship Portal Effects*/
+    {684.257f,-1363.85f,289.922f,2.90662f}, // Horde Gunship Portal Effects
+    */
 
     {1283.05f,-765.878f,50.8297f,-3.13286f}, // Horde Keep Portcullis
 
@@ -454,6 +578,9 @@ class BattlegroundIC : public Battleground
         /* Scorekeeping */
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
 
+        void FillInitialWorldStates(WorldPacket& data);
     private:
+        uint32 closeFortressDoors;
+        bool doorsClosed;
 };
 #endif

@@ -641,6 +641,12 @@ enum TrinityStrings
     LANG_BG_EY_DROPPED_FLAG             = 686,
     LANG_BG_EY_RESETED_FLAG             = 687,
 
+    // Isle of Conquest
+    LANG_BG_IC_START_TWO_MINUTES        = 688,
+    LANG_BG_IC_START_ONE_MINUTE         = 689,
+    LANG_BG_IC_START_HALF_MINUTE        = 691,
+    LANG_BG_IC_HAS_BEGUN                = 690,
+
     LANG_ARENA_ONE_TOOLOW               = 700,
     LANG_ARENA_ONE_MINUTE               = 701,
     LANG_ARENA_THIRTY_SECONDS           = 702,
