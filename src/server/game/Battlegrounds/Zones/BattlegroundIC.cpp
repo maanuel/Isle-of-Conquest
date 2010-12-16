@@ -24,7 +24,7 @@
 BattlegroundIC::BattlegroundIC()
 {
     m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS);
-    m_BgCreatures.resize(0);
+    m_BgCreatures.resize(NPCS_MAX_SPAWNS);
 
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_IC_START_TWO_MINUTES;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_IC_START_ONE_MINUTE;
@@ -55,7 +55,7 @@ void BattlegroundIC::Update(uint32 diff)
             //DoorClose(BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
 
             GetBGObject(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01)->RemoveFromWorld();
-            GetBGObject(BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01)->RemoveFromWorld();
+            GetBGObject(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01)->RemoveFromWorld();
 
             GetBGObject(BG_IC_GO_ALLIANCE_GATE_3)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Alliance door
             GetBGObject(BG_IC_GO_HORDE_GATE_1)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_DAMAGED); // Horde door
@@ -79,7 +79,7 @@ void BattlegroundIC::StartingEventOpenDoors()
 {
     //after 20 seconds they should be despawned
     DoorOpen(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01);
-    DoorOpen(BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
+    DoorOpen(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
 
     sLog.outError("Isle Of Conquest: StartingEventOpenDoors");
 }
@@ -224,26 +224,30 @@ bool BattlegroundIC::SetupBattleground()
 {
     for (uint8 i = 0; i < GAMEOBJECT_MAX_SPAWNS; i++)
     {
-        if (!AddObject(i,BG_IC_ObjEntries[i],
-            BG_IC_ObjSpawnlocs[i][0],BG_IC_ObjSpawnlocs[i][1],
-            BG_IC_ObjSpawnlocs[i][2],BG_IC_ObjSpawnlocs[i][3],
+        if (!AddObject(i,BG_IC_ObjSpawnlocs[i].entry,
+            BG_IC_ObjSpawnlocs[i].x,BG_IC_ObjSpawnlocs[i].y,
+            BG_IC_ObjSpawnlocs[i].z,BG_IC_ObjSpawnlocs[i].o,
             0,0,0,0,RESPAWN_ONE_DAY))
         {
-            sLog.outError("Isle of Conquest: There was an error spawning gameobject %u",BG_IC_ObjEntries[i]);
+            sLog.outError("Isle of Conquest: There was an error spawning gameobject %u",BG_IC_ObjSpawnlocs[i].entry);
+            return false;      
+        }
+    } 
+
+    for (uint8 i = 0; i < NPCS_MAX_SPAWNS; i++)
+    {
+        if (!AddCreature(BG_IC_NpcSpawnlocs[i].entry,BG_IC_NpcSpawnlocs[i].type,BG_IC_NpcSpawnlocs[i].team,
+            BG_IC_NpcSpawnlocs[i].x,BG_IC_NpcSpawnlocs[i].y,
+            BG_IC_NpcSpawnlocs[i].z,BG_IC_NpcSpawnlocs[i].o,
+            RESPAWN_ONE_DAY))
+        {
+            sLog.outError("Isle of Conquest: There was an error spawning creature %u",BG_IC_NpcSpawnlocs[i].entry);
             return false;      
         }
     }  
 
     return true;
 }
-
-/*void BattlegroundIC::SpawnLeader(uint32 teamid)
-{
-    if (teamid == ALLIANCE)
-        AddCreature(34924, 0, ALLIANCE, 307.03f, -833.04f, 48.91f, 6.23f, 10*MINUTE);
-    else
-        AddCreature(34922, 1, HORDE, 1264.42f, -766.80f, 48.91f, 3.28f, 10*MINUTE);
-}*/
 
 void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
 {
