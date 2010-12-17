@@ -31,6 +31,12 @@ BattlegroundIC::BattlegroundIC()
     m_StartMessageIds[BG_STARTING_EVENT_THIRD]  = LANG_BG_IC_START_HALF_MINUTE;
     m_StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_IC_HAS_BEGUN;
 
+    for (uint8 i = 0; i < 2; i++)
+        factionReinforcements[i] = 300;
+
+    for (uint8 i = 0; i < BG_IC_MAXDOOR; i++)
+        GateStatus[i] = BG_IC_GATE_OK;
+
     closeFortressDoors = 20000; // the doors are closed again... in a special way
     doorsClosed = false;
 }
@@ -80,8 +86,6 @@ void BattlegroundIC::StartingEventOpenDoors()
     //after 20 seconds they should be despawned
     DoorOpen(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01);
     DoorOpen(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
-
-    sLog.outError("Isle Of Conquest: StartingEventOpenDoors");
 }
 
 void BattlegroundIC::AddPlayer(Player *plr)
@@ -118,105 +122,22 @@ void BattlegroundIC::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 
 void BattlegroundIC::FillInitialWorldStates(WorldPacket& data)
 {
-    /*data << uint32(4862) << uint32(1000);
-    data << uint32(5196) << uint32(0);
-    data << uint32(5194) << uint32(0);
-    data << uint32(4857) << uint32(0);
-    data << uint32(4584) << uint32(0);
-    data << uint32(4315) << uint32(0);
-    data << uint32(4312) << uint32(0);
-    data << uint32(4309) << uint32(1);
-    data << uint32(4306) << uint32(0);
-    data << uint32(4304) << uint32(1);
-    data << uint32(4301) << uint32(0);
-    data << uint32(4298) << uint32(1);
-    data << uint32(4294) << uint32(0);
-    data << uint32(4226) << uint32(256);
-    data << uint32(4221) << uint32(1);
-    data << uint32(4229) << uint32(0);
-    data << uint32(4440) << uint32(0);
-    data << uint32(4348) << uint32(0);
-    data << uint32(4346) << uint32(0);
-    data << uint32(3610) << uint32(1);
-    data << uint32(1943) << uint32(0);
-    data << uint32(1941) << uint32(0);
-    data << uint32(4343) << uint32(0);
-    data << uint32(4340) << uint32(0);
-    data << uint32(4327) << uint32(1);
-    data << uint32(4324) << uint32(0);
-    data << uint32(4320) << uint32(0);
-    data << uint32(4318) << uint32(1);
-    data << uint32(5071) << uint32(6);
-    data << uint32(4062) << uint32(0);
-    data << uint32(3601) << uint32(0);
-    data << uint32(3327) << uint32(0);
-    data << uint32(4023) << uint32(0);
-    data << uint32(4021) << uint32(0);
-    data << uint32(3191) << uint32(4);
-    data << uint32(2263) << uint32(0);
-    data << uint32(2259) << uint32(0);
-    data << uint32(5037) << uint32(6);
-    data << uint32(4864) << uint32(100);
-    data << uint32(4863) << uint32(300);
-    data << uint32(4354) << uint32(0);
-    data << uint32(4375) << uint32(0);
-    data << uint32(4314) << uint32(0);
-    data << uint32(4313) << uint32(1);
-    data << uint32(4311) << uint32(0);
-    data << uint32(4310) << uint32(0);
-    data << uint32(4308) << uint32(0);
-    data << uint32(4307) << uint32(0);
-    data << uint32(4305) << uint32(0);
-    data << uint32(4303) << uint32(0);
-    data << uint32(4302) << uint32(0);
-    data << uint32(4300) << uint32(0);
-    data << uint32(4299) << uint32(0);
-    data << uint32(4297) << uint32(0);
-    data << uint32(4296) << uint32(0);
-    data << uint32(4293) << uint32(1);
-    data << uint32(4227) << uint32(287);
-    data << uint32(4222) << uint32(1);
-    data << uint32(4131) << uint32(60);
-    data << uint32(4228) << uint32(0);
-    data << uint32(4230) << uint32(0);
-    data << uint32(4439) << uint32(0);
-    data << uint32(5195) << uint32(0);
-    data << uint32(5193) << uint32(0);
-    data << uint32(5192) << uint32(0);
-    data << uint32(2565) << uint32(142);
-    data << uint32(4025) << uint32(0);
-    data << uint32(4024) << uint32(0);
-    data << uint32(4022) << uint32(0);
-    data << uint32(4020) << uint32(0);
-    data << uint32(2264) << uint32(0);
-    data << uint32(2262) << uint32(0);
-    data << uint32(2261) << uint32(0);
-    data << uint32(4347) << uint32(0);
-    data << uint32(4345) << uint32(1);
-    data << uint32(4344) << uint32(0);
-    data << uint32(4342) << uint32(0);
-    data << uint32(4341) << uint32(0);
-    data << uint32(4339) << uint32(1);
-    data << uint32(4328) << uint32(1);
-    data << uint32(4326) << uint32(1);
-    data << uint32(4325) << uint32(0);
-    data << uint32(4323) << uint32(0);
-    data << uint32(4322) << uint32(0);
-    data << uint32(4321) << uint32(0);
-    data << uint32(4319) << uint32(1);
-    data << uint32(4317) << uint32(1);
-    data << uint32(4273) << uint32(1);
-    data << uint32(3426) << uint32(3);
-    data << uint32(2851) << uint32(0);
-    data << uint32(3710) << uint32(0);
-    data << uint32(3600) << uint32(0);
-    data << uint32(3695) << uint32(0);
-    data << uint32(2260) << uint32(0);
-    data << uint32(3901) << uint32(3);
-    data << uint32(3826) << uint32(1);
-    data << uint32(3801) << uint32(0);
-    data << uint32(1942) << uint32(0);
-    data << uint32(3085) << uint32(379);*/
+    data << uint32(BG_IC_ALLIANCE_RENFORT_SET) << uint32(1);
+    data << uint32(BG_IC_HORDE_RENFORT_SET) << uint32(1);
+    data << uint32(BG_IC_ALLIANCE_RENFORT) << uint32(factionReinforcements[TEAM_ALLIANCE]);
+    data << uint32(BG_IC_HORDE_RENFORT) << uint32(factionReinforcements[TEAM_HORDE]);
+
+     //for (uint8 i = 0 ; i < 6; ++i)
+    //{
+        //if(m_IC_DoorData[i].state == BG_IC_GATE_DESTROYED)
+        //    data<<uint32(m_IC_DoorData[i].worldstate[0])<< uint32(1);
+        //else
+         //   data<<uint32(m_IC_DoorData[i].worldstate[1])<< uint32(1);
+   // }
+
+    //for (uint8 i = 0 ; i < BG_IC_DYNAMIC_NODES_COUNT ; i++)
+    //    data << uint32(m_IC_NodeData[i].worldstate[m_IC_NodeData[i].current]) << uint32(1);
+
 
 }
 
@@ -265,6 +186,22 @@ void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
         RewardHonorToTeam(500,ALLIANCE);
         EndBattleground(ALLIANCE);
     }*/
+}
+
+void BattlegroundIC::HandleKillPlayer(Player* player, Player* killer)
+{
+    if (GetStatus() != STATUS_IN_PROGRESS)
+        return;
+
+    Battleground::HandleKillPlayer(player, killer);
+     
+    factionReinforcements[player->GetTeamId()] -= 1;
+
+    UpdateWorldState((player->GetTeamId() == TEAM_ALLIANCE ? BG_IC_ALLIANCE_RENFORT : BG_IC_HORDE_RENFORT), factionReinforcements[player->GetTeamId()]);
+
+    // we must end the battleground
+    if (factionReinforcements[player->GetTeamId()] < 1)
+        EndBattleground(killer->GetTeamId());
 }
 
 void BattlegroundIC::EndBattleground(uint32 winner)

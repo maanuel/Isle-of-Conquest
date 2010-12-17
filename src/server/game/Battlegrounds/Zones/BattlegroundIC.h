@@ -677,6 +677,44 @@ enum BG_IC_Objectives
     IC_OBJECTIVE_DEFEND_BASE    = 246
 };
 
+enum eIC_WorldStates
+{
+    BG_IC_ALLIANCE_RENFORT_SET      = 4221,
+    BG_IC_HORDE_RENFORT_SET         = 4222,
+    BG_IC_ALLIANCE_RENFORT          = 4226,
+    BG_IC_HORDE_RENFORT             = 4227,
+    BG_IC_GATE_FRONT_H_WS_CLOSED    = 4317,
+    BG_IC_GATE_WEST_H_WS_CLOSED     = 4318,
+    BG_IC_GATE_EAST_H_WS_CLOSED     = 4319,
+    BG_IC_GATE_FRONT_A_WS_CLOSED    = 4328,
+    BG_IC_GATE_WEST_A_WS_CLOSED     = 4327,
+    BG_IC_GATE_EAST_A_WS_CLOSED     = 4326,
+    BG_IC_GATE_FRONT_H_WS_OPEN      = 4322,
+    BG_IC_GATE_WEST_H_WS_OPEN       = 4321,
+    BG_IC_GATE_EAST_H_WS_OPEN       = 4320,
+    BG_IC_GATE_FRONT_A_WS_OPEN      = 4323,
+    BG_IC_GATE_WEST_A_WS_OPEN       = 4324,
+    BG_IC_GATE_EAST_A_WS_OPEN       = 4325,
+};
+
+enum BG_IC_GateState
+{
+    BG_IC_GATE_OK = 1,
+    BG_IC_GATE_DAMAGED = 2,
+    BG_IC_GATE_DESTROYED = 3
+};
+
+enum ICDoorList
+{
+    BG_IC_H_FRONT,
+    BG_IC_H_WEST,
+    BG_IC_H_EAST,
+    BG_IC_A_FRONT,
+    BG_IC_A_WEST,
+    BG_IC_A_EAST,
+    BG_IC_MAXDOOR,
+};
+
 class BattlegroundICScore : public BattlegroundScore
 {
     public:
@@ -703,6 +741,7 @@ class BattlegroundIC : public Battleground
         bool SetupBattleground();
         void SpawnLeader(uint32 teamid);
         void HandleKillUnit(Creature *unit, Player *killer);
+        void HandleKillPlayer(Player* player, Player* killer);
         void EndBattleground(uint32 winner);
         void EventPlayerClickedOnFlag(Player *source, GameObject* /*target_obj*/);
 
@@ -713,5 +752,7 @@ class BattlegroundIC : public Battleground
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
+        uint16 factionReinforcements[2];
+        BG_IC_GateState GateStatus[6];
 };
 #endif
