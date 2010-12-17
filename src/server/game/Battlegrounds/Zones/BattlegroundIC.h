@@ -519,9 +519,9 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
 {
     {BG_IC_GO_ALLIANCE_BANNER,GO_ALLIANCE_BANNER,299.153f,-784.589f,48.9162f,-0.157079f}, // Alliance Banner
 
-    {BG_IC_GO_ALLIANCE_GATE_1,GO_ALLIANCE_GATE_1,351.615f,-762.75f,48.9162f,-1.5708f}, // Alliance Gate
-    {BG_IC_GO_ALLIANCE_GATE_2,GO_ALLIANCE_GATE_2,351.024f,-903.326f,48.9247f,1.5708f}, // Alliance Gate
-    {BG_IC_GO_ALLIANCE_GATE_3,GO_ALLIANCE_GATE_3,413.479f,-833.95f,48.5238f,3.14159f}, // Alliance Gate
+    {BG_IC_GO_ALLIANCE_GATE_1,GO_ALLIANCE_GATE_1,351.615f,-762.75f,48.9162f,-1.5708f}, // Alliance Gate || Left
+    {BG_IC_GO_ALLIANCE_GATE_2,GO_ALLIANCE_GATE_2,351.024f,-903.326f,48.9247f,1.5708f}, // Alliance Gate || Right
+    {BG_IC_GO_ALLIANCE_GATE_3,GO_ALLIANCE_GATE_3,413.479f,-833.95f,48.5238f,3.14159f}, // Alliance Gate || Front
 
     // This is spawned when the hangar is captured
     /*
@@ -601,9 +601,9 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
 
     {BG_IC_GO_HORDE_BANNER,GO_HORDE_BANNER,1284.76f,-705.668f,48.9163f,-3.08918f}, // Horde Banner
 
-    {BG_IC_GO_HORDE_GATE_1,GO_HORDE_GATE_1,1150.9f,-762.606f,47.5077f,3.14159f}, // Horde Gate
-    {BG_IC_GO_HORDE_GATE_2,GO_HORDE_GATE_2,1218.74f,-851.155f,48.2533f,-1.5708f}, // Horde Gate
-    {BG_IC_GO_HORDE_GATE_3,GO_HORDE_GATE_3,1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate
+    {BG_IC_GO_HORDE_GATE_1,GO_HORDE_GATE_1,1150.9f,-762.606f,47.5077f,3.14159f}, // Horde Gate || Front
+    {BG_IC_GO_HORDE_GATE_2,GO_HORDE_GATE_2,1218.74f,-851.155f,48.2533f,-1.5708f}, // Horde Gate || Left
+    {BG_IC_GO_HORDE_GATE_3,GO_HORDE_GATE_3,1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate || Right
 
     // This is spawned when the hangar is captured
     /*
@@ -746,7 +746,6 @@ class BattlegroundIC : public Battleground
         void EventPlayerClickedOnFlag(Player *source, GameObject* /*target_obj*/);
 
         void EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent);
-        void DestroyGate(Player* /*pl*/, GameObject* /*go*/, uint32 destroyedEvent);
 
         /* Scorekeeping */
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
@@ -758,33 +757,46 @@ class BattlegroundIC : public Battleground
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
 
-        uint32 GetGateIDFromDestroyEventID(uint32 id)
+        uint32 GetGateIDFromEntry(uint32 id)
         {
             uint32 i = 0;
             switch(id)
             {
-                case 22079: i = BG_IC_H_FRONT ;break;
-                case 22083: i = BG_IC_H_WEST ;break;
-                case 22081: i = BG_IC_H_EAST ;break;
-                case 22078: i = BG_IC_A_FRONT ;break;
-                case 22082: i = BG_IC_A_WEST ;break;
-                case 22080: i = BG_IC_A_EAST ;break;
+                case GO_HORDE_GATE_1: i = BG_IC_H_FRONT ;break;
+                case GO_HORDE_GATE_2: i = BG_IC_H_WEST ;break;
+                case GO_HORDE_GATE_3: i = BG_IC_H_EAST ;break;
+                case GO_ALLIANCE_GATE_3: i = BG_IC_A_FRONT ;break;
+                case GO_ALLIANCE_GATE_1: i = BG_IC_A_WEST ;break;
+                case GO_ALLIANCE_GATE_2: i = BG_IC_A_EAST ;break;
             }
             return i;
         }
 
-
-        uint32 GetWorldStateFromGateID(uint32 id)
+       
+        uint32 GetWorldStateFromGateEntry(uint32 id, bool open)
         {
             uint32 uws = 0;
+
             switch(id)
-            {
-                case: GO_HORDE_GATE_1: uws = BG_IC_GATE_FRONT_H_WS_CLOSED; break;
-                case: GO_HORDE_GATE_2: uws = BG_IC_GATE_WEST_H_WS_CLOSED; break;
-                case: GO_HORDE_GATE_3: uws = BG_IC_GATE_EAST_H_WS_CLOSED; break;
-                case: GO_ALLIANCE_GATE_1: uws = BG_IC_GATE_FRONT_A_WS_CLOSED; break;
-                case: GO_ALLIANCE_GATE_2: uws = BG_IC_GATE_WEST_A_WS_CLOSED; break;
-                case: GO_ALLIANCE_GATE_3: uws = BG_IC_GATE_EAST_A_WS_CLOSED; break;
+            { 
+                case GO_HORDE_GATE_1:
+                    uws = (open ? BG_IC_GATE_FRONT_H_WS_OPEN : BG_IC_GATE_FRONT_H_WS_CLOSED);
+                    break;
+                case GO_HORDE_GATE_2:
+                    uws = (open ? BG_IC_GATE_WEST_H_WS_OPEN : BG_IC_GATE_WEST_H_WS_CLOSED);
+                    break;
+                case GO_HORDE_GATE_3: 
+                    uws = (open ? BG_IC_GATE_EAST_H_WS_OPEN : BG_IC_GATE_EAST_H_WS_CLOSED);
+                    break;
+                case GO_ALLIANCE_GATE_3:
+                    uws = (open ? BG_IC_GATE_FRONT_A_WS_OPEN : BG_IC_GATE_FRONT_A_WS_CLOSED);
+                    break;
+                case GO_ALLIANCE_GATE_1:
+                    uws = (open ? BG_IC_GATE_WEST_A_WS_OPEN : BG_IC_GATE_WEST_A_WS_CLOSED);
+                    break;
+                case GO_ALLIANCE_GATE_2: 
+                    uws = (open ? BG_IC_GATE_EAST_A_WS_OPEN : BG_IC_GATE_EAST_A_WS_CLOSED);
+                    break;
             }
             return uws;
         }

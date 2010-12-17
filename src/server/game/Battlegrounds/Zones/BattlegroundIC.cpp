@@ -127,13 +127,15 @@ void BattlegroundIC::FillInitialWorldStates(WorldPacket& data)
     data << uint32(BG_IC_ALLIANCE_RENFORT) << uint32(factionReinforcements[TEAM_ALLIANCE]);
     data << uint32(BG_IC_HORDE_RENFORT) << uint32(factionReinforcements[TEAM_HORDE]);
 
-     //for (uint8 i = 0 ; i < 6; ++i)
-    //{
-        //if(m_IC_DoorData[i].state == BG_IC_GATE_DESTROYED)
-        //    data<<uint32(m_IC_DoorData[i].worldstate[0])<< uint32(1);
-        //else
-         //   data<<uint32(m_IC_DoorData[i].worldstate[1])<< uint32(1);
-   // }
+    // i am making this just test it right now, this should be improved
+    uint32 doors[6] = {GO_ALLIANCE_GATE_1, GO_ALLIANCE_GATE_2, GO_ALLIANCE_GATE_3, GO_HORDE_GATE_1, GO_HORDE_GATE_2, GO_HORDE_GATE_3};
+    for (uint8 i = 0 ; i < 6; ++i)
+    {
+        if (GateStatus[GetGateIDFromEntry(doors[i])] == BG_IC_GATE_DESTROYED)
+            data<<uint32(GetWorldStateFromGateEntry(doors[i],true)) << uint32(1);
+        else
+         data<<uint32(GetWorldStateFromGateEntry(doors[i],false)) << uint32(1);
+    }
 
     //for (uint8 i = 0 ; i < BG_IC_DYNAMIC_NODES_COUNT ; i++)
     //    data << uint32(m_IC_NodeData[i].worldstate[m_IC_NodeData[i].current]) << uint32(1);
@@ -219,27 +221,32 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
 {
     if (!go || !go->GetGOInfo())
         return;
-
+    
     switch(hitType)
     {
         case BG_OBJECT_DMG_HIT_TYPE_JUST_DAMAGED://under attack
-            SendWarningToAll(LANG_BG_IC_IS_UNDER_ATTACK, go->GetGOInfo()->name);
+            //SendWarningToAll(LANG_BG_IC_IS_UNDER_ATTACK, go->GetGOInfo()->name);
             break;
         case BG_OBJECT_DMG_HIT_TYPE_DAMAGED:
             break;
         case BG_OBJECT_DMG_HIT_TYPE_JUST_HIGH_DAMAGED:
-            {
+            /*{
                 uint32 i = GetGateIDFromDestroyEventID(destroyedEvent);
-                GateStatus[i] = BG_IC_GATE_DAMAGED;
+                //GateStatus[i] = BG_IC_GATE_DAMAGED;
                 uint32 uws = GetWorldStateFromGateID(i);
                 if (uws)
                     UpdateWorldState(uws, GateStatus[i]);
                 break;
-            }
+            }*/
         case BG_OBJECT_DMG_HIT_TYPE_HIGH_DAMAGED:
             break;
         case BG_OBJECT_DMG_HIT_TYPE_JUST_DESTROYED://handled at DestroyGate()
-                SendWarningToAll(LANG_BG_IC_WAS_DESTROYED, go->GetGOInfo()->name);
+            GateStatus[GetGateIDFromEntry(go->GetEntry())] = BG_IC_GATE_DESTROYED;
+            uint32 uws = GetWorldStateFromGateEntry(go->GetEntry(), true);
+            if (uws)
+                UpdateWorldState(uws, GateStatus[GetGateIDFromEntry(go->GetEntry())]);
+            //SendWarningToAll(LANG_BG_IC_WAS_DESTROYED, go->GetGOInfo()->name);
+            break;
     }
 }
 
@@ -297,5 +304,5 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
             break;
         }
     }
-}*/
-
+}
+*/
