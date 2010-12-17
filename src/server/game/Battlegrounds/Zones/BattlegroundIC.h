@@ -522,6 +522,11 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_ALLIANCE_GATE_1,GO_ALLIANCE_GATE_1,351.615f,-762.75f,48.9162f,-1.5708f}, // Alliance Gate || Left
     {BG_IC_GO_ALLIANCE_GATE_2,GO_ALLIANCE_GATE_2,351.024f,-903.326f,48.9247f,1.5708f}, // Alliance Gate || Right
     {BG_IC_GO_ALLIANCE_GATE_3,GO_ALLIANCE_GATE_3,413.479f,-833.95f,48.5238f,3.14159f}, // Alliance Gate || Front
+    
+    {BG_IC_GO_HORDE_GATE_1,GO_HORDE_GATE_1,1150.9f,-762.606f,47.5077f,3.14159f}, // Horde Gate || Front
+    {BG_IC_GO_HORDE_GATE_2,GO_HORDE_GATE_2,1218.74f,-851.155f,48.2533f,-1.5708f}, // Horde Gate || Left
+    {BG_IC_GO_HORDE_GATE_3,GO_HORDE_GATE_3,1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate || Right
+
 
     // This is spawned when the hangar is captured
     /*
@@ -600,10 +605,6 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_HANGAR_BANNER,GO_HANGAR_BANNER,807.78f,-1000.07f,132.381f,-1.93732f}, // Hangar Banner
 
     {BG_IC_GO_HORDE_BANNER,GO_HORDE_BANNER,1284.76f,-705.668f,48.9163f,-3.08918f}, // Horde Banner
-
-    {BG_IC_GO_HORDE_GATE_1,GO_HORDE_GATE_1,1150.9f,-762.606f,47.5077f,3.14159f}, // Horde Gate || Front
-    {BG_IC_GO_HORDE_GATE_2,GO_HORDE_GATE_2,1218.74f,-851.155f,48.2533f,-1.5708f}, // Horde Gate || Left
-    {BG_IC_GO_HORDE_GATE_3,GO_HORDE_GATE_3,1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate || Right
 
     // This is spawned when the hangar is captured
     /*

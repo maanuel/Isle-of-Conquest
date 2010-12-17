@@ -127,27 +127,22 @@ void BattlegroundIC::FillInitialWorldStates(WorldPacket& data)
     data << uint32(BG_IC_ALLIANCE_RENFORT) << uint32(factionReinforcements[TEAM_ALLIANCE]);
     data << uint32(BG_IC_HORDE_RENFORT) << uint32(factionReinforcements[TEAM_HORDE]);
 
-    // i am making this just test it right now, this should be improved
-    uint32 doors[6] = {GO_ALLIANCE_GATE_1, GO_ALLIANCE_GATE_2, GO_ALLIANCE_GATE_3, GO_HORDE_GATE_1, GO_HORDE_GATE_2, GO_HORDE_GATE_3};
-    for (uint8 i = 0 ; i < 6; ++i)
+    for (uint8 i = 1; i < 7; i++)
     {
-        if (GateStatus[GetGateIDFromEntry(doors[i])] == BG_IC_GATE_DESTROYED)
-            data<<uint32(GetWorldStateFromGateEntry(doors[i],true)) << uint32(1);
-        else
-         data<<uint32(GetWorldStateFromGateEntry(doors[i],false)) << uint32(1);
+        uint32 uws = GetWorldStateFromGateEntry(BG_IC_ObjSpawnlocs[i].entry,(GateStatus[GetGateIDFromEntry(BG_IC_ObjSpawnlocs[i].entry)] == BG_IC_GATE_DESTROYED ? true : false));
+        sLog.outError("FillInitWorldStates: Updating WorldState %u, WorldState %u, door entry %u",i,uws, BG_IC_ObjSpawnlocs[i].entry);  
+        data << uint32(uws) << uint32(1);
     }
 
     //for (uint8 i = 0 ; i < BG_IC_DYNAMIC_NODES_COUNT ; i++)
     //    data << uint32(m_IC_NodeData[i].worldstate[m_IC_NodeData[i].current]) << uint32(1);
-
-
 }
 
 bool BattlegroundIC::SetupBattleground()
 {
     for (uint8 i = 0; i < GAMEOBJECT_MAX_SPAWNS; i++)
     {
-        if (!AddObject(i,BG_IC_ObjSpawnlocs[i].entry,
+        if (!AddObject(BG_IC_ObjSpawnlocs[i].type,BG_IC_ObjSpawnlocs[i].entry,
             BG_IC_ObjSpawnlocs[i].x,BG_IC_ObjSpawnlocs[i].y,
             BG_IC_ObjSpawnlocs[i].z,BG_IC_ObjSpawnlocs[i].o,
             0,0,0,0,RESPAWN_ONE_DAY))
@@ -168,6 +163,13 @@ bool BattlegroundIC::SetupBattleground()
             return false;      
         }
     }  
+
+    /*for (uint8 i = 1; i < 7; i++)
+    {
+        uint32 uws = GetWorldStateFromGateEntry(BG_IC_ObjSpawnlocs[i].entry,false);
+        sLog.outError("Updating WorldState %u, WorldState %u",i,uws);
+        UpdateWorldState(uws,1);        
+    }*/
 
     return true;
 }
@@ -249,60 +251,3 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
             break;
     }
 }
-
-/*void BattlegroundIC::DestroyGate(Player* pl, GameObject* go, uint32 destroyedEvent)
-{
-    uint16 gateID = GetGateIDFromDestroyEventID(destroyedEvent);
-
-    if (GateStatus[gateID] == BG_IC_GATE_DESTROYED)
-        return;
-
-    uint16 ObjectId = m_IC_DoorData[gateID].object_build;
-    if (!GetBGObject(ObjectId))
-        return;
-
-    if (GetBGObject(ObjectId)->GetGOValue()->building.health == 0)
-    {
-        UpdateWorldState(m_IC_DoorData[gateID].worldstate[0], 0);
-        UpdateWorldState(m_IC_DoorData[gateID].worldstate[1], 1);
-        switch(gateID)
-        {
-        case BG_IC_H_FRONT:
-        case BG_IC_H_WEST:
-        case BG_IC_H_EAST:
-            {
-                for (int i = 0 ; i < MAX_BG_IC_OBJ; ++i)
-                {
-                    uint8 id=BG_IC_OBJ[i].id;
-                    switch(BG_IC_OBJ[i].type)
-                    {
-                    case IC_TYPE_LAST_DOOR_H:
-                        if(GetBGObject(id)) GetBGObject(id)->SetGoState(GO_STATE_ACTIVE);         
-                    }
-                }
-                if (GetBGObject(m_IC_NodeData[BG_IC_ALLIANCE_KEEP].object_flag))
-                    GetBGObject(m_IC_NodeData[BG_IC_ALLIANCE_KEEP].object_flag)->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
-
-            }
-            break;
-        case BG_IC_A_FRONT:
-        case BG_IC_A_WEST:
-        case BG_IC_A_EAST:
-            {
-                for (int i = 0 ; i < MAX_BG_IC_OBJ; ++i)
-                {
-                    uint8 id=BG_IC_OBJ[i].id;
-                    switch(BG_IC_OBJ[i].type)
-                    {
-                    case IC_TYPE_LAST_DOOR_A:
-                        if(GetBGObject(id)) GetBGObject(id)->SetGoState(GO_STATE_ACTIVE);         
-                    }
-                }
-                if (GetBGObject(m_IC_NodeData[BG_IC_HORDE_KEEP].object_flag))
-                    GetBGObject(m_IC_NodeData[BG_IC_HORDE_KEEP].object_flag)->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
-            }
-            break;
-        }
-    }
-}
-*/
