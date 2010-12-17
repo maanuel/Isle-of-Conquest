@@ -214,3 +214,88 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player * /*source*/, GameObject* /
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 }
+
+void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)
+{
+    if (!go || !go->GetGOInfo())
+        return;
+
+    switch(hitType)
+    {
+        case BG_OBJECT_DMG_HIT_TYPE_JUST_DAMAGED://under attack
+            SendWarningToAll(LANG_BG_IC_IS_UNDER_ATTACK, go->GetGOInfo()->name);
+            break;
+        case BG_OBJECT_DMG_HIT_TYPE_DAMAGED:
+            break;
+        case BG_OBJECT_DMG_HIT_TYPE_JUST_HIGH_DAMAGED:
+            {
+                uint32 i = GetGateIDFromDestroyEventID(destroyedEvent);
+                GateStatus[i] = BG_IC_GATE_DAMAGED;
+                uint32 uws = GetWorldStateFromGateID(i);
+                if (uws)
+                    UpdateWorldState(uws, GateStatus[i]);
+                break;
+            }
+        case BG_OBJECT_DMG_HIT_TYPE_HIGH_DAMAGED:
+            break;
+        case BG_OBJECT_DMG_HIT_TYPE_JUST_DESTROYED://handled at DestroyGate()
+                SendWarningToAll(LANG_BG_IC_WAS_DESTROYED, go->GetGOInfo()->name);
+    }
+}
+
+/*void BattlegroundIC::DestroyGate(Player* pl, GameObject* go, uint32 destroyedEvent)
+{
+    uint16 gateID = GetGateIDFromDestroyEventID(destroyedEvent);
+
+    if (GateStatus[gateID] == BG_IC_GATE_DESTROYED)
+        return;
+
+    uint16 ObjectId = m_IC_DoorData[gateID].object_build;
+    if (!GetBGObject(ObjectId))
+        return;
+
+    if (GetBGObject(ObjectId)->GetGOValue()->building.health == 0)
+    {
+        UpdateWorldState(m_IC_DoorData[gateID].worldstate[0], 0);
+        UpdateWorldState(m_IC_DoorData[gateID].worldstate[1], 1);
+        switch(gateID)
+        {
+        case BG_IC_H_FRONT:
+        case BG_IC_H_WEST:
+        case BG_IC_H_EAST:
+            {
+                for (int i = 0 ; i < MAX_BG_IC_OBJ; ++i)
+                {
+                    uint8 id=BG_IC_OBJ[i].id;
+                    switch(BG_IC_OBJ[i].type)
+                    {
+                    case IC_TYPE_LAST_DOOR_H:
+                        if(GetBGObject(id)) GetBGObject(id)->SetGoState(GO_STATE_ACTIVE);         
+                    }
+                }
+                if (GetBGObject(m_IC_NodeData[BG_IC_ALLIANCE_KEEP].object_flag))
+                    GetBGObject(m_IC_NodeData[BG_IC_ALLIANCE_KEEP].object_flag)->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
+
+            }
+            break;
+        case BG_IC_A_FRONT:
+        case BG_IC_A_WEST:
+        case BG_IC_A_EAST:
+            {
+                for (int i = 0 ; i < MAX_BG_IC_OBJ; ++i)
+                {
+                    uint8 id=BG_IC_OBJ[i].id;
+                    switch(BG_IC_OBJ[i].type)
+                    {
+                    case IC_TYPE_LAST_DOOR_A:
+                        if(GetBGObject(id)) GetBGObject(id)->SetGoState(GO_STATE_ACTIVE);         
+                    }
+                }
+                if (GetBGObject(m_IC_NodeData[BG_IC_HORDE_KEEP].object_flag))
+                    GetBGObject(m_IC_NodeData[BG_IC_HORDE_KEEP].object_flag)->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
+            }
+            break;
+        }
+    }
+}*/
+

@@ -745,6 +745,9 @@ class BattlegroundIC : public Battleground
         void EndBattleground(uint32 winner);
         void EventPlayerClickedOnFlag(Player *source, GameObject* /*target_obj*/);
 
+        void EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent);
+        void DestroyGate(Player* /*pl*/, GameObject* /*go*/, uint32 destroyedEvent);
+
         /* Scorekeeping */
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
 
@@ -754,5 +757,36 @@ class BattlegroundIC : public Battleground
         bool doorsClosed;
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
+
+        uint32 GetGateIDFromDestroyEventID(uint32 id)
+        {
+            uint32 i = 0;
+            switch(id)
+            {
+                case 22079: i = BG_IC_H_FRONT ;break;
+                case 22083: i = BG_IC_H_WEST ;break;
+                case 22081: i = BG_IC_H_EAST ;break;
+                case 22078: i = BG_IC_A_FRONT ;break;
+                case 22082: i = BG_IC_A_WEST ;break;
+                case 22080: i = BG_IC_A_EAST ;break;
+            }
+            return i;
+        }
+
+
+        uint32 GetWorldStateFromGateID(uint32 id)
+        {
+            uint32 uws = 0;
+            switch(id)
+            {
+                case: GO_HORDE_GATE_1: uws = BG_IC_GATE_FRONT_H_WS_CLOSED; break;
+                case: GO_HORDE_GATE_2: uws = BG_IC_GATE_WEST_H_WS_CLOSED; break;
+                case: GO_HORDE_GATE_3: uws = BG_IC_GATE_EAST_H_WS_CLOSED; break;
+                case: GO_ALLIANCE_GATE_1: uws = BG_IC_GATE_FRONT_A_WS_CLOSED; break;
+                case: GO_ALLIANCE_GATE_2: uws = BG_IC_GATE_WEST_A_WS_CLOSED; break;
+                case: GO_ALLIANCE_GATE_3: uws = BG_IC_GATE_EAST_A_WS_CLOSED; break;
+            }
+            return uws;
+        }
 };
 #endif
