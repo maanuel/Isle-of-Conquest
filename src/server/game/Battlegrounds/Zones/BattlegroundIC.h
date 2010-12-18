@@ -145,10 +145,10 @@ enum gameobjectsIC
     GO_ALLIANCE_BANNER_HANGAR = 195132,
     GO_ALLIANCE_BANNER_HANGAR_CONT= 195144,
 
-    GO_ALLIANCE_BANNER_QUARRY = 195338,
+    GO_ALLIANCE_BANNER_QUARRY = 195334,
     GO_ALLIANCE_BANNER_QUARRY_CONT = 195335,
     GO_HORDE_BANNER_QUARRY = 195336,
-    GO_HORDE_BANNER_QUARRY_CONT = 195338,
+    GO_HORDE_BANNER_QUARRY_CONT = 195337,
 
     GO_ALLIANCE_BANNER_REFINERY = 195339,
     GO_ALLIANCE_BANNER_REFINERY_CONT = 195340,
@@ -707,7 +707,7 @@ enum BG_IC_Objectives
     IC_OBJECTIVE_DEFEND_BASE    = 246
 };
 
-enum eIC_WorldStates
+enum ICWorldStates
 {
     BG_IC_ALLIANCE_RENFORT_SET      = 4221,
     BG_IC_HORDE_RENFORT_SET         = 4222,
@@ -725,6 +725,48 @@ enum eIC_WorldStates
     BG_IC_GATE_FRONT_A_WS_OPEN      = 4323,
     BG_IC_GATE_WEST_A_WS_OPEN       = 4324,
     BG_IC_GATE_EAST_A_WS_OPEN       = 4325,
+
+    BG_IC_DOCKS_UNCONTROLLED = 4301,
+    BG_IC_DOCKS_CONFLICT_A = 4305,
+    BG_IC_DOCKS_CONFLICT_H = 4302,
+    BG_IC_DOCKS_CONTROLLED_A = 4304,
+    BG_IC_DOCKS_CONTROLLED_H = 4303,
+
+    BG_IC_HANGAR_UNCONTROLLED = 4296,
+    BG_IC_HANGAR_CONFLICT_A = 4300,
+    BG_IC_HANGAR_CONFLICT_H = 4297,
+    BG_IC_HANGAR_CONTROLLED_A = 4299,
+    BG_IC_HANGAR_CONTROLLED_H = 4298,
+
+    BG_IC_QUARRY_UNCONTROLLED = 4306,
+    BG_IC_QUARRY_CONFLICT_A = 4310,
+    BG_IC_QUARRY_CONFLICT_H = 4307,
+    BG_IC_QUARRY_CONTROLLED_A = 4309,
+    BG_IC_QUARRY_CONTROLLED_H = 4308,
+
+    BG_IC_REFINERY_UNCONTROLLED = 4311,
+    BG_IC_REFINERY_CONFLICT_A = 4315,
+    BG_IC_REFINERY_CONFLICT_H = 4312,
+    BG_IC_REFINERY_CONTROLLED_A = 4314,
+    BG_IC_REFINERY_CONTROLLED_H = 4313,
+
+    BG_IC_WORKSHOP_UNCONTROLLED = 4294,
+    BG_IC_WORKSHOP_CONFLICT_A = 4228,
+    BG_IC_WORKSHOP_CONFLICT_H = 4293,
+    BG_IC_WORKSHOP_CONTROLLED_A = 4229,
+    BG_IC_WORKSHOP_CONTROLLED_H = 4230,
+
+    BG_IC_ALLIANCE_KEEP_UNCONTROLLED = 4341,
+    BG_IC_ALLIANCE_KEEP_CONFLICT_A = 4342,
+    BG_IC_ALLIANCE_KEEP_CONFLICT_H = 4343,
+    BG_IC_ALLIANCE_KEEP_CONTROLLED_A = 4339,
+    BG_IC_ALLIANCE_KEEP_CONTROLLED_H = 4340,
+
+    BG_IC_HORDE_KEEP_UNCONTROLLED = 4346,
+    BG_IC_HORDE_KEEP_CONFLICT_A = 4347,
+    BG_IC_HORDE_KEEP_CONFLICT_H = 4348,
+    BG_IC_HORDE_KEEP_CONTROLLED_A = 4344,
+    BG_IC_HORDE_KEEP_CONTROLLED_H = 4345
 };
 
 enum BG_IC_GateState
@@ -760,6 +802,15 @@ enum ICNodePointType
     MAX_NODE_TYPES
 };
 
+enum ICNodeState
+{
+    NODE_STATE_UNCONTROLLED = 0,
+    NODE_STATE_CONFLICT_A,
+    NODE_STATE_CONFLICT_H,
+    NODE_STATE_CONTROLLED_A,
+    NODE_STATE_CONTROLLED_H
+};
+
 // I.E: Hangar, Quarry, Graveyards .. etc
 struct ICNodePoint
 {
@@ -767,10 +818,12 @@ struct ICNodePoint
     uint32 gameobject_entry; // what gamoebject entry is active here.
     uint8 faction; // who has this node
     ICNodePointType nodeType; // here we can specify if it is graveyards, hangar etc...
-    uint32 banners[5]; // the banners that have this point
+    uint32 banners[4]; // the banners that have this point
     bool needChange; // this is used for the 1 minute time period after the point is captured
     uint32 timer; // the same use for needChange
     uint32 last_entry;
+    uint32 worldStates[5];
+    ICNodeState nodeState;
 };
 
 class BattlegroundICScore : public BattlegroundScore
@@ -815,7 +868,7 @@ class BattlegroundIC : public Battleground
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
  
-        uint32 GetNextBanner(ICNodePoint* nodePoint,Player* player);
+        uint32 GetNextBanner(ICNodePoint* nodePoint,uint32 team, bool returnDefinitve);
 
         uint32 GetGateIDFromEntry(uint32 id)
         {
@@ -859,5 +912,7 @@ class BattlegroundIC : public Battleground
             }
             return uws;
         }
+
+        void UpdateNodeWorldState(ICNodePoint* nodePoint);
 };
 #endif
