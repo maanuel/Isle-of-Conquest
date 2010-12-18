@@ -105,6 +105,7 @@ void BattlegroundIC::Update(uint32 diff)
                 AddObject(nodePoint[i].gameobject_type,nodePoint[i].gameobject_entry,cords[0],cords[1],cords[2],cords[3],0,0,0,0,RESPAWN_ONE_DAY);
 
                 UpdateNodeWorldState(&nodePoint[i]);
+                HandleCapturedNodes(&nodePoint[i]); 
 
                 nodePoint[i].needChange = false;
                 nodePoint[i].timer = 60000;
@@ -137,11 +138,16 @@ void BattlegroundIC::AddPlayer(Player *plr)
     BattlegroundICScore* sc = new BattlegroundICScore;
 
     m_PlayerScores[plr->GetGUID()] = sc;
+
+    if (nodePoint[NODE_TYPE_QUARRY].faction == plr->GetTeamId())
+        plr->CastSpell(plr,SPELL_QUARRY,true);
 }
 
-void BattlegroundIC::RemovePlayer(Player* /*plr*/,uint64 /*guid*/)
+void BattlegroundIC::RemovePlayer(Player* plr,uint64 guid)
 {
-
+    Battleground::RemovePlayer(plr, guid);
+    
+    plr->RemoveAura(SPELL_QUARRY);
 }
 
 void BattlegroundIC::HandleAreaTrigger(Player * /*Source*/, uint32 /*Trigger*/)
@@ -277,6 +283,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             {
                 nodePoint[i].timer = 60000;
                 nodePoint[i].needChange = false;
+                HandleCapturedNodes(&nodePoint[i]); 
             }
 
             GameObject* banner = GetBGObject(nodePoint[i].gameobject_type);
@@ -341,6 +348,18 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
     // we should never be here...
     sLog.outError("Isle Of Conquest: Unexpected return in GetNextBanner function");
     return 0;
+}
+
+void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
+{
+
+    switch(nodePoint->gameobject_type)
+    {
+    case BG_IC_GO_QUARRY_BANNER:
+        RemoveAuraOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? HORDE : ALLIANCE));
+        CastSpellOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE));
+        break;
+    }
 }
 
 void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)

@@ -914,5 +914,6 @@ class BattlegroundIC : public Battleground
         }
 
         void UpdateNodeWorldState(ICNodePoint* nodePoint);
+        void HandleCapturedNodes(ICNodePoint* nodePoint);
 };
 #endif
