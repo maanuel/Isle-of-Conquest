@@ -21,6 +21,17 @@
 #include "BattlegroundIC.h"
 #include "Language.h"
 
+ICNodePoint nodePoint[7] =
+{
+    {BG_IC_GO_REFINERY_BANNER,GO_REFINERY_BANNER,TEAM_NEUTRAL,NODE_TYPE_REFINERY, {GO_ALLIANCE_BANNER_REFINERY,GO_ALLIANCE_BANNER_REFINERY_CONT,GO_HORDE_BANNER_REFINERY,GO_HORDE_BANNER_REFINERY_CONT},false,0,0},
+    {BG_IC_GO_QUARRY_BANNER,GO_QUARRY_BANNER,TEAM_NEUTRAL,NODE_TYPE_QUARRY, {GO_ALLIANCE_BANNER_QUARRY,GO_ALLIANCE_BANNER_QUARRY_CONT,GO_HORDE_BANNER_QUARRY,GO_HORDE_BANNER_QUARRY_CONT},false,0,0},
+    {BG_IC_GO_DOCKS_BANNER,GO_DOCKS_BANNER,TEAM_NEUTRAL,NODE_TYPE_DOCKS, {GO_ALLIANCE_BANNER_DOCK,GO_ALLIANCE_BANNER_DOCK_CONT,GO_HORDE_BANNER_DOCK,GO_HORDE_BANNER_DOCK_CONT},false,0,0},
+    {BG_IC_GO_HANGAR_BANNER,GO_HANGAR_BANNER,TEAM_NEUTRAL,NODE_TYPE_HANGAR, {GO_ALLIANCE_BANNER_HANGAR,GO_ALLIANCE_BANNER_HANGAR_CONT,GO_HORDE_BANNER_HANGAR,GO_HORDE_BANNER_HANGAR_CONT},false,0,0},
+    {BG_IC_GO_WORKSHOP_BANNER,GO_WORKSHOP_BANNER,TEAM_NEUTRAL, NODE_TYPE_WORKSHOP, {GO_ALLIANCE_BANNER_WORKSHOP,GO_ALLIANCE_BANNER_WORKSHOP_CONT,GO_HORDE_BANNER_WORKSHOP,GO_HORDE_BANNER_WORKSHOP_CONT},false,0,0},
+    {BG_IC_GO_ALLIANCE_BANNER,GO_ALLIANCE_BANNER,TEAM_ALLIANCE,NODE_TYPE_GRAVEYARD_A, {GO_ALLIANCE_BANNER_GRAVEYARD_A,GO_ALLIANCE_BANNER_GRAVEYARD_A_CONT,GO_HORDE_BANNER_GRAVEYARD_A,GO_HORDE_BANNER_GRAVEYARD_A_CONT},false,0,0},
+    {BG_IC_GO_HORDE_BANNER,GO_HORDE_BANNER,TEAM_HORDE,NODE_TYPE_GRAVEYARD_H, {GO_ALLIANCE_BANNER_GRAVEYARD_H,GO_ALLIANCE_BANNER_GRAVEYARD_H_CONT,GO_HORDE_BANNER_GRAVEYARD_H,GO_HORDE_BANNER_GRAVEYARD_H_CONT},false,0,0},
+};
+
 BattlegroundIC::BattlegroundIC()
 {
     m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS);
@@ -127,7 +138,7 @@ void BattlegroundIC::FillInitialWorldStates(WorldPacket& data)
     data << uint32(BG_IC_ALLIANCE_RENFORT) << uint32(factionReinforcements[TEAM_ALLIANCE]);
     data << uint32(BG_IC_HORDE_RENFORT) << uint32(factionReinforcements[TEAM_HORDE]);
 
-    for (uint8 i = 1; i < 7; i++)
+    for (uint8 i = 0; i < 6; i++)
     {
         uint32 uws = GetWorldStateFromGateEntry(BG_IC_ObjSpawnlocs[i].entry,(GateStatus[GetGateIDFromEntry(BG_IC_ObjSpawnlocs[i].entry)] == BG_IC_GATE_DESTROYED ? true : false));
         sLog.outError("FillInitWorldStates: Updating WorldState %u, WorldState %u, door entry %u",i,uws, BG_IC_ObjSpawnlocs[i].entry);  
@@ -213,10 +224,75 @@ void BattlegroundIC::EndBattleground(uint32 winner)
     Battleground::EndBattleground(winner);
 }
 
-void BattlegroundIC::EventPlayerClickedOnFlag(Player * /*source*/, GameObject* /*target_obj*/)
+void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target_obj)
 {
-    if (GetStatus() != STATUS_IN_PROGRESS)
-        return;
+    sLog.outError("EventPlayerClickedOnFlag %u", target_obj->GetEntry());
+
+    // this is commented just for testing
+    //if (GetStatus() != STATUS_IN_PROGRESS)
+    //   return;
+
+    for (uint8 i = 0; i < MAX_NODE_TYPES; i++)
+    {
+        if (nodePoint[i].gameobject_entry == target_obj->GetEntry())
+        {
+            // this SHOULD NEEVEER HAPPEN
+            if (nodePoint[i].faction == player->GetTeamId())
+                return;
+
+            uint32 nextBanner = GetNextBanner(&nodePoint[i],player);
+
+            // we set the new settings of the nodePoint
+            nodePoint[i].faction = player->GetTeamId();
+            nodePoint[i].last_entry = nodePoint[i].gameobject_entry;
+            nodePoint[i].gameobject_entry = nextBanner;
+
+            // this is just needed if the next banner is grey
+            if (nodePoint[i].banners[1] == nextBanner || nodePoint[i].banners[3] == nextBanner)
+            {
+                nodePoint[i].timer = 60000; // 1 minute for last change (real faction banner)
+                nodePoint[i].needChange = true;
+            } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2])
+            {
+                nodePoint[i].timer = 0; // 1 minute for last change (real faction banner)
+                nodePoint[i].needChange = false;
+            }
+
+            GameObject* banner = GetBGObject(nodePoint[i].gameobject_type);
+
+            if (!banner) // this should never happen
+                return;
+            
+            float cords[4] = {banner->GetPositionX(), banner->GetPositionY(), banner->GetPositionZ(), banner->GetOrientation() };
+            
+            DelObject(nodePoint[i].gameobject_type);
+            AddObject(nodePoint[i].gameobject_type,nodePoint[i].gameobject_entry,cords[0],cords[1],cords[2],cords[3],0,0,0,0,RESPAWN_ONE_DAY);
+
+            // we dont need to iterate if we are here
+            // If the needChange bool was set true, we will handle the rest in the Update Map function.
+            return;      
+        }
+    }
+}
+
+uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, Player* player)
+{
+    // there were no changes, this point has never been captured by any faction or at least clicked
+    if (nodePoint->last_entry == 0)
+        // 1 returns the CONTESTED ALLIANCE BANNER, 3 returns the HORDE one
+        return nodePoint->banners[(player->GetTeamId() == TEAM_ALLIANCE ? 1 : 3)];
+
+    // If the actual banner is the definitive faction banner, we must return the grey banner of the player's faction
+    if (nodePoint->gameobject_entry == nodePoint->banners[0] || nodePoint->gameobject_entry == nodePoint->banners[2])
+        return nodePoint->banners[(player->GetTeamId() == TEAM_ALLIANCE ? 1 : 3)];
+
+    // If the actual banner is the grey faction banner, we must return the previous banner
+    if (nodePoint->gameobject_entry == nodePoint->banners[1] || nodePoint->banners[3])
+        return nodePoint->last_entry;
+   
+    // we should never be here...
+    sLog.outError("Isle Of Conquest: Unexpected return in GetNextBanner function");
+    return 0;
 }
 
 void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)

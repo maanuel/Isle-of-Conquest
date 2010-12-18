@@ -133,7 +133,42 @@ enum gameobjectsIC
 
     GO_REFINERY_BANNER = 195343,
 
-    GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01 = 195491
+    GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01 = 195491,
+
+    GO_ALLIANCE_BANNER_DOCK = 195153,
+    GO_ALLIANCE_BANNER_DOCK_CONT = 195154,
+    GO_HORDE_BANNER_DOCK = 195155,
+    GO_HORDE_BANNER_DOCK_CONT = 195156,
+
+    GO_HORDE_BANNER_HANGAR = 195130,
+    GO_HORDE_BANNER_HANGAR_CONT = 195145,
+    GO_ALLIANCE_BANNER_HANGAR = 195132,
+    GO_ALLIANCE_BANNER_HANGAR_CONT= 195144,
+
+    GO_ALLIANCE_BANNER_QUARRY = 195338,
+    GO_ALLIANCE_BANNER_QUARRY_CONT = 195335,
+    GO_HORDE_BANNER_QUARRY = 195336,
+    GO_HORDE_BANNER_QUARRY_CONT = 195338,
+
+    GO_ALLIANCE_BANNER_REFINERY = 195339,
+    GO_ALLIANCE_BANNER_REFINERY_CONT = 195340,
+    GO_HORDE_BANNER_REFINERY = 195341,
+    GO_HORDE_BANNER_REFINERY_CONT = 195342,
+
+    GO_ALLIANCE_BANNER_WORKSHOP = 195149,
+    GO_ALLIANCE_BANNER_WORKSHOP_CONT = 195150,
+    GO_HORDE_BANNER_WORKSHOP = 195151,
+    GO_HORDE_BANNER_WORKSHOP_CONT = 195152,
+
+    GO_ALLIANCE_BANNER_GRAVEYARD_A = 195396,
+    GO_ALLIANCE_BANNER_GRAVEYARD_A_CONT = 195397,
+    GO_HORDE_BANNER_GRAVEYARD_A = 195398,
+    GO_HORDE_BANNER_GRAVEYARD_A_CONT = 195399,
+
+    GO_ALLIANCE_BANNER_GRAVEYARD_H = 195391,
+    GO_ALLIANCE_BANNER_GRAVEYARD_H_CONT = 195392,
+    GO_HORDE_BANNER_GRAVEYARD_H = 195393,
+    GO_HORDE_BANNER_GRAVEYARD_H_CONT = 195394
 };
 
 #define NPCS_MAX_SPAWNS BG_IC_NPC_KEEP_CANNON_25+1
@@ -517,8 +552,6 @@ struct ICGo
 
 const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
 {
-    {BG_IC_GO_ALLIANCE_BANNER,GO_ALLIANCE_BANNER,299.153f,-784.589f,48.9162f,-0.157079f}, // Alliance Banner
-
     {BG_IC_GO_ALLIANCE_GATE_1,GO_ALLIANCE_GATE_1,351.615f,-762.75f,48.9162f,-1.5708f}, // Alliance Gate || Left
     {BG_IC_GO_ALLIANCE_GATE_2,GO_ALLIANCE_GATE_2,351.024f,-903.326f,48.9247f,1.5708f}, // Alliance Gate || Right
     {BG_IC_GO_ALLIANCE_GATE_3,GO_ALLIANCE_GATE_3,413.479f,-833.95f,48.5238f,3.14159f}, // Alliance Gate || Front
@@ -527,6 +560,14 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_HORDE_GATE_2,GO_HORDE_GATE_2,1218.74f,-851.155f,48.2533f,-1.5708f}, // Horde Gate || Left
     {BG_IC_GO_HORDE_GATE_3,GO_HORDE_GATE_3,1217.9f,-676.948f,47.6341f,1.5708f}, // Horde Gate || Right
 
+    {BG_IC_GO_HORDE_BANNER,GO_HORDE_BANNER,1284.76f,-705.668f,48.9163f,-3.08918f}, // Horde Banner
+    {BG_IC_GO_ALLIANCE_BANNER,GO_ALLIANCE_BANNER,299.153f,-784.589f,48.9162f,-0.157079f}, // Alliance Banner
+
+    {BG_IC_GO_WORKSHOP_BANNER,GO_WORKSHOP_BANNER,776.229f,-804.283f,6.45052f,1.6057f}, // Workshop Banner
+    {BG_IC_GO_DOCKS_BANNER,GO_DOCKS_BANNER,726.385f,-360.205f,17.8153f,-1.62316f}, // Docks Banner
+    {BG_IC_GO_HANGAR_BANNER,GO_HANGAR_BANNER,807.78f,-1000.07f,132.381f,-1.93732f}, // Hangar Banner
+    {BG_IC_GO_QUARRY_BANNER,GO_QUARRY_BANNER,251.016f,-1159.32f,17.2376f,-2.25147f}, // Quarry Banner
+    {BG_IC_GO_REFINERY_BANNER,GO_REFINERY_BANNER,1269.5f,-400.809f,37.6253f,-1.76278f}, // Refinery Banner
 
     // This is spawned when the hangar is captured
     /*
@@ -571,8 +612,6 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_CHAIR_8_2,GO_CHAIR_8,1081.81f,-358.637f,18.5531f,1.92859f}, // Chair
     {BG_IC_GO_CHAIR_9,GO_CHAIR_9,814.931f,-470.816f,33.6373f,-3.12412f}, // Chair
 
-    {BG_IC_GO_DOCKS_BANNER,GO_DOCKS_BANNER,726.385f,-360.205f,17.8153f,-1.62316f}, // Docks Banner
-
     {BG_IC_GO_DOODAD_HU_PORTCULLIS01_1,GO_DOODAD_HU_PORTCULLIS01,401.024f,-780.724f,49.9482f,-2.52896f}, // Doodad_HU_Portcullis01
     {BG_IC_GO_DOODAD_HU_PORTCULLIS01_2,GO_DOODAD_HU_PORTCULLIS01,399.802f,-885.208f,50.1939f,2.516f}, // Doodad_HU_Portcullis01
 
@@ -602,10 +641,6 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {1458.37f,-730.522f,190.091f,0.398611f}, // Gunship Portal
     */
 
-    {BG_IC_GO_HANGAR_BANNER,GO_HANGAR_BANNER,807.78f,-1000.07f,132.381f,-1.93732f}, // Hangar Banner
-
-    {BG_IC_GO_HORDE_BANNER,GO_HORDE_BANNER,1284.76f,-705.668f,48.9163f,-3.08918f}, // Horde Banner
-
     // This is spawned when the hangar is captured
     /*
     {827.922f,-993.325f,134.197f,3.14159f}, // Horde Gunship Portal
@@ -621,8 +656,6 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     */
 
     {BG_IC_GO_HORDE_KEEP_PORTCULLIS,GO_HORDE_KEEP_PORTCULLIS,1283.05f,-765.878f,50.8297f,-3.13286f}, // Horde Keep Portcullis
-
-    {BG_IC_GO_QUARRY_BANNER,GO_QUARRY_BANNER,251.016f,-1159.32f,17.2376f,-2.25147f}, // Quarry Banner
 
     {BG_IC_GO_SEAFORIUM_BOMBS_1,GO_SEAFORIUM_BOMBS,785.509f,-864.715f,13.3993f,2.47837f}, // Seaforium Bombs
     {BG_IC_GO_SEAFORIUM_BOMBS_2,GO_SEAFORIUM_BOMBS,750.601f,-864.597f,13.4754f,1.93731f}, // Seaforium Bombs
@@ -659,17 +692,13 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_TELEPORTER_EFFECTS_H_5,GO_TELEPORTER_EFFECTS_H,1236.46f,-669.344f,48.2684f,0.087266f}, // Teleporter Effects (Horde)
     {BG_IC_GO_TELEPORTER_EFFECTS_H_6,GO_TELEPORTER_EFFECTS_H,1235.6f,-683.806f,49.3028f,-3.07177f}, // Teleporter Effects (Horde)
 
-    {BG_IC_GO_WORKSHOP_BANNER,GO_WORKSHOP_BANNER,776.229f,-804.283f,6.45052f,1.6057f}, // Workshop Banner
-
-    {BG_IC_GO_REFINERY_BANNER,GO_REFINERY_BANNER,1269.5f,-400.809f,37.6253f,-1.76278f}, // Refinery Banner
-
     {BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01,GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01,1150.9f,-762.606f,47.0f,3.14159f} // Doodad_ND_WinterOrc_Wall_GateFX_Door01 -> this was not sniffed because I only had alliance sniffs
 };
 
 enum Buffs
 {
-    OIL_REFINERY        = 68719,
-    QUARRY            = 68720
+    SPELL_OIL_REFINERY      = 68719,
+    SPELL_QUARRY            = 68720
 };
 
 enum BG_IC_Objectives
@@ -716,6 +745,34 @@ enum ICDoorList
     BG_IC_MAXDOOR,
 };
 
+enum ICNodePointType
+{
+    NODE_TYPE_REFINERY,
+    NODE_TYPE_QUARRY,
+    NODE_TYPE_DOCKS,
+    NODE_TYPE_HANGAR,
+    NODE_TYPE_WORKSHOP,
+
+    // Graveyards
+    NODE_TYPE_GRAVEYARD_A,
+    NODE_TYPE_GRAVEYARD_H,
+    
+    MAX_NODE_TYPES
+};
+
+// I.E: Hangar, Quarry, Graveyards .. etc
+struct ICNodePoint
+{
+    uint32 gameobject_type; // with this we will get the GameObject of that point
+    uint32 gameobject_entry; // what gamoebject entry is active here.
+    uint8 faction; // who has this node
+    ICNodePointType nodeType; // here we can specify if it is graveyards, hangar etc...
+    uint32 banners[5]; // the banners that have this point
+    bool needChange; // this is used for the 1 minute time period after the point is captured
+    uint32 timer; // the same use for needChange
+    uint32 last_entry;
+};
+
 class BattlegroundICScore : public BattlegroundScore
 {
     public:
@@ -757,6 +814,8 @@ class BattlegroundIC : public Battleground
         bool doorsClosed;
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
+ 
+        uint32 GetNextBanner(ICNodePoint* nodePoint,Player* player);
 
         uint32 GetGateIDFromEntry(uint32 id)
         {
@@ -773,7 +832,6 @@ class BattlegroundIC : public Battleground
             return i;
         }
 
-       
         uint32 GetWorldStateFromGateEntry(uint32 id, bool open)
         {
             uint32 uws = 0;
