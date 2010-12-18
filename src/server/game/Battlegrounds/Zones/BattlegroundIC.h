@@ -867,6 +867,7 @@ class BattlegroundIC : public Battleground
         bool doorsClosed;
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
+        ICNodePoint nodePoint[7];
  
         uint32 GetNextBanner(ICNodePoint* nodePoint,uint32 team, bool returnDefinitve);
 
