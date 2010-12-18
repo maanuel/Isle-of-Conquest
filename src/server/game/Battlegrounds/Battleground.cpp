@@ -613,6 +613,28 @@ void Battleground::CastSpellOnTeam(uint32 SpellID, uint32 TeamID)
     }
 }
 
+void Battleground::RemoveAuraOnTeam(uint32 SpellID, uint32 TeamID)
+{
+    for (BattlegroundPlayerMap::const_iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+    {
+        if (itr->second.OfflineRemoveTime)
+            continue;
+        Player *plr = sObjectMgr.GetPlayer(itr->first);
+
+        if (!plr)
+        {
+            sLog.outError("Battleground:RemoveAuraOnTeam: Player (GUID: %u) not found!", GUID_LOPART(itr->first));
+            continue;
+        }
+
+        uint32 team = itr->second.Team;
+        if (!team) team = plr->GetTeam();
+
+        if (team == TeamID)
+            plr->RemoveAura(SpellID);
+    }
+}
+
 void Battleground::YellToAll(Creature* creature, const char* text, uint32 language)
 {
     for (std::map<uint64, BattlegroundPlayer>::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
