@@ -21,7 +21,7 @@
 #include "BattlegroundIC.h"
 #include "Language.h"
 
-ICNodePoint nodePointInitial[7] =
+const ICNodePoint nodePointInitial[7] =
 {
     {BG_IC_GO_REFINERY_BANNER,GO_REFINERY_BANNER,TEAM_NEUTRAL,NODE_TYPE_REFINERY,{GO_ALLIANCE_BANNER_REFINERY,GO_ALLIANCE_BANNER_REFINERY_CONT,GO_HORDE_BANNER_REFINERY,GO_HORDE_BANNER_REFINERY_CONT},false,0,0,{BG_IC_REFINERY_UNCONTROLLED,BG_IC_REFINERY_CONFLICT_A,BG_IC_REFINERY_CONFLICT_H,BG_IC_REFINERY_CONTROLLED_A,BG_IC_REFINERY_CONTROLLED_H},NODE_STATE_UNCONTROLLED},
     {BG_IC_GO_QUARRY_BANNER,GO_QUARRY_BANNER,TEAM_NEUTRAL,NODE_TYPE_QUARRY, {GO_ALLIANCE_BANNER_QUARRY,GO_ALLIANCE_BANNER_QUARRY_CONT,GO_HORDE_BANNER_QUARRY,GO_HORDE_BANNER_QUARRY_CONT},false,0,0,{BG_IC_QUARRY_UNCONTROLLED,BG_IC_QUARRY_CONFLICT_A,BG_IC_QUARRY_CONFLICT_H,BG_IC_QUARRY_CONTROLLED_A,BG_IC_QUARRY_CONTROLLED_H},NODE_STATE_UNCONTROLLED},
@@ -53,6 +53,9 @@ BattlegroundIC::BattlegroundIC()
 
     for (uint8 i = 0; i < 7; i++)
         nodePoint[i] =  nodePointInitial[i];
+
+
+    siegeEngineWorkshopTimer = 3*60*1000;
 }
 
 BattlegroundIC::~BattlegroundIC()
@@ -86,6 +89,44 @@ void BattlegroundIC::Update(uint32 diff)
 
     for (uint8 i = 0; i < MAX_NODE_TYPES; i++)
     {
+
+        if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
+        {
+            // this means that the node is not contested state
+            if (nodePoint[i].banners[0] == nodePoint[i].gameobject_entry
+                || nodePoint[i].banners[2] == nodePoint[i].gameobject_entry)
+            {
+                if (siegeEngineWorkshopTimer <= diff)
+                {
+                    uint8 siegeType = (nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
+
+                    if (Creature* siege = GetBGCreature(siegeType)) // this always should be true
+                    {
+                        if (siege->isAlive())
+                        {
+                            if (siege->HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE))
+                                siege->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                            else
+                                siege->SetHealth(siege->GetMaxHealth());
+                        }
+                        else
+                        {
+                            DelCreature(siegeType);
+                            AddCreature((nodePoint[i].faction == TEAM_ALLIANCE ? NPC_SIEGE_ENGINE_A : NPC_SIEGE_ENGINE_H),siegeType,nodePoint[i].faction, 
+                                BG_IC_WorkshopVehicles[4].GetPositionX(),BG_IC_WorkshopVehicles[4].GetPositionY(),
+                                BG_IC_WorkshopVehicles[4].GetPositionZ(),BG_IC_WorkshopVehicles[4].GetOrientation(),
+                                RESPAWN_ONE_DAY);
+
+                            GetBGCreature(siegeType)->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                            GetBGCreature(siegeType)->setFaction(BG_IC_Factions[(nodePoint[i].faction == TEAM_ALLIANCE ? 0 : 1)]);
+                        }
+                    }
+
+                    siegeEngineWorkshopTimer = 60*3*1000;
+                } else siegeEngineWorkshopTimer -= diff;
+            }
+        }
+
         // the point is waiting for a change on his banner
         if (nodePoint[i].needChange)
         {
@@ -144,6 +185,9 @@ void BattlegroundIC::AddPlayer(Player *plr)
 
     if (nodePoint[NODE_TYPE_QUARRY].faction == plr->GetTeamId())
         plr->CastSpell(plr,SPELL_QUARRY,true);
+
+    if (nodePoint[NODE_TYPE_REFINERY].faction == plr->GetTeamId())
+        plr->CastSpell(plr,SPELL_OIL_REFINERY,true);
 }
 
 void BattlegroundIC::RemovePlayer(Player* plr,uint64 guid)
@@ -151,6 +195,7 @@ void BattlegroundIC::RemovePlayer(Player* plr,uint64 guid)
     Battleground::RemovePlayer(plr, guid);
     
     plr->RemoveAura(SPELL_QUARRY);
+    plr->RemoveAura(SPELL_OIL_REFINERY);
 }
 
 void BattlegroundIC::HandleAreaTrigger(Player * /*Source*/, uint32 /*Trigger*/)
@@ -299,6 +344,12 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             DelObject(nodePoint[i].gameobject_type);
             AddObject(nodePoint[i].gameobject_type,nodePoint[i].gameobject_entry,cords[0],cords[1],cords[2],cords[3],0,0,0,0,RESPAWN_ONE_DAY);
 
+            if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
+            {
+                DelObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
+                DelObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
+            }
+
             UpdateNodeWorldState(&nodePoint[i]);
             // we dont need to iterate if we are here
             // If the needChange bool was set true, we will handle the rest in the Update Map function.
@@ -355,12 +406,56 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
 
 void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
 {
-
     switch(nodePoint->gameobject_type)
     {
     case BG_IC_GO_QUARRY_BANNER:
         RemoveAuraOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? HORDE : ALLIANCE));
         CastSpellOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE));
+        break;
+    case BG_IC_GO_REFINERY_BANNER:
+        RemoveAuraOnTeam(SPELL_OIL_REFINERY,(nodePoint->faction == TEAM_ALLIANCE ? HORDE : ALLIANCE));
+        CastSpellOnTeam(SPELL_OIL_REFINERY,(nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE));
+        break;
+    case BG_IC_GO_WORKSHOP_BANNER:
+        {
+            if (siegeEngineWorkshopTimer < 3*60*1000)
+                siegeEngineWorkshopTimer = 3*60*1000;
+
+            uint8 freeType = 36; // last type used
+            do
+            {
+                freeType++;
+            } while (GetBGCreature(freeType));
+
+            for (uint8 i = 0; i < 4; i++)
+            {
+                if (AddCreature(NPC_DEMOLISHER,freeType++,nodePoint->faction,
+                BG_IC_WorkshopVehicles[i].GetPositionX(),BG_IC_WorkshopVehicles[i].GetPositionY(),
+                BG_IC_WorkshopVehicles[i].GetPositionZ(),BG_IC_WorkshopVehicles[i].GetOrientation(),
+                RESPAWN_ONE_DAY))
+                    GetBGCreature(freeType-1)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+            }
+                
+            uint8 siegeType = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
+            AddCreature((nodePoint->faction == TEAM_ALLIANCE ? NPC_SIEGE_ENGINE_A : NPC_SIEGE_ENGINE_H),siegeType,nodePoint->faction, 
+                BG_IC_WorkshopVehicles[4].GetPositionX(),BG_IC_WorkshopVehicles[4].GetPositionY(),
+                BG_IC_WorkshopVehicles[4].GetPositionZ(),BG_IC_WorkshopVehicles[4].GetOrientation(),
+                RESPAWN_ONE_DAY);
+
+            GetBGCreature(siegeType)->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+            GetBGCreature(siegeType)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+
+            for (uint8 i = 0; i < 2; i++)
+            {
+                AddObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i,GO_SEAFORIUM_BOMBS,
+                workshopBombs[i].GetPositionX(),workshopBombs[i].GetPositionY(),
+                workshopBombs[i].GetPositionZ(),workshopBombs[i].GetOrientation(),
+                0,0,0,0,7000);
+
+                GetBGObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i)->SetUInt32Value(GAMEOBJECT_FACTION,BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+            }
+
+        }
         break;
     }
 }

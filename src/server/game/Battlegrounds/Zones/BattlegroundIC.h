@@ -33,7 +33,10 @@ enum creaturesIC
     NPC_OVERLORD_AGMAR = 34922, // Horde Boss
     NPC_KOR_KRON_GUARD = 34918, // horde guard
     NPC_SEVEN_TH_LEGION_INFANTRY = 34919, // alliance guard
-    NPC_KEEP_CANNON    = 34944,
+    NPC_KEEP_CANNON  = 34944,
+    NPC_DEMOLISHER = 34775,
+    NPC_SIEGE_ENGINE_H = 35069,
+    NPC_SIEGE_ENGINE_A = 34776
 };
 
 enum gameobjectsIC
@@ -220,7 +223,10 @@ enum BG_IC_NPCs
     BG_IC_NPC_KEEP_CANNON_22,
     BG_IC_NPC_KEEP_CANNON_23,
     BG_IC_NPC_KEEP_CANNON_24,
-    BG_IC_NPC_KEEP_CANNON_25
+    BG_IC_NPC_KEEP_CANNON_25,
+
+    BG_IC_NPC_SIEGE_ENGINE_A,
+    BG_IC_NPC_SIEGE_ENGINE_H
 };
 const ICNpc BG_IC_NpcSpawnlocs[NPCS_MAX_SPAWNS]=
 {
@@ -274,6 +280,15 @@ const ICNpc BG_IC_NpcSpawnlocs[NPCS_MAX_SPAWNS]=
     {BG_IC_NPC_KEEP_CANNON_23,NPC_KEEP_CANNON,TEAM_HORDE,1135.29f,-840.878f,88.0252f,2.30383f},// 33
     {BG_IC_NPC_KEEP_CANNON_24,NPC_KEEP_CANNON,TEAM_HORDE,1142.59f,-691.946f,87.9756f,3.9619f},// 34
     {BG_IC_NPC_KEEP_CANNON_25,NPC_KEEP_CANNON,TEAM_HORDE,1166.13f,-858.391f,87.9653f,5.63741f},// 35
+};
+
+const Position BG_IC_WorkshopVehicles[5] =
+{
+    {751.8281f, -852.732666f, 12.5250978f, 1.46607661f}, // Demolisher
+    {761.809f, -854.2274f, 12.5263243f, 1.46607661f}, // Demolisher
+    {783.4722f, -853.9601f, 12.54775f, 1.71042264f}, // Demolisher
+    {793.055542f, -852.71875f, 12.5671329f, 1.71042264f}, // Demolisher
+    {773.680542f, -884.092041f, 16.8090363f, 1.58824956f} // Siege Engine
 };
 
 #define GAMEOBJECT_MAX_SPAWNS BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01+1
@@ -351,9 +366,6 @@ enum BG_IC_GOs
     
     BG_IC_GO_QUARRY_BANNER,
 
-    BG_IC_GO_SEAFORIUM_BOMBS_1, 
-    BG_IC_GO_SEAFORIUM_BOMBS_2,
-
     BG_IC_GO_STOVE_1_1, 
     BG_IC_GO_STOVE_2_1, 
     BG_IC_GO_STOVE_1_2, 
@@ -390,7 +402,21 @@ enum BG_IC_GOs
 
     BG_IC_GO_REFINERY_BANNER,
 
-    BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01
+    BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01,
+        
+    BG_IC_GO_SEAFORIUM_BOMBS_1, 
+    BG_IC_GO_SEAFORIUM_BOMBS_2,
+
+/*
+    BG_IC_GO_DEMOLISHER_A_1,
+    BG_IC_GO_DEMOLISHER_A_2,
+    BG_IC_GO_DEMOLISHER_A_3,
+    BG_IC_GO_DEMOLISHER_A_4,
+
+    BG_IC_GO_DEMOLISHER_H_1,
+    BG_IC_GO_DEMOLISHER_H_2,
+    BG_IC_GO_DEMOLISHER_H_3,
+    BG_IC_GO_DEMOLISHER_H_4,*/
 };
 /*
 const uint32 BG_IC_ObjEntries[GAMEOBJECT_MAX_SPAWNS] =
@@ -657,8 +683,8 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
 
     {BG_IC_GO_HORDE_KEEP_PORTCULLIS,GO_HORDE_KEEP_PORTCULLIS,1283.05f,-765.878f,50.8297f,-3.13286f}, // Horde Keep Portcullis
 
-    {BG_IC_GO_SEAFORIUM_BOMBS_1,GO_SEAFORIUM_BOMBS,785.509f,-864.715f,13.3993f,2.47837f}, // Seaforium Bombs
-    {BG_IC_GO_SEAFORIUM_BOMBS_2,GO_SEAFORIUM_BOMBS,750.601f,-864.597f,13.4754f,1.93731f}, // Seaforium Bombs
+    /*{BG_IC_GO_SEAFORIUM_BOMBS_1,GO_SEAFORIUM_BOMBS,785.509f,-864.715f,13.3993f,2.47837f}, // Seaforium Bombs
+    {BG_IC_GO_SEAFORIUM_BOMBS_2,GO_SEAFORIUM_BOMBS,750.601f,-864.597f,13.4754f,1.93731f}, // Seaforium Bombs*/
 
     {BG_IC_GO_STOVE_1_1,GO_STOVE_1,903.291f,-457.345f,18.1356f,2.23402f}, // Stove
     {BG_IC_GO_STOVE_2_1,GO_STOVE_2,761.462f,-446.684f,22.5602f,0.244344f}, // Stove
@@ -693,6 +719,12 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
     {BG_IC_GO_TELEPORTER_EFFECTS_H_6,GO_TELEPORTER_EFFECTS_H,1235.6f,-683.806f,49.3028f,-3.07177f}, // Teleporter Effects (Horde)
 
     {BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01,GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01,1150.9f,-762.606f,47.0f,3.14159f} // Doodad_ND_WinterOrc_Wall_GateFX_Door01 -> this was not sniffed because I only had alliance sniffs
+};
+
+const Position workshopBombs[2] = 
+{
+    {750.601f,-864.597f,13.4754f,1.93731},
+    {785.509f,-864.715f,13.3993f,2.47837f}
 };
 
 enum Buffs
@@ -821,8 +853,8 @@ struct ICNodePoint
     uint32 banners[4]; // the banners that have this point
     bool needChange; // this is used for the 1 minute time period after the point is captured
     uint32 timer; // the same use for needChange
-    uint32 last_entry;
-    uint32 worldStates[5];
+    uint32 last_entry; // the last gameobject_entry
+    uint32 worldStates[5]; // the worldstates that represent that node in the map
     ICNodeState nodeState;
 };
 
@@ -865,6 +897,8 @@ class BattlegroundIC : public Battleground
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
+        //bool siegeEngineWorkshop;
+        uint32 siegeEngineWorkshopTimer;
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
         ICNodePoint nodePoint[7];
