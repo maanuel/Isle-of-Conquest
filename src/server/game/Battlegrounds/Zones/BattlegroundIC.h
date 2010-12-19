@@ -723,7 +723,7 @@ const ICGo BG_IC_ObjSpawnlocs[GAMEOBJECT_MAX_SPAWNS] =
 
 const Position workshopBombs[2] = 
 {
-    {750.601f,-864.597f,13.4754f,1.93731},
+    {750.601f,-864.597f,13.4754f,1.93731f},
     {785.509f,-864.715f,13.3993f,2.47837f}
 };
 

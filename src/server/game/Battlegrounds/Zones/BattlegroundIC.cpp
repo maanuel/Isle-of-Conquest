@@ -67,8 +67,8 @@ void BattlegroundIC::Update(uint32 diff)
 {
     Battleground::Update(diff);
 
-    if (GetStatus() != STATUS_IN_PROGRESS)
-        return;
+   // if (GetStatus() != STATUS_IN_PROGRESS)
+    //    return;
 
     if (!doorsClosed)
     {
@@ -89,12 +89,13 @@ void BattlegroundIC::Update(uint32 diff)
 
     for (uint8 i = 0; i < MAX_NODE_TYPES; i++)
     {
-
         if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
         {
             // this means that the node is not contested state
-            if (nodePoint[i].banners[0] == nodePoint[i].gameobject_entry
-                || nodePoint[i].banners[2] == nodePoint[i].gameobject_entry)
+            /*if (nodePoint[i].banners[0] == nodePoint[i].gameobject_entry
+                || nodePoint[i].banners[2] == nodePoint[i].gameobject_entry)*/
+            if (nodePoint[i].nodeState == NODE_STATE_CONFLICT_A ||
+                nodePoint[i].nodeState == NODE_STATE_CONFLICT_H)
             {
                 if (siegeEngineWorkshopTimer <= diff)
                 {
@@ -105,7 +106,8 @@ void BattlegroundIC::Update(uint32 diff)
                         if (siege->isAlive())
                         {
                             if (siege->HasFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE))
-                                siege->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                                // following sniffs the vehicle always has UNIT_FLAG_UNK_14
+                                siege->RemoveFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_OOC_NOT_ATTACKABLE);
                             else
                                 siege->SetHealth(siege->GetMaxHealth());
                         }
@@ -117,8 +119,11 @@ void BattlegroundIC::Update(uint32 diff)
                                 BG_IC_WorkshopVehicles[4].GetPositionZ(),BG_IC_WorkshopVehicles[4].GetOrientation(),
                                 RESPAWN_ONE_DAY);
 
-                            GetBGCreature(siegeType)->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
-                            GetBGCreature(siegeType)->setFaction(BG_IC_Factions[(nodePoint[i].faction == TEAM_ALLIANCE ? 0 : 1)]);
+                            /*if (GetBGCreature(siegeType))
+                            {
+                                GetBGCreature(siegeType)->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                                GetBGCreature(siegeType)->setFaction(BG_IC_Factions[(nodePoint[i].faction == TEAM_ALLIANCE ? 0 : 1)]);
+                            }*/
                         }
                     }
 
@@ -173,6 +178,7 @@ void BattlegroundIC::StartingEventOpenDoors()
     //after 20 seconds they should be despawned
     DoorOpen(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01);
     DoorOpen(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
+
     DoorOpen(BG_IC_GO_DOODAD_HU_PORTCULLIS01_1);
     DoorOpen(BG_IC_GO_DOODAD_HU_PORTCULLIS01_2);
     DoorOpen(BG_IC_GO_DOODAD_VR_PORTCULLIS01_1);
@@ -307,8 +313,8 @@ void BattlegroundIC::EndBattleground(uint32 winner)
 
 void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target_obj)
 {
-    if (GetStatus() != STATUS_IN_PROGRESS)
-       return;
+    //if (GetStatus() != STATUS_IN_PROGRESS)
+    //   return;
 
     // All the node points are iterated to find the clicked one
     for (uint8 i = 0; i < MAX_NODE_TYPES; i++)
@@ -329,11 +335,11 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             // this is just needed if the next banner is grey
             if (nodePoint[i].banners[1] == nextBanner || nodePoint[i].banners[3] == nextBanner)
             {
-                nodePoint[i].timer = 60000; // 1 minute for last change (real faction banner)
+                nodePoint[i].timer = 20000; // 1 minute for last change (real faction banner)
                 nodePoint[i].needChange = true;
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
-                nodePoint[i].timer = 60000;
+                nodePoint[i].timer = 20000;
                 nodePoint[i].needChange = false;
                 HandleCapturedNodes(&nodePoint[i]); 
             }
@@ -446,20 +452,28 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
                 BG_IC_WorkshopVehicles[4].GetPositionZ(),BG_IC_WorkshopVehicles[4].GetOrientation(),
                 RESPAWN_ONE_DAY);
 
-            GetBGCreature(siegeType)->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
-            GetBGCreature(siegeType)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+            if (Creature* siegeEngine = GetBGCreature(siegeType))
+            {
+                siegeEngine->SetFlag(UNIT_FIELD_FLAGS,UNIT_FLAG_NOT_SELECTABLE|UNIT_FLAG_UNK_14|UNIT_FLAG_OOC_NOT_ATTACKABLE);
+                siegeEngine->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+            }
 
             for (uint8 i = 0; i < 2; i++)
             {
                 AddObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i,GO_SEAFORIUM_BOMBS,
                 workshopBombs[i].GetPositionX(),workshopBombs[i].GetPositionY(),
                 workshopBombs[i].GetPositionZ(),workshopBombs[i].GetOrientation(),
-                0,0,0,0,7000);
+                0,0,0,0,10);
 
-                GetBGObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i)->SetUInt32Value(GAMEOBJECT_FACTION,BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                if (GameObject* seaforiumBombs = GetBGObject(BG_IC_GO_SEAFORIUM_BOMBS_1+i))
+                {
+                    seaforiumBombs->SetRespawnTime(10);
+                    seaforiumBombs->SetUInt32Value(GAMEOBJECT_FACTION,BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                }
             }
-
+            break;
         }
+    default:
         break;
     }
 }

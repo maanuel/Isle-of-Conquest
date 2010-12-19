@@ -9214,6 +9214,60 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
         case 4710:
             if (bg && bg->GetTypeID(true) == BATTLEGROUND_IC)
                 bg->FillInitialWorldStates(data);
+            else
+            {
+                data << uint32(4221) << uint32(0x0); // 7
+                data << uint32(4222) << uint32(0x0); // 8
+                data << uint32(4226) << uint32(0x0); // 9 
+                data << uint32(4227) << uint32(0x0); // 10
+                data << uint32(4317) << uint32(0x0); // 11
+                data << uint32(4318) << uint32(0x0); // 12
+                data << uint32(4319) << uint32(0x0); // 13
+                data << uint32(4328) << uint32(0x0); // 14
+                data << uint32(4327) << uint32(0x0); // 15
+                data << uint32(4326) << uint32(0x0); // 16
+                data << uint32(4322) << uint32(0x0); // 17
+                data << uint32(4321) << uint32(0x0); // 18
+                data << uint32(4320) << uint32(0x0); // 19
+                data << uint32(4323) << uint32(0x0); // 20
+                data << uint32(4324) << uint32(0x0); // 21
+                data << uint32(4325) << uint32(0x0); // 22
+                data << uint32(4301) << uint32(0x0); // 23
+                data << uint32(4305) << uint32(0x0); // 24
+                data << uint32(4302) << uint32(0x0); // 25
+                data << uint32(4304) << uint32(0x0); // 26
+                data << uint32(4303) << uint32(0x0); // 27
+                data << uint32(4296) << uint32(0x0); // 28
+                data << uint32(4300) << uint32(0x0); // 29
+                data << uint32(4297) << uint32(0x0); // 30
+                data << uint32(4299) << uint32(0x0); // 31
+                data << uint32(4298) << uint32(0x0); // 32
+                data << uint32(4306) << uint32(0x0); // 33
+                data << uint32(4310) << uint32(0x0); // 34
+                data << uint32(4307) << uint32(0x0); // 35
+                data << uint32(4309) << uint32(0x0); // 36
+                data << uint32(4308) << uint32(0x0); // 37
+                data << uint32(4311) << uint32(0x0); // 38
+                data << uint32(4315) << uint32(0x0); // 39
+                data << uint32(4312) << uint32(0x0); // 40
+                data << uint32(4314) << uint32(0x0); // 41
+                data << uint32(4313) << uint32(0x0); // 42
+                data << uint32(4294) << uint32(0x0); // 43
+                data << uint32(4228) << uint32(0x0); // 44
+                data << uint32(4293) << uint32(0x0); // 45
+                data << uint32(4229) << uint32(0x0); // 46
+                data << uint32(4230) << uint32(0x0); // 47
+                data << uint32(4341) << uint32(0x0); // 48
+                data << uint32(4342) << uint32(0x0); // 49
+                data << uint32(4343) << uint32(0x0); // 50
+                data << uint32(4339) << uint32(0x0); // 51
+                data << uint32(4340) << uint32(0x0); // 52
+                data << uint32(4346) << uint32(0x0); // 53
+                data << uint32(4347) << uint32(0x0); // 54
+                data << uint32(4348) << uint32(0x0); // 55
+                data << uint32(4344) << uint32(0x0); // 56
+                data << uint32(4345) << uint32(0x0); // 57
+            }
             break;
         default:
             data << uint32(0x914) << uint32(0x0);           // 7
