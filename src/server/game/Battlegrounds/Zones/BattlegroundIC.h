@@ -727,6 +727,8 @@ const Position workshopBombs[2] =
     {785.509f,-864.715f,13.3993f,2.47837f}
 };
 
+const uint32 BG_IC_GraveyardIds[MAX_NODE_TYPES+2] = {0, 0, 1480, 1481, 1482, 1486, 1485, 1483, 1484};
+
 enum Buffs
 {
     SPELL_OIL_REFINERY      = 68719,
@@ -889,6 +891,8 @@ class BattlegroundIC : public Battleground
         void EventPlayerClickedOnFlag(Player *source, GameObject* /*target_obj*/);
 
         void EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent);
+
+        virtual WorldSafeLocsEntry const* GetClosestGraveYard(Player* player);
 
         /* Scorekeeping */
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);

@@ -510,3 +510,42 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
             break;
     }
 }
+
+WorldSafeLocsEntry const* BattlegroundIC::GetClosestGraveYard(Player* player)
+{
+    BattlegroundTeamId teamIndex = GetTeamIndexByTeamId(player->GetTeam());
+
+    // Is there any occupied node for this team?
+    std::vector<uint8> nodes;
+    for (uint8 i = 0; i < MAX_NODE_TYPES; ++i)
+        if (nodePoint[i].faction == player->GetTeamId())
+            nodes.push_back(i);
+
+    WorldSafeLocsEntry const* good_entry = NULL;
+    // If so, select the closest node to place ghost on
+    if (!nodes.empty())
+    {
+        float plr_x = player->GetPositionX();
+        float plr_y = player->GetPositionY();
+
+        float mindist = 999999.0f;
+        for (uint8 i = 0; i < nodes.size(); ++i)
+        {
+            WorldSafeLocsEntry const*entry = sWorldSafeLocsStore.LookupEntry(BG_IC_GraveyardIds[nodes[i]]);
+            if (!entry)
+                continue;
+            float dist = (entry->x - plr_x)*(entry->x - plr_x)+(entry->y - plr_y)*(entry->y - plr_y);
+            if (mindist > dist)
+            {
+                mindist = dist;
+                good_entry = entry;
+            }
+        }
+        nodes.clear();
+    }
+    // If not, place ghost on starting location
+    if (!good_entry)
+        good_entry = sWorldSafeLocsStore.LookupEntry(BG_AB_GraveyardIds[teamIndex+BG_AB_ALL_NODES_COUNT]);
+
+    return good_entry;
+}
