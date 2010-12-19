@@ -34,7 +34,7 @@ const ICNodePoint nodePointInitial[7] =
 
 BattlegroundIC::BattlegroundIC()
 {
-    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS);
+    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS + 2);
     m_BgCreatures.resize(NPCS_MAX_SPAWNS);
 
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_IC_START_TWO_MINUTES;
@@ -67,8 +67,8 @@ void BattlegroundIC::Update(uint32 diff)
 {
     Battleground::Update(diff);
 
-   // if (GetStatus() != STATUS_IN_PROGRESS)
-    //    return;
+    if (GetStatus() != STATUS_IN_PROGRESS)
+        return;
 
     if (!doorsClosed)
     {
@@ -92,8 +92,6 @@ void BattlegroundIC::Update(uint32 diff)
         if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
         {
             // this means that the node is not contested state
-            /*if (nodePoint[i].banners[0] == nodePoint[i].gameobject_entry
-                || nodePoint[i].banners[2] == nodePoint[i].gameobject_entry)*/
             if (nodePoint[i].nodeState == NODE_STATE_CONFLICT_A ||
                 nodePoint[i].nodeState == NODE_STATE_CONFLICT_H)
             {
@@ -313,8 +311,8 @@ void BattlegroundIC::EndBattleground(uint32 winner)
 
 void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target_obj)
 {
-    //if (GetStatus() != STATUS_IN_PROGRESS)
-    //   return;
+    if (GetStatus() != STATUS_IN_PROGRESS)
+       return;
 
     // All the node points are iterated to find the clicked one
     for (uint8 i = 0; i < MAX_NODE_TYPES; i++)
@@ -335,11 +333,11 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             // this is just needed if the next banner is grey
             if (nodePoint[i].banners[1] == nextBanner || nodePoint[i].banners[3] == nextBanner)
             {
-                nodePoint[i].timer = 20000; // 1 minute for last change (real faction banner)
+                nodePoint[i].timer = 60000; // 1 minute for last change (real faction banner)
                 nodePoint[i].needChange = true;
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
-                nodePoint[i].timer = 20000;
+                nodePoint[i].timer = 60000;
                 nodePoint[i].needChange = false;
                 HandleCapturedNodes(&nodePoint[i]); 
             }
@@ -439,11 +437,14 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
 
             for (uint8 i = 0; i < 4; i++)
             {
-                if (AddCreature(NPC_DEMOLISHER,freeType++,nodePoint->faction,
+                uint8 type = freeType++;
+
+                m_BgCreatures.resize(type);
+                if (AddCreature(NPC_DEMOLISHER,type-1,nodePoint->faction,
                 BG_IC_WorkshopVehicles[i].GetPositionX(),BG_IC_WorkshopVehicles[i].GetPositionY(),
                 BG_IC_WorkshopVehicles[i].GetPositionZ(),BG_IC_WorkshopVehicles[i].GetOrientation(),
                 RESPAWN_ONE_DAY))
-                    GetBGCreature(freeType-1)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
+                    GetBGCreature(type-1)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
             }
                 
             uint8 siegeType = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
