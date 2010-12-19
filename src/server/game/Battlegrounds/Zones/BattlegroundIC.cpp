@@ -132,6 +132,10 @@ void BattlegroundIC::StartingEventOpenDoors()
     //after 20 seconds they should be despawned
     DoorOpen(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01);
     DoorOpen(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
+    DoorOpen(BG_IC_GO_DOODAD_HU_PORTCULLIS01_1);
+    DoorOpen(BG_IC_GO_DOODAD_HU_PORTCULLIS01_2);
+    DoorOpen(BG_IC_GO_DOODAD_VR_PORTCULLIS01_1);
+    DoorOpen(BG_IC_GO_DOODAD_VR_PORTCULLIS01_2);
 }
 
 void BattlegroundIC::AddPlayer(Player *plr)
