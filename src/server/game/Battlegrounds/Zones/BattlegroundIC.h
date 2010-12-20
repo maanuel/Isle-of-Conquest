@@ -901,6 +901,8 @@ class BattlegroundIC : public Battleground
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
+        uint8 takingWorkshopFaction;
+        uint8 takingDockFaction;
         //bool siegeEngineWorkshop;
         uint32 siegeEngineWorkshopTimer;
         uint16 factionReinforcements[2];

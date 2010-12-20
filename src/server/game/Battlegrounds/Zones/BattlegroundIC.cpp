@@ -356,6 +356,8 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
             if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
             {
+                if (nodePoint[i].needChange)
+                    takingWorkshopFaction = player->GetTeamId();
                 DelObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
                 DelObject(BG_IC_GO_SEAFORIUM_BOMBS_2);
             }
@@ -416,6 +418,8 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
 
 void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
 {
+    bool WSDockNewFaction = false;
+
     switch(nodePoint->gameobject_type)
     {
     case BG_IC_GO_QUARRY_BANNER:
@@ -431,20 +435,24 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint)
             if (siegeEngineWorkshopTimer < 3*60*1000)
                 siegeEngineWorkshopTimer = 3*60*1000;
 
+            if (takingWorkshopFaction == nodePoint->faction)
+                WSDockNewFaction = true;
+
             uint8 freeType = 36; // last type used
             do
             {
                 freeType++;
             } while (GetBGCreature(freeType));
 
-            for (uint8 i = 0; i < 4; i++)
-            {
-                if (AddCreature(NPC_DEMOLISHER,freeType++,nodePoint->faction,
-                BG_IC_WorkshopVehicles[i].GetPositionX(),BG_IC_WorkshopVehicles[i].GetPositionY(),
-                BG_IC_WorkshopVehicles[i].GetPositionZ(),BG_IC_WorkshopVehicles[i].GetOrientation(),
-                RESPAWN_ONE_DAY))
+            if (WSDockNewFaction)
+                for (uint8 i = 0; i < 4; i++)
+                {
+                    if (AddCreature(NPC_DEMOLISHER,freeType++,nodePoint->faction,
+                    BG_IC_WorkshopVehicles[i].GetPositionX(),BG_IC_WorkshopVehicles[i].GetPositionY(),
+                    BG_IC_WorkshopVehicles[i].GetPositionZ(),BG_IC_WorkshopVehicles[i].GetOrientation(),
+                    RESPAWN_ONE_DAY))
                     GetBGCreature(freeType-1)->setFaction(BG_IC_Factions[(nodePoint->faction == TEAM_ALLIANCE ? 0 : 1)]);
-            }
+                }
                 
             uint8 siegeType = (nodePoint->faction == TEAM_ALLIANCE ? BG_IC_NPC_SIEGE_ENGINE_A : BG_IC_NPC_SIEGE_ENGINE_H);
             AddCreature((nodePoint->faction == TEAM_ALLIANCE ? NPC_SIEGE_ENGINE_A : NPC_SIEGE_ENGINE_H),siegeType,nodePoint->faction, 
