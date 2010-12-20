@@ -287,21 +287,12 @@ bool BattlegroundIC::SetupBattleground()
         }
     }  
 
-    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+5, 
-                        BG_IC_SpiritGuidePos[5][0], BG_IC_SpiritGuidePos[5][1], 
-                        BG_IC_SpiritGuidePos[5][2], BG_IC_SpiritGuidePos[5][3], 
-                        TEAM_ALLIANCE))
+    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+5,BG_IC_SpiritGuidePos[5][0], BG_IC_SpiritGuidePos[5][1],BG_IC_SpiritGuidePos[5][2], BG_IC_SpiritGuidePos[5][3],TEAM_ALLIANCE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+6,BG_IC_SpiritGuidePos[6][0], BG_IC_SpiritGuidePos[6][1],BG_IC_SpiritGuidePos[6][2], BG_IC_SpiritGuidePos[6][3],TEAM_HORDE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+3,BG_IC_SpiritGuidePos[3][0], BG_IC_SpiritGuidePos[3][1],BG_IC_SpiritGuidePos[3][2], BG_IC_SpiritGuidePos[3][3],TEAM_ALLIANCE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+4,BG_IC_SpiritGuidePos[4][0], BG_IC_SpiritGuidePos[4][1],BG_IC_SpiritGuidePos[4][2], BG_IC_SpiritGuidePos[4][3],TEAM_HORDE))
     {
-        sLog.outError("Failed to spawn initial spirit guide! team: %u,",  TEAM_ALLIANCE);
-        return false;
-    }
-
-    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+6, 
-                        BG_IC_SpiritGuidePos[6][0], BG_IC_SpiritGuidePos[6][1], 
-                        BG_IC_SpiritGuidePos[6][2], BG_IC_SpiritGuidePos[6][3], 
-                        TEAM_HORDE))
-    {
-        sLog.outError("Failed to spawn initial spirit guide! team: %u,",  TEAM_HORDE);
+        sLog.outError("Failed to spawn initial spirit guide!");
         return false;
     }
 
