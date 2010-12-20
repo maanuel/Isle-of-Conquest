@@ -843,7 +843,7 @@ enum ICNodeState
     NODE_STATE_CONTROLLED_H
 };
 
-const uint32 BG_IC_GraveyardIds[MAX_NODE_TYPES+2] = {0, 0, 1480, 1481, 1482, 1486, 1485, 1483, 1484};
+const uint32 BG_IC_GraveyardIds[MAX_NODE_TYPES+2] = {0, 0, 1480, 1481, 1482, 1485, 1486, 1483, 1484};
 
 // I.E: Hangar, Quarry, Graveyards .. etc
 struct ICNodePoint
