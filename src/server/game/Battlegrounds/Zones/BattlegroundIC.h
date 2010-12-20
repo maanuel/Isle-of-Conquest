@@ -226,7 +226,17 @@ enum BG_IC_NPCs
     BG_IC_NPC_KEEP_CANNON_25,
 
     BG_IC_NPC_SIEGE_ENGINE_A,
-    BG_IC_NPC_SIEGE_ENGINE_H
+    BG_IC_NPC_SIEGE_ENGINE_H,
+
+    BG_IC_NPC_DEMOLISHER_1_A,
+    BG_IC_NPC_DEMOLISHER_2_A,
+    BG_IC_NPC_DEMOLISHER_3_A,
+    BG_IC_NPC_DEMOLISHER_4_A,
+
+    BG_IC_NPC_DEMOLISHER_1_H,
+    BG_IC_NPC_DEMOLISHER_2_H,
+    BG_IC_NPC_DEMOLISHER_3_H,
+    BG_IC_NPC_DEMOLISHER_4_H,
 };
 const ICNpc BG_IC_NpcSpawnlocs[NPCS_MAX_SPAWNS]=
 {
@@ -901,8 +911,6 @@ class BattlegroundIC : public Battleground
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
-        uint8 takingWorkshopFaction;
-        uint8 takingDockFaction;
         //bool siegeEngineWorkshop;
         uint32 siegeEngineWorkshopTimer;
         uint16 factionReinforcements[2];
@@ -955,6 +963,6 @@ class BattlegroundIC : public Battleground
         }
 
         void UpdateNodeWorldState(ICNodePoint* nodePoint);
-        void HandleCapturedNodes(ICNodePoint* nodePoint);
+        void HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture);
 };
 #endif
