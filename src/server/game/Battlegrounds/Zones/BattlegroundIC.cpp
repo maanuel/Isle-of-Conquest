@@ -389,8 +389,9 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
 
                 RealocatePlayers(nodePoint->nodeType);
 
-                if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType])
-                    DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType);
+                if (nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
+                    if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2])
+                        DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2);
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
@@ -470,8 +471,8 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
 
 void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
 {
-    if(nodePoint->gameobject_type != BG_IC_GO_QUARRY_BANNER && nodePoint->gameobject_type != BG_IC_GO_REFINERY_BANNER)
-        if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType, 
+    if(nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
+        if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2, 
                                        BG_IC_SpiritGuidePos[nodePoint->nodeType][0], BG_IC_SpiritGuidePos[nodePoint->nodeType][1], 
                                        BG_IC_SpiritGuidePos[nodePoint->nodeType][2], BG_IC_SpiritGuidePos[nodePoint->nodeType][3], 
                                        nodePoint->faction))
