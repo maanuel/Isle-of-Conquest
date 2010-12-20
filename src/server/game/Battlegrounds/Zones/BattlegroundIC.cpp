@@ -39,7 +39,7 @@ BattlegroundIC::BattlegroundIC()
     // +8 == there can be 8 demolishers spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPAWNS
     // +2 == there can be 2 sieges engine spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPANWS
 
-    m_BgCreatures.resize(NPCS_MAX_SPAWNS + 8 + 2);
+    m_BgCreatures.resize(NPCS_MAX_SPAWNS + 8 + 2 + 7);
 
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_IC_START_TWO_MINUTES;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_IC_START_ONE_MINUTE;
@@ -287,6 +287,24 @@ bool BattlegroundIC::SetupBattleground()
         }
     }  
 
+    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+5, 
+                        BG_IC_SpiritGuidePos[5][0], BG_IC_SpiritGuidePos[5][1], 
+                        BG_IC_SpiritGuidePos[5][2], BG_IC_SpiritGuidePos[5][3], 
+                        TEAM_ALLIANCE))
+    {
+        sLog.outError("Failed to spawn initial spirit guide! team: %u,",  TEAM_ALLIANCE);
+        return false;
+    }
+
+    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+6, 
+                        BG_IC_SpiritGuidePos[6][0], BG_IC_SpiritGuidePos[6][1], 
+                        BG_IC_SpiritGuidePos[6][2], BG_IC_SpiritGuidePos[6][3], 
+                        TEAM_HORDE))
+    {
+        sLog.outError("Failed to spawn initial spirit guide! team: %u,",  TEAM_HORDE);
+        return false;
+    }
+
     return true;
 }
 
@@ -329,6 +347,28 @@ void BattlegroundIC::EndBattleground(uint32 winner)
     Battleground::EndBattleground(winner);
 }
 
+void BattlegroundIC::RealocatePlayers(ICNodePointType nodeType)
+{
+    // Those who are waiting to resurrect at this node are taken to the closest own node's graveyard
+    std::vector<uint64> ghost_list = m_ReviveQueue[m_BgCreatures[nodeType]];
+    if (!ghost_list.empty())
+    {
+        WorldSafeLocsEntry const *ClosestGrave = NULL;
+        for (std::vector<uint64>::const_iterator itr = ghost_list.begin(); itr != ghost_list.end(); ++itr)
+        {
+            Player* plr = sObjectMgr.GetPlayer(*itr);
+            if (!plr)
+                continue;
+
+            if (!ClosestGrave)                              // cache
+                ClosestGrave = GetClosestGraveYard(plr);
+
+            if (ClosestGrave)
+                plr->TeleportTo(GetMapId(), ClosestGrave->x, ClosestGrave->y, ClosestGrave->z, plr->GetOrientation());
+        }
+    }
+}
+
 void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target_obj)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
@@ -355,6 +395,11 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             {
                 nodePoint[i].timer = 60000; // 1 minute for last change (real faction banner)
                 nodePoint[i].needChange = true;
+
+                RealocatePlayers(nodePoint->nodeType);
+
+                if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_RESERVED+nodePoint->nodeType])
+                    DelCreature(BG_IC_NPC_SPIRIT_GUIDE_RESERVED++nodePoint->nodeType);
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
@@ -434,6 +479,13 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
 
 void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
 {
+    if(nodePoint->gameobject_type != BG_IC_GO_QUARRY_BANNER && nodePoint->gameobject_type != BG_IC_GO_REFINERY_BANNER)
+        if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_RESERVED+nodePoint->nodeType, 
+                                       BG_IC_SpiritGuidePos[nodePoint->nodeType][0], BG_IC_SpiritGuidePos[nodePoint->nodeType][1], 
+                                       BG_IC_SpiritGuidePos[nodePoint->nodeType][2], BG_IC_SpiritGuidePos[nodePoint->nodeType][3], 
+                                       nodePoint->faction))
+            sLog.outError("Failed to spawn spirit guide! point: %u, team: %u,", nodePoint->nodeType, nodePoint->faction);
+
     switch(nodePoint->gameobject_type)
     {
     case BG_IC_GO_QUARRY_BANNER:
