@@ -287,10 +287,10 @@ bool BattlegroundIC::SetupBattleground()
         }
     }  
 
-    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+5,BG_IC_SpiritGuidePos[5][0], BG_IC_SpiritGuidePos[5][1],BG_IC_SpiritGuidePos[5][2], BG_IC_SpiritGuidePos[5][3],TEAM_ALLIANCE)
-        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+6,BG_IC_SpiritGuidePos[6][0], BG_IC_SpiritGuidePos[6][1],BG_IC_SpiritGuidePos[6][2], BG_IC_SpiritGuidePos[6][3],TEAM_HORDE)
-        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+3,BG_IC_SpiritGuidePos[3][0], BG_IC_SpiritGuidePos[3][1],BG_IC_SpiritGuidePos[3][2], BG_IC_SpiritGuidePos[3][3],TEAM_ALLIANCE)
-        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+4,BG_IC_SpiritGuidePos[4][0], BG_IC_SpiritGuidePos[4][1],BG_IC_SpiritGuidePos[4][2], BG_IC_SpiritGuidePos[4][3],TEAM_HORDE))
+    if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+5,BG_IC_SpiritGuidePos[5][0], BG_IC_SpiritGuidePos[5][1],BG_IC_SpiritGuidePos[5][2], BG_IC_SpiritGuidePos[5][3],ALLIANCE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+6,BG_IC_SpiritGuidePos[6][0], BG_IC_SpiritGuidePos[6][1],BG_IC_SpiritGuidePos[6][2], BG_IC_SpiritGuidePos[6][3],HORDE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+3,BG_IC_SpiritGuidePos[3][0], BG_IC_SpiritGuidePos[3][1],BG_IC_SpiritGuidePos[3][2], BG_IC_SpiritGuidePos[3][3],ALLIANCE)
+        || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+4,BG_IC_SpiritGuidePos[4][0], BG_IC_SpiritGuidePos[4][1],BG_IC_SpiritGuidePos[4][2], BG_IC_SpiritGuidePos[4][3],HORDE))
     {
         sLog.outError("Failed to spawn initial spirit guide!");
         return false;
@@ -390,8 +390,11 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                 RealocatePlayers(nodePoint->nodeType);
 
                 if (nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
-                    if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2])
-                        DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2);
+                    if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
+                    {
+                        DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2);
+                        sLog.outError("Spirit Guide: Removing");
+                    }
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
@@ -475,7 +478,7 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
         if (!AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+nodePoint->nodeType-2, 
                                        BG_IC_SpiritGuidePos[nodePoint->nodeType][0], BG_IC_SpiritGuidePos[nodePoint->nodeType][1], 
                                        BG_IC_SpiritGuidePos[nodePoint->nodeType][2], BG_IC_SpiritGuidePos[nodePoint->nodeType][3], 
-                                       nodePoint->faction))
+                                       (nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE)))
             sLog.outError("Failed to spawn spirit guide! point: %u, team: %u,", nodePoint->nodeType, nodePoint->faction);
 
     switch(nodePoint->gameobject_type)
