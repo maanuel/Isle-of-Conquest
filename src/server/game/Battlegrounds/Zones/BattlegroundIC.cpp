@@ -387,7 +387,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                 nodePoint[i].timer = 60000; // 1 minute for last change (real faction banner)
                 nodePoint[i].needChange = true;
 
-                RealocatePlayers(nodePoint->nodeType);
+                RealocatePlayers(nodePoint[i].nodeType);
 
                 if (nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
                     if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
