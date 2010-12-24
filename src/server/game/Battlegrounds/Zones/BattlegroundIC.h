@@ -38,7 +38,9 @@ enum creaturesIC
     NPC_SIEGE_ENGINE_H = 35069,
     NPC_SIEGE_ENGINE_A = 34776,
     NPC_GLAIVE_THROWER = 34802,
-    NPC_CATAPULT = 34793
+    NPC_CATAPULT = 34793,
+    NPC_HORDE_GUNSHIP_CANNON = 34935,
+    NPC_ALLIANCE_GUNSHIP_CANNON = 34929
 };
 
 enum gameobjectsIC
@@ -173,7 +175,10 @@ enum gameobjectsIC
     GO_ALLIANCE_BANNER_GRAVEYARD_H = 195391,
     GO_ALLIANCE_BANNER_GRAVEYARD_H_CONT = 195392,
     GO_HORDE_BANNER_GRAVEYARD_H = 195393,
-    GO_HORDE_BANNER_GRAVEYARD_H_CONT = 195394
+    GO_HORDE_BANNER_GRAVEYARD_H_CONT = 195394,
+
+    GO_HORDE_GUNSHIP = 195276,
+    GO_ALLIANCE_GUNSHIP = 195121,
 };
 
 #define NPCS_MAX_SPAWNS BG_IC_NPC_KEEP_CANNON_25+1
@@ -340,6 +345,13 @@ const Position BG_IC_DocksVehiclesCatapults[4] =
     {810.7257f, -342.083344f, 12.1675768f, 4.6600f}, // Catapults
 };
 
+const Position BG_IC_HangarTeleporters[3] = 
+{
+    {827.958f,-994.467f,134.071f,0.0f}, // Gunship Portal
+    {738.613f,-1106.58f,134.745f,2.54818f}, // Gunship Portal
+    {672.283f,-1156.99f,133.706f,1.37881f}, // Gunship Portal
+};
+
 #define GAMEOBJECT_MAX_SPAWNS BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01+1
 
 enum BG_IC_GOs
@@ -455,6 +467,10 @@ enum BG_IC_GOs
         
     BG_IC_GO_SEAFORIUM_BOMBS_1, 
     BG_IC_GO_SEAFORIUM_BOMBS_2,
+
+    BG_IC_GO_HANGAR_TELEPORTER_1,
+    BG_IC_GO_HANGAR_TELEPORTER_2,
+    BG_IC_GO_HANGAR_TELEPORTER_3
 
 /*
     BG_IC_GO_DEMOLISHER_A_1,
@@ -779,7 +795,10 @@ const Position workshopBombs[2] =
 enum Buffs
 {
     SPELL_OIL_REFINERY      = 68719,
-    SPELL_QUARRY            = 68720
+    SPELL_QUARRY            = 68720,
+
+    SPELL_PARACHUTE = 66656,
+    SPELL_SLOW_FALL = 12438
 };
 
 enum BG_IC_Objectives
@@ -894,18 +913,36 @@ enum ICNodeState
 
 const uint32 BG_IC_GraveyardIds[MAX_NODE_TYPES+2] = {0, 0, 1480, 1481, 1482, 1485, 1486, 1483, 1484};
 
-const float BG_IC_SpiritGuidePos[MAX_NODE_TYPES+2][4] = {
+const float BG_IC_SpiritGuidePos[MAX_NODE_TYPES+2][4] = 
+{
     {0.0f, 0.0f, 0.0f, 0.0f},                     // no grave
     {0.0f, 0.0f, 0.0f, 0.0f},                     // no grave
-    {629.57f, -279.83f, 11.33f, 0.0f},                   // dock
-    {780.729f, -1103.08f, 135.51f, 2.27f},                    // hangar
-    {775.74f, -652.77f, 9.31f, 4.27f},                    // workshop
-    {278.42f, -883.20f, 49.89f, 1.53f},                   // alliance starting base
-    {1300.91f, -834.04f, 48.91f, 1.69f},                      // horde starting base
-    {438.86f, -310.04f, 51.81f, 5.87f},                    // last resort alliance
-    {1148.65f, -1250.98f, 16.60f, 1.74f},                    // last resort horde
+    {629.57f, -279.83f, 11.33f, 0.0f},            // dock
+    {780.729f, -1103.08f, 135.51f, 2.27f},        // hangar
+    {775.74f, -652.77f, 9.31f, 4.27f},            // workshop
+    {278.42f, -883.20f, 49.89f, 1.53f},           // alliance starting base
+    {1300.91f, -834.04f, 48.91f, 1.69f},          // horde starting base
+    {438.86f, -310.04f, 51.81f, 5.87f},           // last resort alliance
+    {1148.65f, -1250.98f, 16.60f, 1.74f},         // last resort horde
 };
 
+const Position hordeGunshipPassengers[5] = 
+{
+    {-21.401f, -31.343f, 34.173f, 4.62057f},
+    {-12.1064f, -31.9697f, 34.3807f, 4.62057f},
+    {-2.4877f, -31.9885f, 34.8384f, 4.62057f},
+    {10.2664f, -32.0713f, 35.7357f, 4.62057f},
+    {19.4636f, -30.794f, 36.2254f, 4.83106f}
+};
+
+const Position allianceGunshipPassengers[5] = 
+{
+    {-41.7122f, 23.1838f, 22.5605f, 1.60659f},
+    {-31.0354f, 25.1286f, 21.6921f, 1.60659f},
+    {-21.4492f, 25.8326f, 21.6309f, 1.60659f},
+    {-12.4734f, 26.321f, 21.6237f, 1.60659f},
+    {-2.81125f, 26.2077f, 21.6566f, 1.60659f}
+};
 
 // I.E: Hangar, Quarry, Graveyards .. etc
 struct ICNodePoint
@@ -918,7 +955,7 @@ struct ICNodePoint
     bool needChange; // this is used for the 1 minute time period after the point is captured
     uint32 timer; // the same use for needChange
     uint32 last_entry; // the last gameobject_entry
-    uint32 worldStates[5]; // the worldstates that represent that node in the map
+    uint32 worldStates[5]; // the worldstates that represent the node in the map
     ICNodeState nodeState;
 };
 
@@ -975,6 +1012,8 @@ class BattlegroundIC : public Battleground
         void UpdatePlayerScore(Player *Source, uint32 type, uint32 value, bool doAddHonor = true);
 
         void FillInitialWorldStates(WorldPacket& data);
+
+        virtual void DoAction(uint32 action, uint64 var);
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
@@ -983,7 +1022,11 @@ class BattlegroundIC : public Battleground
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
         ICNodePoint nodePoint[7];
- 
+        
+        Transport* gunshipAlliance;
+        Transport* gunshipHorde;
+
+
         uint32 GetNextBanner(ICNodePoint* nodePoint,uint32 team, bool returnDefinitve);
 
         uint32 GetGateIDFromEntry(uint32 id)
@@ -1032,5 +1075,7 @@ class BattlegroundIC : public Battleground
         void RealocatePlayers(ICNodePointType nodeType);
         void UpdateNodeWorldState(ICNodePoint* nodePoint);
         void HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture);
+        Transport* CreateTransport(uint32 goEntry,uint32 period);
+        void SendTransportInit(Player* player);
 };
 #endif

@@ -20,11 +20,15 @@
 #include "Battleground.h"
 #include "BattlegroundIC.h"
 #include "Language.h"
-
+#include "WorldPacket.h"
+#include "GameObject.h"
+#include "ObjectMgr.h"
+#include "Vehicle.h"
+#include "Transport.h"
 
 BattlegroundIC::BattlegroundIC()
 {
-    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS+2);
+    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS+2+3);
 
     // +8 == there can be 8 demolishers spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPAWNS
     // +2 == there can be 2 sieges engine spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPANWS
@@ -48,12 +52,52 @@ BattlegroundIC::BattlegroundIC()
     for (uint8 i = 0; i < 7; i++)
         nodePoint[i] =  nodePointInitial[i];
 
-
     siegeEngineWorkshopTimer = WORKSHOP_UPDATE_TIMER;
+
+    gunshipHorde = NULL;
+    gunshipAlliance = NULL;
 }
 
 BattlegroundIC::~BattlegroundIC()
 {
+
+}
+
+void BattlegroundIC::SendTransportInit(Player* player)
+{
+    if (!gunshipAlliance || !gunshipHorde)
+        return;
+
+    UpdateData transData;
+
+    gunshipAlliance->BuildCreateUpdateBlockForPlayer(&transData, player);
+    gunshipHorde->BuildCreateUpdateBlockForPlayer(&transData, player);
+
+    WorldPacket packet;
+
+    transData.BuildPacket(&packet);
+    player->GetSession()->SendPacket(&packet);
+}
+
+void BattlegroundIC::DoAction(uint32 action, uint64 var)
+{
+    if (action != 1)
+        return;
+
+    Player* plr = sObjectMgr.GetPlayer(var);
+
+    if (!plr || !gunshipAlliance || !gunshipHorde)
+        return;
+
+    plr->AddAura(SPELL_PARACHUTE,plr);
+    plr->AddAura(SPELL_SLOW_FALL,plr);
+
+    plr->SetTransport(plr->GetTeamId() == TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde);
+    plr->m_movementInfo.t_pos.m_positionX = 7.305609f;
+    plr->m_movementInfo.t_pos.m_positionY = -0.095246f;
+    plr->m_movementInfo.t_pos.m_positionZ = 34.51022f;
+    plr->m_movementInfo.t_guid = (plr->GetTeamId() == TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde)->GetGUID();
+    plr->TeleportTo(GetMapId(),661,-1244,288,0,TELE_TO_NOT_LEAVE_TRANSPORT);
 
 }
 
@@ -218,6 +262,8 @@ void BattlegroundIC::AddPlayer(Player *plr)
 
     if (nodePoint[NODE_TYPE_REFINERY].faction == plr->GetTeamId())
         plr->CastSpell(plr,SPELL_OIL_REFINERY,true);
+
+    SendTransportInit(plr);
 }
 
 void BattlegroundIC::RemovePlayer(Player* plr,uint64 guid)
@@ -293,8 +339,24 @@ bool BattlegroundIC::SetupBattleground()
         || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+3,BG_IC_SpiritGuidePos[7][0], BG_IC_SpiritGuidePos[7][1],BG_IC_SpiritGuidePos[7][2], BG_IC_SpiritGuidePos[7][3],ALLIANCE)
         || !AddSpiritGuide(BG_IC_NPC_SPIRIT_GUIDE_1+4,BG_IC_SpiritGuidePos[8][0], BG_IC_SpiritGuidePos[8][1],BG_IC_SpiritGuidePos[8][2], BG_IC_SpiritGuidePos[8][3],HORDE))
     {
-        sLog.outError("Failed to spawn initial spirit guide!");
+        sLog.outError("Isle of Conquest: Failed to spawn initial spirit guide!");
         return false;
+    }
+
+    gunshipHorde = CreateTransport(GO_HORDE_GUNSHIP,120000);
+    gunshipAlliance = CreateTransport(GO_ALLIANCE_GUNSHIP,120000);
+
+    if (!gunshipAlliance || !gunshipHorde)
+    {
+        sLog.outError("Isle of Conquest: There was an error creating gunships!");
+        return false;
+    }
+
+    //Send transport init packet to all player in map
+    for (BattlegroundPlayerMap::const_iterator itr = GetPlayers().begin(); itr != GetPlayers().end();itr++)
+    {
+        if (Player* player = sObjectMgr.GetPlayer(itr->first))
+            SendTransportInit(player);
     }
 
     return true;
@@ -394,6 +456,15 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                     if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
                         DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2);
 
+                if (nodePoint[i].nodeType == NODE_TYPE_HANGAR)
+                {
+                    if (gunshipAlliance && gunshipHorde)
+                        (nodePoint[i].faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
+
+                    for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_1; u++)
+                        DelObject(u);
+                }
+
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
@@ -479,11 +550,31 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
             BG_IC_SpiritGuidePos[nodePoint->nodeType][0], BG_IC_SpiritGuidePos[nodePoint->nodeType][1], 
             BG_IC_SpiritGuidePos[nodePoint->nodeType][2], BG_IC_SpiritGuidePos[nodePoint->nodeType][3], 
             (nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE)))
-            sLog.outError("Failed to spawn spirit guide! point: %u, team: %u,", nodePoint->nodeType, nodePoint->faction);
+            sLog.outError("Isle of Conquest: Failed to spawn spirit guide! point: %u, team: %u,", nodePoint->nodeType, nodePoint->faction);
     }
 
     switch(nodePoint->gameobject_type)
     {
+    case BG_IC_GO_HANGAR_BANNER:
+        // all the players on the stopped transport should be teleported out
+        if (!gunshipAlliance || !gunshipHorde)
+            break;
+        
+        for (uint8 u = 0; u < 3; u++)
+        {
+            uint8 type = BG_IC_GO_HANGAR_TELEPORTER_1+u;
+            AddObject(type, (nodePoint->faction == TEAM_ALLIANCE ? GO_ALLIANCE_GUNSHIP_PORTAL : GO_HORDE_GUNSHIP_PORTAL),
+                BG_IC_HangarTeleporters[u].GetPositionX(),BG_IC_HangarTeleporters[u].GetPositionY(),
+                BG_IC_HangarTeleporters[u].GetPositionZ(),BG_IC_HangarTeleporters[u].GetOrientation(),
+                0,0,0,0,RESPAWN_ONE_DAY);
+        }
+
+        //sLog.outError("BG_IC_GO_HANGAR_BANNER CAPTURED Faction: %u", nodePoint->faction);
+
+        (nodePoint->faction == TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde)->BuildStartMovePacket(GetBgMap());
+        (nodePoint->faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
+        // we should spawn teleporters
+        break;
     case BG_IC_GO_QUARRY_BANNER:
         RemoveAuraOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? HORDE : ALLIANCE));
         CastSpellOnTeam(SPELL_QUARRY,(nodePoint->faction == TEAM_ALLIANCE ? ALLIANCE : HORDE));
@@ -712,4 +803,50 @@ WorldSafeLocsEntry const* BattlegroundIC::GetClosestGraveYard(Player* player)
         good_entry = sWorldSafeLocsStore.LookupEntry(BG_IC_GraveyardIds[teamIndex+MAX_NODE_TYPES]);
 
     return good_entry;
+}
+
+Transport* BattlegroundIC::CreateTransport(uint32 goEntry,uint32 period)
+{
+    Transport* t = new Transport(period,0);
+
+    const GameObjectInfo *goinfo = sObjectMgr.GetGameObjectInfo(goEntry);
+
+    if (!goinfo)
+    {
+        sLog.outErrorDb("Transport ID:%u will not be loaded, gameobject_template missing", goEntry);
+        delete t;
+        return NULL;
+    }
+
+    std::set<uint32> mapsUsed;
+
+    if (!t->GenerateWaypoints(goinfo->moTransport.taxiPathId, mapsUsed))
+        // skip transports with empty waypoints list
+    {
+        sLog.outErrorDb("Transport (path id %u) path size = 0. Transport ignored, check DBC files or transport GO data0 field.",goinfo->moTransport.taxiPathId);
+        delete t;
+        return NULL;
+    }
+
+    uint32 mapid = t->m_WayPoints[0].mapid;
+
+    float x = t->m_WayPoints[0].x; 
+    float y = t->m_WayPoints[0].y;
+    float z =  t->m_WayPoints[0].z;
+    float o = 1;
+
+    // creates the Gameobject
+    if (!t->Create(sObjectMgr.GenerateLowGuid(HIGHGUID_MO_TRANSPORT),goEntry, mapid, x, y, z, o, 100, 0))
+    {
+        delete t;
+        return NULL;
+    }
+
+    //If we someday decide to use the grid to track transports, here:
+    t->SetMap(GetBgMap());
+
+    for (uint8 i = 0; i < 5; i++)
+        t->AddNPCPassenger(0,(goEntry == GO_HORDE_GUNSHIP ? NPC_HORDE_GUNSHIP_CANNON : NPC_ALLIANCE_GUNSHIP_CANNON), (goEntry == GO_HORDE_GUNSHIP ? hordeGunshipPassengers[i].GetPositionX() : allianceGunshipPassengers[i].GetPositionX()) , (goEntry == GO_HORDE_GUNSHIP ? hordeGunshipPassengers[i].GetPositionY() : allianceGunshipPassengers[i].GetPositionY()),(goEntry == GO_HORDE_GUNSHIP ? hordeGunshipPassengers[i].GetPositionZ() : allianceGunshipPassengers[i].GetPositionZ()), (goEntry == GO_HORDE_GUNSHIP ? hordeGunshipPassengers[i].GetOrientation() : allianceGunshipPassengers[i].GetOrientation()));
+		
+    return t;
 }
