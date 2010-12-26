@@ -1569,50 +1569,11 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
         sLog.outError("EffectForceCast of spell %u: triggering unknown spell id %i", m_spellInfo->Id,triggered_spell_id);
         return;
     }
-
-    switch(m_spellInfo->Id)
-    {
-        // Isle of Conquest: Teleporters to airships
-        case 66629:
-        case 66638:
-        {
-            if (!m_caster->ToPlayer())
-                return;
-
-            if (Battleground *bg = m_caster->ToPlayer()->GetBattleground())
-            {
-                if (bg->GetTypeID(true) == BATTLEGROUND_IC)
-                    bg->DoAction(1,m_caster->GetGUID());
-                return;
-            }
-                
-            return;
-        }
-    }
-
+    
     if (damage)
     {
         switch(m_spellInfo->Id)
         {
-            // Isle of Conquest: Teleporters to airships
-            case 66629:
-            case 66638:
-            {
-                sLog.outError("Spell Effect - Teleporter IC");
-                if (!m_caster->ToPlayer())
-                    return;
-
-                sLog.outError("El caster es tipo player");
-
-                if (Battleground *bg = m_caster->ToPlayer()->GetBattleground())
-                {
-                    if (bg->GetTypeID(true) == BATTLEGROUND_IC)
-                        bg->DoAction(1,m_caster->GetGUID());
-                    return;
-                }
-                
-                return;
-            }
             case 52588: // Skeletal Gryphon Escape
             case 48598: // Ride Flamebringer Cue
                 unitTarget->RemoveAura(damage);
@@ -4320,6 +4281,21 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
         {
             switch(m_spellInfo->Id)
             {
+                // Isle of Conquest: Teleporters to airships
+                case 66630:
+                case 66637:
+                {
+                    if (!m_caster->ToPlayer())
+                        return;
+
+                    if (Battleground *bg = m_caster->ToPlayer()->GetBattleground())
+                    {
+                        if (bg->GetTypeID(true) == BATTLEGROUND_IC)
+                            bg->DoAction(1,m_caster->GetGUID());
+                    }
+
+                    return;
+                }
                 // Glyph of Backstab
                 case 63975:
                 {
