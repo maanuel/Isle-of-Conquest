@@ -28,12 +28,9 @@
 
 BattlegroundIC::BattlegroundIC()
 {
-    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS+2+3);
+    m_BgObjects.resize(GAMEOBJECT_MAX_SPAWNS + MAX_AIRSHIPS + MAX_HANGAR_TELEPORTERS);
 
-    // +8 == there can be 8 demolishers spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPAWNS
-    // +2 == there can be 2 sieges engine spawned at the same time, however they are not always spawned that is why i dont add them to NPCS_MAX_SPANWS
-
-    m_BgCreatures.resize(NPCS_MAX_SPAWNS + 8 + 2 + 12 + 7);
+    m_BgCreatures.resize(NPCS_MAX_SPAWNS + MAX_WORKSHOP_SPAWNS + MAX_DOCKS_SPAWNS + MAX_SPIRIT_GUIDES);
 
     m_StartMessageIds[BG_STARTING_EVENT_FIRST]  = LANG_BG_IC_START_TWO_MINUTES;
     m_StartMessageIds[BG_STARTING_EVENT_SECOND] = LANG_BG_IC_START_ONE_MINUTE;
@@ -113,9 +110,6 @@ void BattlegroundIC::Update(uint32 diff)
     {
         if (closeFortressDoors <= diff)
         {
-            //DoorClose(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01);
-            //DoorClose(BG_IC_GO_DOOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01);
-
             GetBGObject(BG_IC_GO_DOODAD_ND_HUMAN_GATE_CLOSEDFX_DOOR01)->RemoveFromWorld();
             GetBGObject(BG_IC_GO_DOODAD_ND_WINTERORC_WALL_GATEFX_DOOR01)->RemoveFromWorld();
 
@@ -236,13 +230,11 @@ void BattlegroundIC::Update(uint32 diff)
             {
                 factionReinforcements[nodePoint[i].faction] += 1;
                 RewardHonorToTeam(12,nodePoint[i].faction == TEAM_ALLIANCE ? ALLIANCE : HORDE);
-                UpdateWorldState((nodePoint[i].faction) == TEAM_ALLIANCE ? BG_IC_ALLIANCE_RENFORT : BG_IC_HORDE_RENFORT), factionReinforcements[nodePoint[i].faction]);
+                UpdateWorldState((nodePoint[i].faction == TEAM_ALLIANCE ? BG_IC_ALLIANCE_RENFORT : BG_IC_HORDE_RENFORT), factionReinforcements[nodePoint[i].faction]);
             }
         }
         resourceTimer = IC_RESOURCE_TIME;
-    }
-    else
-        resourcerTimer -= diff; 
+    } else resourceTimer -= diff; 
 }
 
 void BattlegroundIC::StartingEventCloseDoors()
