@@ -972,6 +972,7 @@ const ICNodePoint nodePointInitial[7] =
 
 #define WORKSHOP_UPDATE_TIMER 180000 // 3 minutes
 #define DOCKS_UPDATE_TIMER 180000 // not sure if it is 3 minutes
+#define IC_RESOURCE_TIME 45000 // not sure, need more research
 
 
 class BattlegroundICScore : public BattlegroundScore
@@ -1018,6 +1019,7 @@ class BattlegroundIC : public Battleground
         uint32 closeFortressDoors;
         bool doorsClosed;
         uint32 docksTimer;
+        uint32 resourceTimer;
         uint32 siegeEngineWorkshopTimer;
         uint16 factionReinforcements[2];
         BG_IC_GateState GateStatus[6];
