@@ -48,6 +48,7 @@ BattlegroundIC::BattlegroundIC()
 
     closeFortressDoors = 20000; // the doors are closed again... in a special way
     doorsClosed = false;
+    resourceTimer = IC_RESOURCE_TIME;
 
     for (uint8 i = 0; i < 7; i++)
         nodePoint[i] =  nodePointInitial[i];
@@ -196,24 +197,6 @@ void BattlegroundIC::Update(uint32 diff)
             }
         }
 
-        if (nodePoint[i].nodeType == NODE_TYPE_REFINERY || nodePoint[i].nodeType == NODE_TYPE_QUARRY)
-        {
-            if (nodePoint[i].nodeState == NODE_STATE_CONTROLLED_A ||
-                nodePoint[i].nodeState == NODE_STATE_CONTROLLED_H)
-            {
-                if (resourceTimer <= 0)
-                {
-                    factionReinforcements[nodePoint[i].faction] += 1;
-                    RewardHonorToTeam(12,nodePoint[i].faction == TEAM_ALLIANCE ? ALLIANCE : HORDE);
-                    UpdateWorldState((nodePoint[i].faction) == TEAM_ALLIANCE ? BG_IC_ALLIANCE_RENFORT : BG_IC_HORDE_RENFORT), factionReinforcements[nodePoint[i].faction]);
-                    resourceTimer = IC_RESOURCE_TIME;
-                }
-                else
-                    resourcerTimer -= diff;
-            }
-        }
-
-
         // the point is waiting for a change on his banner
         if (nodePoint[i].needChange)
         {
@@ -243,7 +226,23 @@ void BattlegroundIC::Update(uint32 diff)
             } else nodePoint[i].timer -= diff;
         }
     }
-    
+
+    if (resourceTimer <= diff)
+    {
+        for (uint8 i = 0; i < NODE_TYPE_DOCKS; i++)
+        {
+            if (nodePoint[i].nodeState == NODE_STATE_CONTROLLED_A ||
+                nodePoint[i].nodeState == NODE_STATE_CONTROLLED_H)
+            {
+                factionReinforcements[nodePoint[i].faction] += 1;
+                RewardHonorToTeam(12,nodePoint[i].faction == TEAM_ALLIANCE ? ALLIANCE : HORDE);
+                UpdateWorldState((nodePoint[i].faction) == TEAM_ALLIANCE ? BG_IC_ALLIANCE_RENFORT : BG_IC_HORDE_RENFORT), factionReinforcements[nodePoint[i].faction]);
+            }
+        }
+        resourceTimer = IC_RESOURCE_TIME;
+    }
+    else
+        resourcerTimer -= diff; 
 }
 
 void BattlegroundIC::StartingEventCloseDoors()
