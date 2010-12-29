@@ -385,17 +385,17 @@ void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
     if (GetStatus() != STATUS_IN_PROGRESS)
        return;
 
-    /*uint32 entry = unit->GetEntry();
-    if (entry == 34924)
+    uint32 entry = unit->GetEntry();
+    if (entry == NPC_HIGH_COMMANDER_HALFORD_WYRMBANE)
     {
         RewardHonorToTeam(500,HORDE);
         EndBattleground(HORDE);
     }
-    else if (entry == 34922)
+    else if (entry == NPC_OVERLORD_AGMAR)
     {
         RewardHonorToTeam(500,ALLIANCE);
         EndBattleground(ALLIANCE);
-    }*/
+    }
 }
 
 void BattlegroundIC::HandleKillPlayer(Player* player, Player* killer)
