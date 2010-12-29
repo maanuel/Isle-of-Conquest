@@ -96,7 +96,6 @@ void BattlegroundIC::DoAction(uint32 action, uint64 var)
     plr->m_movementInfo.t_pos.m_positionZ = 34.51022f;
     plr->m_movementInfo.t_guid = (plr->GetTeamId() == TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde)->GetGUID();
     plr->TeleportTo(GetMapId(),661,-1244,288,0,TELE_TO_NOT_LEAVE_TRANSPORT);
-
 }
 
 void BattlegroundIC::Update(uint32 diff)
@@ -374,6 +373,12 @@ bool BattlegroundIC::SetupBattleground()
         if (Player* player = sObjectMgr.GetPlayer(itr->first))
             SendTransportInit(player);
     }
+
+    // setting correct factions for Keep Cannons
+    for (uint8 i = BG_IC_NPC_KEEP_CANNON_1; i < BG_IC_NPC_KEEP_CANNON_12; i++)
+        GetBGCreature(i)->setFaction(BG_IC_Factions[0]);
+    for (uint8 i = BG_IC_NPC_KEEP_CANNON_13; i < BG_IC_NPC_KEEP_CANNON_25; i++)
+        GetBGCreature(i)->setFaction(BG_IC_Factions[1]);
 
     return true;
 }
