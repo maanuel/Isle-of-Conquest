@@ -285,9 +285,7 @@ void BattlegroundIC::AddPlayer(Player *plr)
 }
 
 void BattlegroundIC::RemovePlayer(Player* plr,uint64 guid)
-{
-    Battleground::RemovePlayer(plr, guid);
-    
+{  
     plr->RemoveAura(SPELL_QUARRY);
     plr->RemoveAura(SPELL_OIL_REFINERY);
 }
@@ -451,7 +449,7 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
     {
         if (nodePoint[i].gameobject_entry == target_obj->GetEntry())
         {
-            // this SHOULD NEEVEER HAPPEN
+            // THIS SHOULD NEEVEER HAPPEN
             if (nodePoint[i].faction == player->GetTeamId())
                 return;
 
@@ -469,6 +467,8 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                 nodePoint[i].needChange = true;
 
                 RealocatePlayers(nodePoint[i].nodeType);
+
+                // if we are here means that the point has been lost, or it is the first capture
 
                 if (nodePoint[i].nodeType != NODE_TYPE_REFINERY && nodePoint[i].nodeType != NODE_TYPE_QUARRY)
                     if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
