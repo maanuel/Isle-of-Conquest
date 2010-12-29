@@ -4281,21 +4281,6 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
         {
             switch(m_spellInfo->Id)
             {
-                // Isle of Conquest: Teleporters to airships
-                case 66630:
-                case 66637:
-                {
-                    if (!m_caster->ToPlayer())
-                        return;
-
-                    if (Battleground *bg = m_caster->ToPlayer()->GetBattleground())
-                    {
-                        if (bg->GetTypeID(true) == BATTLEGROUND_IC)
-                            bg->DoAction(1,m_caster->GetGUID());
-                    }
-
-                    return;
-                }
                 // Glyph of Backstab
                 case 63975:
                 {

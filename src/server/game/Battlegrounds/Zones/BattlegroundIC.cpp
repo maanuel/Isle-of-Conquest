@@ -256,6 +256,15 @@ void BattlegroundIC::StartingEventOpenDoors()
     DoorOpen(BG_IC_GO_DOODAD_HU_PORTCULLIS01_2);
     DoorOpen(BG_IC_GO_DOODAD_VR_PORTCULLIS01_1);
     DoorOpen(BG_IC_GO_DOODAD_VR_PORTCULLIS01_2);
+
+    for (uint8 i = 0; i < MAX_TELEPORTERS_SPAWNS; i++)
+    {
+        if (!AddObject(BG_IC_Teleporters[i].type,BG_IC_Teleporters[i].entry,
+            BG_IC_Teleporters[i].x,BG_IC_Teleporters[i].y,
+            BG_IC_Teleporters[i].z,BG_IC_Teleporters[i].o,
+            0,0,0,0,RESPAWN_ONE_DAY))
+            sLog.outError("Isle of Conquest | Starting Event Open Doors: There was an error spawning gameobject %u",BG_IC_Teleporters[i].entry);
+    }
 }
 
 void BattlegroundIC::AddPlayer(Player *plr)
@@ -742,9 +751,23 @@ void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
     }
 }
 
+void BattlegroundIC::DestroyGate(Player* pl, GameObject* go, uint32 destroyedEvent)
+{
+    GateStatus[GetGateIDFromEntry(go->GetEntry())] = BG_IC_GATE_DESTROYED;
+    uint32 uws_open = GetWorldStateFromGateEntry(go->GetEntry(), true);
+    uint32 uws_close = GetWorldStateFromGateEntry(go->GetEntry(), false);
+    if (uws_open)
+    {
+        UpdateWorldState(uws_close,0);
+        UpdateWorldState(uws_open, 1);
+    }
+    DoorOpen((pl->GetTeamId() == TEAM_ALLIANCE ? BG_IC_GO_HORDE_KEEP_PORTCULLIS : BG_IC_GO_DOODAD_PORTCULLISACTIVE02));
+}
+
+
 void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)
 {
-    if (!go || !go->GetGOInfo())
+   /* if (!go || !go->GetGOInfo())
         return;
     
     switch(hitType)
@@ -762,7 +785,7 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
                 if (uws)
                     UpdateWorldState(uws, GateStatus[i]);
                 break;
-            }*/
+            }*//*
         case BG_OBJECT_DMG_HIT_TYPE_HIGH_DAMAGED:
             break;
         case BG_OBJECT_DMG_HIT_TYPE_JUST_DESTROYED://handled at DestroyGate()
@@ -772,7 +795,7 @@ void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8
                 UpdateWorldState(uws, GateStatus[GetGateIDFromEntry(go->GetEntry())]);
             //SendWarningToAll(LANG_BG_IC_WAS_DESTROYED, go->GetGOInfo()->name);
             break;
-    }
+    }*/
 }
 
 WorldSafeLocsEntry const* BattlegroundIC::GetClosestGraveYard(Player* player)
@@ -818,11 +841,11 @@ Transport* BattlegroundIC::CreateTransport(uint32 goEntry,uint32 period)
 {
     Transport* t = new Transport(period,0);
 
-    const GameObjectInfo *goinfo = sObjectMgr.GetGameObjectInfo(goEntry);
+    const GameObjectInfo* goinfo = sObjectMgr.GetGameObjectInfo(goEntry);
 
     if (!goinfo)
     {
-        sLog.outErrorDb("Transport ID:%u will not be loaded, gameobject_template missing", goEntry);
+        sLog.outErrorDb("Transport ID: %u will not be loaded, gameobject_template missing", goEntry);
         delete t;
         return NULL;
     }
