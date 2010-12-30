@@ -379,6 +379,10 @@ bool BattlegroundIC::SetupBattleground()
     for (uint8 i = BG_IC_NPC_KEEP_CANNON_13; i < BG_IC_NPC_KEEP_CANNON_25; i++)
         GetBGCreature(i)->setFaction(BG_IC_Factions[1]);
 
+    // correcting spawn time for keeps bombs
+    for (uint8 i = BG_IC_GO_HUGE_SEAFORIUM_BOMBS_A_1; i < BG_IC_GO_HUGE_SEAFORIUM_BOMBS_H_4; i++)
+        GetBGObject(i)->SetRespawnTime(10);
+
     return true;
 }
 
