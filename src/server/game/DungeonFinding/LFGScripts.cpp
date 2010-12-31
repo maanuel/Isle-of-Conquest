@@ -35,7 +35,7 @@ void LFGScripts::OnAddMember(Group* group, uint64 guid)
     if (!gguid)
         return;
 
-    sLog.outDebug("LFGScripts::OnAddMember [" UI64FMTD "]: added [" UI64FMTD "]", gguid, guid);
+    sLog->outDebug("LFGScripts::OnAddMember [" UI64FMTD "]: added [" UI64FMTD "]", gguid, guid);
     LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_CLEAR_LOCK_LIST);
     for (GroupReference *itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
     {
@@ -47,12 +47,12 @@ void LFGScripts::OnAddMember(Group* group, uint64 guid)
     }
 
     // TODO - if group is queued and new player is added convert to rolecheck without notify the current players queued
-    if (group->GetLfgState() == LFG_STATE_QUEUED)
-        sLFGMgr.Leave(NULL, group);
+    if (sLFGMgr->GetState(gguid) == LFG_STATE_QUEUED)
+        sLFGMgr->Leave(NULL, group);
 
-    Player *plr = sObjectMgr.GetPlayer(guid);
-    if (plr && plr->GetLfgState() == LFG_STATE_QUEUED)
-        sLFGMgr.Leave(plr);
+    if (sLFGMgr->GetState(guid) == LFG_STATE_QUEUED)
+        if (Player *plr = sObjectMgr->GetPlayer(guid))
+            sLFGMgr->Leave(plr);
 }
 
 void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method, uint64 kicker, const char* reason)
@@ -61,11 +61,11 @@ void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method,
     if (!gguid || method == GROUP_REMOVEMETHOD_DEFAULT)
         return;
 
-    sLog.outDebug("LFGScripts::OnRemoveMember [" UI64FMTD "]: remove [" UI64FMTD "] Method: %d Kicker: [" UI64FMTD "] Reason: %s", gguid, guid, method, kicker, (reason ? reason : ""));
-    if (group->GetLfgState() == LFG_STATE_QUEUED)
+    sLog->outDebug("LFGScripts::OnRemoveMember [" UI64FMTD "]: remove [" UI64FMTD "] Method: %d Kicker: [" UI64FMTD "] Reason: %s", gguid, guid, method, kicker, (reason ? reason : ""));
+    if (sLFGMgr->GetState(gguid) == LFG_STATE_QUEUED)
     {
         // TODO - Do not remove, just remove the one leaving and rejoin queue with all other data
-        sLFGMgr.Leave(NULL, group);
+        sLFGMgr->Leave(NULL, group);
     }
 
     if (!group->isLFGGroup())
@@ -77,11 +77,12 @@ void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method,
         std::string str_reason = "";
         if (reason)
             str_reason = std::string(reason);
-        sLFGMgr.InitBoot(group, GUID_LOPART(kicker), GUID_LOPART(guid), str_reason);
+        sLFGMgr->InitBoot(group, kicker, guid, str_reason);
         return;
     }
 
-    if (Player *plr = sObjectMgr.GetPlayer(guid))
+    sLFGMgr->ClearState(guid);
+    if (Player *plr = sObjectMgr->GetPlayer(guid))
     {
         /*
         if (method == GROUP_REMOVEMETHOD_LEAVE)
@@ -90,19 +91,22 @@ void LFGScripts::OnRemoveMember(Group* group, uint64 guid, RemoveMethod& method,
             // Update internal kick cooldown of kicked
         */
 
-        plr->ClearLfgState();
         LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_LEADER);
         plr->GetSession()->SendLfgUpdateParty(updateData);
         if (plr->GetMap()->IsDungeon())                    // Teleport player out the dungeon
-            sLFGMgr.TeleportPlayer(plr, true);
+            sLFGMgr->TeleportPlayer(plr, true);
     }
 
-    if (group->GetLfgState() != LFG_STATE_FINISHED_DUNGEON)// Need more players to finish the dungeon
-        sLFGMgr.OfferContinue(group);
+    if (sLFGMgr->GetState(gguid) != LFG_STATE_FINISHED_DUNGEON)// Need more players to finish the dungeon
+        sLFGMgr->OfferContinue(group);
 }
 
 void LFGScripts::OnDisband(Group* group)
 {
+    uint64 gguid = group->GetGUID();
+    sLog->outDebug("LFGScripts::OnDisband [" UI64FMTD "]", gguid);
+
+    sLFGMgr->RemoveGroupData(gguid);
 }
 
 void LFGScripts::OnChangeLeader(Group* group, uint64 newLeaderGuid, uint64 oldLeaderGuid)
@@ -111,15 +115,15 @@ void LFGScripts::OnChangeLeader(Group* group, uint64 newLeaderGuid, uint64 oldLe
     if (!gguid)
         return;
 
-    sLog.outDebug("LFGScripts::OnChangeLeader [" UI64FMTD "]: old [" UI64FMTD "] new [" UI64FMTD "]", gguid, newLeaderGuid, oldLeaderGuid);
-    Player *plr = sObjectMgr.GetPlayer(newLeaderGuid);
+    sLog->outDebug("LFGScripts::OnChangeLeader [" UI64FMTD "]: old [" UI64FMTD "] new [" UI64FMTD "]", gguid, newLeaderGuid, oldLeaderGuid);
+    Player *plr = sObjectMgr->GetPlayer(newLeaderGuid);
 
     LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_LEADER);
     if (plr)
         plr->GetSession()->SendLfgUpdateParty(updateData);
 
 
-    plr = sObjectMgr.GetPlayer(oldLeaderGuid);
+    plr = sObjectMgr->GetPlayer(oldLeaderGuid);
     if (plr)
     {
         updateData.updateType = LFG_UPDATETYPE_GROUP_DISBAND;
@@ -133,25 +137,36 @@ void LFGScripts::OnInviteMember(Group* group, uint64 guid)
     if (!gguid)
         return;
 
-    sLog.outDebug("LFGScripts::OnInviteMember [" UI64FMTD "]: invite [" UI64FMTD "] leader [" UI64FMTD "]", gguid, guid, group->GetLeaderGUID());
-    sLFGMgr.Leave(NULL, group);
+    sLog->outDebug("LFGScripts::OnInviteMember [" UI64FMTD "]: invite [" UI64FMTD "] leader [" UI64FMTD "]", gguid, guid, group->GetLeaderGUID());
+    sLFGMgr->Leave(NULL, group);
 }
 
-void LFGScripts::OnLevelChanged(Player* /*player*/, uint8 /*newLevel*/)
+void LFGScripts::OnLevelChanged(Player* player, uint8 /*newLevel*/)
 {
-    // TODO - Invalidate LockStatus from cache
+    sLFGMgr->InitializeLockedDungeons(player);
 }
 
 void LFGScripts::OnLogout(Player* player)
 {
-    sLFGMgr.Leave(player);
+    sLFGMgr->Leave(player);
     LfgUpdateData updateData = LfgUpdateData(LFG_UPDATETYPE_REMOVED_FROM_QUEUE);
     player->GetSession()->SendLfgUpdateParty(updateData);
     player->GetSession()->SendLfgUpdatePlayer(updateData);
     player->GetSession()->SendLfgUpdateSearch(false);
+    uint64 guid = player->GetGUID();
+    // TODO - Do not remove, add timer before deleting
+    sLFGMgr->RemovePlayerData(guid);
 }
 
-void LFGScripts::OnLogin(Player* /*player*/)
+void LFGScripts::OnLogin(Player* player)
 {
+    sLFGMgr->InitializeLockedDungeons(player);
     // TODO - Restore LfgPlayerData and send proper status to player if it was in a group
+}
+
+void LFGScripts::OnBindToInstance(Player* player, Difficulty difficulty, uint32 mapId, bool /*permanent*/)
+{
+    MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
+    if (mapEntry->IsDungeon() && difficulty > DUNGEON_DIFFICULTY_NORMAL)
+        sLFGMgr->InitializeLockedDungeons(player);
 }

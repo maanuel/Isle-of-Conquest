@@ -31,6 +31,66 @@ enum PriestSpells
     PRIEST_SPELL_PENANCE_R1_HEAL                 = 47757,
 };
 
+// Guardian Spirit
+class spell_pri_guardian_spirit : public SpellScriptLoader
+{
+public:
+    spell_pri_guardian_spirit() : SpellScriptLoader("spell_pri_guardian_spirit") { }
+
+    class spell_pri_guardian_spirit_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_pri_guardian_spirit_AuraScript);
+
+        uint32 healPct;
+
+        enum Spell
+        {
+            PRI_SPELL_GUARDIAN_SPIRIT_HEAL = 48153,
+        };
+
+        bool Validate(SpellEntry const * /*spellEntry*/)
+        {
+            return sSpellStore.LookupEntry(PRI_SPELL_GUARDIAN_SPIRIT_HEAL);
+        }
+
+        bool Load()
+        {
+            healPct = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_1);
+            return true;
+        }
+
+        void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & canBeRecalculated)
+        {
+            // Set absorbtion amount to unlimited
+            amount = -1;
+        }
+
+        void Absorb(AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
+        {
+            Unit * target = GetTarget();
+            if (dmgInfo.GetDamage() < target->GetHealth())
+                return;
+
+            int32 healAmount = int32(target->CountPctFromMaxHealth(healPct));
+            // remove the aura now, we don't want 40% healing bonus
+            Remove(AURA_REMOVE_BY_ENEMY_SPELL);
+            target->CastCustomSpell(target, PRI_SPELL_GUARDIAN_SPIRIT_HEAL, &healAmount, NULL, NULL, true);
+            absorbAmount = dmgInfo.GetDamage();
+        }
+
+        void Register()
+        {
+            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pri_guardian_spirit_AuraScript::CalculateAmount, EFFECT_1, SPELL_AURA_SCHOOL_ABSORB);
+            OnEffectAbsorb += AuraEffectAbsorbFn(spell_pri_guardian_spirit_AuraScript::Absorb, EFFECT_1);
+        }
+    };
+
+    AuraScript *GetAuraScript() const
+    {
+        return new spell_pri_guardian_spirit_AuraScript();
+    }
+};
+
 class spell_pri_mana_burn : public SpellScriptLoader
 {
     public:
@@ -107,13 +167,13 @@ class spell_pri_penance : public SpellScriptLoader
                 if (!sSpellStore.LookupEntry(PRIEST_SPELL_PENANCE_R1))
                     return false;
                 // can't use other spell than this penance due to spell_ranks dependency
-                if (sSpellMgr.GetFirstSpellInChain(PRIEST_SPELL_PENANCE_R1) != sSpellMgr.GetFirstSpellInChain(spellEntry->Id))
+                if (sSpellMgr->GetFirstSpellInChain(PRIEST_SPELL_PENANCE_R1) != sSpellMgr->GetFirstSpellInChain(spellEntry->Id))
                     return false;
 
-                uint8 rank = sSpellMgr.GetSpellRank(spellEntry->Id);
-                if (!sSpellMgr.GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_DAMAGE, rank, true))
+                uint8 rank = sSpellMgr->GetSpellRank(spellEntry->Id);
+                if (!sSpellMgr->GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_DAMAGE, rank, true))
                     return false;
-                if (!sSpellMgr.GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_HEAL, rank, true))
+                if (!sSpellMgr->GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_HEAL, rank, true))
                     return false;
 
                 return true;
@@ -127,12 +187,12 @@ class spell_pri_penance : public SpellScriptLoader
 
                 Unit *caster = GetCaster();
 
-                uint8 rank = sSpellMgr.GetSpellRank(GetSpellInfo()->Id);
+                uint8 rank = sSpellMgr->GetSpellRank(GetSpellInfo()->Id);
 
                 if (caster->IsFriendlyTo(unitTarget))
-                    caster->CastSpell(unitTarget, sSpellMgr.GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_HEAL, rank), false, 0);
+                    caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_HEAL, rank), false, 0);
                 else
-                    caster->CastSpell(unitTarget, sSpellMgr.GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_DAMAGE, rank), false, 0);
+                    caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(PRIEST_SPELL_PENANCE_R1_DAMAGE, rank), false, 0);
             }
 
             void Register()
@@ -148,9 +208,59 @@ class spell_pri_penance : public SpellScriptLoader
         }
 };
 
+// Reflective Shield
+class spell_pri_reflective_shield_trigger : public SpellScriptLoader
+{
+public:
+    spell_pri_reflective_shield_trigger() : SpellScriptLoader("spell_pri_reflective_shield_trigger") { }
+
+    class spell_pri_reflective_shield_trigger_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_pri_reflective_shield_trigger_AuraScript);
+
+        enum Spells
+        {
+            SPELL_PRI_REFLECTIVE_SHIELD_TRIGGERED = 33619,
+            SPELL_PRI_REFLECTIVE_SHIELD_R1 = 33201,
+        };
+
+        bool Validate(SpellEntry const * /*spellEntry*/)
+        {
+            return sSpellStore.LookupEntry(SPELL_PRI_REFLECTIVE_SHIELD_TRIGGERED) && sSpellStore.LookupEntry(SPELL_PRI_REFLECTIVE_SHIELD_R1);
+        }
+
+        void Trigger(AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
+        {
+            Unit * target = GetTarget();
+            if (dmgInfo.GetAttacker() == target)
+                return;
+            Unit * caster = GetCaster();
+            if (!caster)
+                return;
+            if (AuraEffect * talentAurEff = target->GetAuraEffectOfRankedSpell(SPELL_PRI_REFLECTIVE_SHIELD_R1, EFFECT_0))
+            {
+                int32 bp = CalculatePctN(absorbAmount, talentAurEff->GetAmount());
+                target->CastCustomSpell(dmgInfo.GetAttacker(), SPELL_PRI_REFLECTIVE_SHIELD_TRIGGERED, &bp, NULL, NULL, true, NULL, aurEff);
+            }
+        }
+
+        void Register()
+        {
+             AfterEffectAbsorb += AuraEffectAbsorbFn(spell_pri_reflective_shield_trigger_AuraScript::Trigger, EFFECT_0);
+        }
+    };
+
+    AuraScript *GetAuraScript() const
+    {
+        return new spell_pri_reflective_shield_trigger_AuraScript();
+    }
+};
+
 void AddSC_priest_spell_scripts()
 {
+    new spell_pri_guardian_spirit();
     new spell_pri_mana_burn;
     new spell_pri_pain_and_suffering_proc;
     new spell_pri_penance;
+    new spell_pri_reflective_shield_trigger();
 }

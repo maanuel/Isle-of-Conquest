@@ -138,7 +138,7 @@ class boss_bronjahm : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->hasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STAT_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -302,11 +302,11 @@ class spell_bronjahm_soulstorm_channel : public SpellScriptLoader
         {
             PrepareAuraScript(spell_bronjahm_soulstorm_channel_AuraScript);
 
-            void HandlePeriodicTick(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp)
+            void HandlePeriodicTick(AuraEffect const* /*aurEff*/)
             {
                 PreventDefaultAction();
                 for (uint32 i = 68904; i <= 68907; ++i)
-                    aurApp->GetTarget()->CastSpell(aurApp->GetTarget(), i, true);
+                    GetTarget()->CastSpell(GetTarget(), i, true);
             }
 
             void Register()
@@ -330,14 +330,14 @@ class spell_bronjahm_soulstorm_visual : public SpellScriptLoader
         {
             PrepareAuraScript(spell_bronjahm_soulstorm_visual_AuraScript);
 
-            void HandlePeriodicTick(AuraEffect const* aurEff, AuraApplication const* aurApp)
+            void HandlePeriodicTick(AuraEffect const* aurEff)
             {
                 PreventDefaultAction();
                 if (aurEff->GetTickNumber()%5)
                     return;
-                aurApp->GetTarget()->CastSpell(aurApp->GetTarget(), 68886, true);
+                GetTarget()->CastSpell(GetTarget(), 68886, true);
                 for (uint32 i = 68896; i <= 68898; ++i)
-                    aurApp->GetTarget()->CastSpell(aurApp->GetTarget(), i, true);
+                    GetTarget()->CastSpell(GetTarget(), i, true);
             }
 
             void Register()

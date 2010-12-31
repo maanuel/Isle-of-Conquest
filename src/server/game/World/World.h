@@ -142,7 +142,6 @@ enum WorldBoolConfigs
     CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN,
     CONFIG_VMAP_INDOOR_CHECK,
     CONFIG_PET_LOS,
-    CONFIG_BG_START_MUSIC,
     CONFIG_START_ALL_SPELLS,
     CONFIG_START_ALL_EXPLORED,
     CONFIG_START_ALL_REP,
@@ -192,7 +191,6 @@ enum WorldIntConfigs
     CONFIG_INTERVAL_CHANGEWEATHER,
     CONFIG_INTERVAL_DISCONNECT_TOLERANCE,
     CONFIG_PORT_WORLD,
-    CONFIG_SOCKET_SELECTTIME,
     CONFIG_SOCKET_TIMEOUTTIME,
     CONFIG_SESSION_ADD_DELAY,
     CONFIG_GAME_TYPE,
@@ -310,6 +308,7 @@ enum WorldIntConfigs
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
     CONFIG_DB_PING_INTERVAL,
     CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
+    CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
     INT_CONFIG_VALUE_COUNT
 };
 
@@ -738,6 +737,9 @@ class World
         bool GetEventKill() const { return isEventKillStart; }
 
         bool isEventKillStart;
+
+        uint32 GetCleaningFlags() { return m_CleaningFlags; }
+        void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
@@ -754,6 +756,8 @@ class World
         static uint8 m_ExitCode;
         uint32 m_ShutdownTimer;
         uint32 m_ShutdownMask;
+
+        uint32 m_CleaningFlags;
 
         bool m_isClosed;
 
@@ -832,6 +836,6 @@ class World
 
 extern uint32 realmID;
 
-#define sWorld (*ACE_Singleton<World, ACE_Null_Mutex>::instance())
+#define sWorld ACE_Singleton<World, ACE_Null_Mutex>::instance()
 #endif
 /// @}

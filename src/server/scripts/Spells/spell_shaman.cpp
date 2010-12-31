@@ -36,6 +36,50 @@ enum ShamanSpells
     SHAMAN_TOTEM_SPELL_EARTHEN_POWER    = 59566,//Spell witch remove snare effect
 };
 
+// 51474 - Astral shift
+class spell_sha_astral_shift : public SpellScriptLoader
+{
+public:
+    spell_sha_astral_shift() : SpellScriptLoader("spell_sha_astral_shift") { }
+
+    class spell_sha_astral_shift_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_sha_astral_shift_AuraScript);
+
+        uint32 absorbPct;
+
+        bool Load()
+        {
+            absorbPct = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_0, GetCaster());
+            return true;
+        }
+
+        void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & canBeRecalculated)
+        {
+            // Set absorbtion amount to unlimited
+            amount = -1;
+        }
+
+        void Absorb(AuraEffect * /*aurEff*/, DamageInfo & dmgInfo, uint32 & absorbAmount)
+        {
+            // reduces all damage taken while stun, fear or silence
+            if (GetTarget()->GetUInt32Value(UNIT_FIELD_FLAGS) & (UNIT_FLAG_STUNNED | UNIT_FLAG_FLEEING | UNIT_FLAG_SILENCED))
+                absorbAmount = CalculatePctN(dmgInfo.GetDamage(), absorbPct);
+        }
+
+        void Register()
+        {
+             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_sha_astral_shift_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+             OnEffectAbsorb += AuraEffectAbsorbFn(spell_sha_astral_shift_AuraScript::Absorb, EFFECT_0);
+        }
+    };
+
+    AuraScript *GetAuraScript() const
+    {
+        return new spell_sha_astral_shift_AuraScript();
+    }
+};
+
 // 1535 Fire Nova
 class spell_sha_fire_nova : public SpellScriptLoader
 {
@@ -49,11 +93,11 @@ public:
         {
             if (!sSpellStore.LookupEntry(SHAMAN_SPELL_FIRE_NOVA_R1))
                 return false;
-            if (sSpellMgr.GetFirstSpellInChain(SHAMAN_SPELL_FIRE_NOVA_R1) != sSpellMgr.GetFirstSpellInChain(spellEntry->Id))
+            if (sSpellMgr->GetFirstSpellInChain(SHAMAN_SPELL_FIRE_NOVA_R1) != sSpellMgr->GetFirstSpellInChain(spellEntry->Id))
                 return false;
 
-            uint8 rank = sSpellMgr.GetSpellRank(spellEntry->Id);
-            if (!sSpellMgr.GetSpellWithRank(SHAMAN_SPELL_FIRE_NOVA_TRIGGERED_R1, rank, true))
+            uint8 rank = sSpellMgr->GetSpellRank(spellEntry->Id);
+            if (!sSpellMgr->GetSpellWithRank(SHAMAN_SPELL_FIRE_NOVA_TRIGGERED_R1, rank, true))
                 return false;
             return true;
         }
@@ -62,8 +106,8 @@ public:
         {
             if (Unit* caster = GetCaster())
             {
-                uint8 rank = sSpellMgr.GetSpellRank(GetSpellInfo()->Id);
-                uint32 spellId = sSpellMgr.GetSpellWithRank(SHAMAN_SPELL_FIRE_NOVA_TRIGGERED_R1, rank);
+                uint8 rank = sSpellMgr->GetSpellRank(GetSpellInfo()->Id);
+                uint32 spellId = sSpellMgr->GetSpellWithRank(SHAMAN_SPELL_FIRE_NOVA_TRIGGERED_R1, rank);
                 // fire slot
                 if (spellId && caster->m_SummonSlot[1])
                 {
@@ -154,9 +198,9 @@ public:
             return true;
         }
 
-        void HandleEffectPeriodic(AuraEffect const * aurEff, AuraApplication const * aurApp)
+        void HandleEffectPeriodic(AuraEffect const * aurEff)
         {
-            Unit* target = aurApp->GetTarget();
+            Unit* target = GetTarget();
             if (Unit *caster = aurEff->GetBase()->GetCaster())
                 if (AuraEffect* aur = caster->GetDummyAuraEffect(SPELLFAMILY_SHAMAN, 2289, 0))
                     if (roll_chance_i(aur->GetBaseAmount()))
@@ -174,8 +218,10 @@ public:
         return new spell_sha_earthbind_totem_AuraScript();
     }
 };
+
 void AddSC_shaman_spell_scripts()
 {
+    new spell_sha_astral_shift();
     new spell_sha_fire_nova();
     new spell_sha_mana_tide_totem();
     new spell_sha_earthbind_totem();

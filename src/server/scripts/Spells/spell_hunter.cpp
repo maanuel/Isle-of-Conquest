@@ -275,7 +275,9 @@ public:
             {
                 SpellEntry const *spellInfo = sSpellStore.LookupEntry(itr->first);
 
-                if (spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER &&
+                ///! If spellId in cooldown map isn't valid, the above will return a null pointer.
+                if (spellInfo &&
+                    spellInfo->SpellFamilyName == SPELLFAMILY_HUNTER &&
                     spellInfo->Id != HUNTER_SPELL_READINESS &&
                     spellInfo->Id != HUNTER_SPELL_BESTIAL_WRATH &&
                     GetSpellRecoveryTime(spellInfo) > 0)
@@ -355,14 +357,14 @@ public:
             return true;
         }
 
-        void HandlePeriodic(AuraEffect const * aurEff, AuraApplication const * aurApp)
+        void HandlePeriodic(AuraEffect const * aurEff)
         {
             PreventDefaultAction();
             if (aurEff->GetAmount() > 0)
                 return;
 
             uint32 spellId = SPELL_SNIPER_TRAINING_BUFF_R1 + GetId() - SPELL_SNIPER_TRAINING_R1;
-            Unit * pTarget = aurApp->GetTarget();
+            Unit * pTarget = GetTarget();
             if (!pTarget->HasAura(spellId))
             {
                 SpellEntry const * triggeredSpellInfo = sSpellStore.LookupEntry(spellId);

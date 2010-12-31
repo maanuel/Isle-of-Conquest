@@ -392,7 +392,7 @@ class boss_deathbringer_saurfang : public CreatureScript
 
                 events.Update(diff);
 
-                if (me->hasUnitState(UNIT_STAT_CASTING))
+                if (me->HasUnitState(UNIT_STAT_CASTING))
                     return;
 
                 while (uint32 eventId = events.ExecuteEvent())
@@ -426,10 +426,10 @@ class boss_deathbringer_saurfang : public CreatureScript
                             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_OOC_NOT_ATTACKABLE);
                             break;
                         case EVENT_SUMMON_BLOOD_BEAST:
-                            for (uint8 i10 = 0; i10 < 2; ++i10)
+                            for (uint32 i10 = 0; i10 < 2; ++i10)
                                 DoCast(me, SPELL_SUMMON_BLOOD_BEAST+i10);
                             if (Is25ManRaid())
-                                for (uint8 i25 = 0; i25 < 3; ++i25)
+                                for (uint32 i25 = 0; i25 < 3; ++i25)
                                     DoCast(me, SPELL_SUMMON_BLOOD_BEAST_25_MAN+i25);
                             Talk(SAY_BLOOD_BEASTS);
                             events.ScheduleEvent(EVENT_SUMMON_BLOOD_BEAST, 40000, 0, PHASE_COMBAT);
@@ -524,9 +524,9 @@ class boss_deathbringer_saurfang : public CreatureScript
             }
 
         private:
+            uint32 fallenChampionCount;
             bool introDone;
             bool frenzy;   // faster than iterating all auras to find Frenzy
-            uint32 fallenChampionCount;
         };
 
         CreatureAI* GetAI(Creature* creature) const
@@ -969,7 +969,7 @@ class spell_deathbringer_blood_link_aura : public SpellScriptLoader
                 return true;
             }
 
-            void HandlePeriodicTick(AuraEffect const* /*aurEff*/, AuraApplication const* /*aurApp*/)
+            void HandlePeriodicTick(AuraEffect const* /*aurEff*/)
             {
                 PreventDefaultAction();
                 if (GetUnitOwner()->getPowerType() == POWER_ENERGY && GetUnitOwner()->GetPower(POWER_ENERGY) == GetUnitOwner()->GetMaxPower(POWER_ENERGY))
@@ -1016,14 +1016,14 @@ class spell_deathbringer_blood_power : public SpellScriptLoader
 
             void RecalculateHook(AuraEffect const* /*aurEffect*/, int32& amount, bool& canBeRecalculated)
             {
-                amount = GetUnitOwner()->GetPower(POWER_ENERGY);
+                amount = int32(GetUnitOwner()->GetPower(POWER_ENERGY));
                 canBeRecalculated = true;
             }
 
             void Register()
             {
-                OnEffectCalcAmount += AuraEffectCalcAmountFn(spell_deathbringer_blood_power_AuraScript::RecalculateHook, EFFECT_0, SPELL_AURA_MOD_SCALE);
-                OnEffectCalcAmount += AuraEffectCalcAmountFn(spell_deathbringer_blood_power_AuraScript::RecalculateHook, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_deathbringer_blood_power_AuraScript::RecalculateHook, EFFECT_0, SPELL_AURA_MOD_SCALE);
+                DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_deathbringer_blood_power_AuraScript::RecalculateHook, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
             }
 
             bool Load()

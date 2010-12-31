@@ -39,6 +39,82 @@ enum PaladinSpells
     SPELL_BLESSING_OF_LOWER_CITY_SHAMAN          = 37881,
 };
 
+// 31850 - Ardent Defender
+class spell_pal_ardent_defender : public SpellScriptLoader
+{
+public:
+    spell_pal_ardent_defender() : SpellScriptLoader("spell_pal_ardent_defender") { }
+
+    class spell_pal_ardent_defender_AuraScript : public AuraScript
+    {
+        PrepareAuraScript(spell_pal_ardent_defender_AuraScript);
+
+        uint32 absorbPct, healPct;
+
+        enum Spell
+        {
+            PAL_SPELL_ARDENT_DEFENDER_HEAL = 66235,
+        };
+
+        bool Load()
+        {
+            healPct = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_1);
+            absorbPct = SpellMgr::CalculateSpellEffectAmount(GetSpellProto(), EFFECT_0);
+            return GetUnitOwner()->ToPlayer();
+        }
+
+        void CalculateAmount(AuraEffect const * /*aurEff*/, int32 & amount, bool & canBeRecalculated)
+        {
+            // Set absorbtion amount to unlimited
+            amount = -1;
+        }
+
+        void Absorb(AuraEffect * aurEff, DamageInfo & dmgInfo, uint32 & absorbAmount)
+        {
+            Unit * pVictim = GetTarget();
+            int32 remainingHealth = pVictim->GetHealth() - dmgInfo.GetDamage();
+            uint32 allowedHealth = pVictim->CountPctFromMaxHealth(35);
+            // If damage kills us
+            if (remainingHealth <= 0 && !pVictim->ToPlayer()->HasSpellCooldown(PAL_SPELL_ARDENT_DEFENDER_HEAL))
+            {
+                // Cast healing spell, completely avoid damage
+                absorbAmount = dmgInfo.GetDamage();
+
+                uint32 defenseSkillValue = pVictim->GetDefenseSkillValue();
+                // Max heal when defense skill denies critical hits from raid bosses
+                // Formula: max defense at level + 140 (raiting from gear)
+                uint32 reqDefForMaxHeal  = pVictim->getLevel() * 5 + 140;
+                float pctFromDefense = (defenseSkillValue >= reqDefForMaxHeal)
+                    ? 1.0f
+                    : float(defenseSkillValue) / float(reqDefForMaxHeal);
+
+                int32 healAmount = int32(pVictim->CountPctFromMaxHealth(uint32(healPct * pctFromDefense)));
+                pVictim->CastCustomSpell(pVictim, PAL_SPELL_ARDENT_DEFENDER_HEAL, &healAmount, NULL, NULL, true, NULL, aurEff);
+                pVictim->ToPlayer()->AddSpellCooldown(PAL_SPELL_ARDENT_DEFENDER_HEAL, 0, time(NULL) + 120);
+            }
+            else if (remainingHealth < int32(allowedHealth))
+            {
+                // Reduce damage that brings us under 35% (or full damage if we are already under 35%) by x%
+                uint32 damageToReduce = (pVictim->GetHealth() < allowedHealth)
+                    ? dmgInfo.GetDamage()
+                    : allowedHealth - remainingHealth;
+                absorbAmount = CalculatePctN(damageToReduce, absorbPct);
+            }
+        }
+
+        void Register()
+        {
+             DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_pal_ardent_defender_AuraScript::CalculateAmount, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB);
+             OnEffectAbsorb += AuraEffectAbsorbFn(spell_pal_ardent_defender_AuraScript::Absorb, EFFECT_0);
+        }
+    };
+
+    AuraScript *GetAuraScript() const
+    {
+        return new spell_pal_ardent_defender_AuraScript();
+    }
+};
+
 class spell_pal_blessing_of_faith : public SpellScriptLoader
 {
 public:
@@ -108,16 +184,16 @@ public:
             return true;
         }
 
-        void HandleEffectApply(AuraEffect const * /*aurEff*/, AuraApplication const * aurApp, AuraEffectHandleModes /*mode*/)
+        void HandleEffectApply(AuraEffect const * /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
-            Unit* pTarget = aurApp->GetTarget();
+            Unit* pTarget = GetTarget();
             if (Unit* pCaster = GetCaster())
                 pCaster->CastSpell(pTarget, PALADIN_SPELL_BLESSING_OF_SANCTUARY_BUFF, true);
         }
 
-        void HandleEffectRemove(AuraEffect const * /*aurEff*/, AuraApplication const * aurApp, AuraEffectHandleModes /*mode*/)
+        void HandleEffectRemove(AuraEffect const * /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
-            Unit* pTarget = aurApp->GetTarget();
+            Unit* pTarget = GetTarget();
             pTarget->RemoveAura(PALADIN_SPELL_BLESSING_OF_SANCTUARY_BUFF, GetCasterGUID());
         }
 
@@ -183,13 +259,13 @@ public:
                 return false;
 
             // can't use other spell than holy shock due to spell_ranks dependency
-            if (sSpellMgr.GetFirstSpellInChain(PALADIN_SPELL_HOLY_SHOCK_R1) != sSpellMgr.GetFirstSpellInChain(spellEntry->Id))
+            if (sSpellMgr->GetFirstSpellInChain(PALADIN_SPELL_HOLY_SHOCK_R1) != sSpellMgr->GetFirstSpellInChain(spellEntry->Id))
                 return false;
 
-            uint8 rank = sSpellMgr.GetSpellRank(spellEntry->Id);
-            if (!sSpellMgr.GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_DAMAGE, rank, true))
+            uint8 rank = sSpellMgr->GetSpellRank(spellEntry->Id);
+            if (!sSpellMgr->GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_DAMAGE, rank, true))
                 return false;
-            if (!sSpellMgr.GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_HEALING, rank, true))
+            if (!sSpellMgr->GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_HEALING, rank, true))
                 return false;
 
             return true;
@@ -201,12 +277,12 @@ public:
             {
                 Unit *caster = GetCaster();
 
-                uint8 rank = sSpellMgr.GetSpellRank(GetSpellInfo()->Id);
+                uint8 rank = sSpellMgr->GetSpellRank(GetSpellInfo()->Id);
 
                 if (caster->IsFriendlyTo(unitTarget))
-                    caster->CastSpell(unitTarget, sSpellMgr.GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_HEALING, rank), true, 0);
+                    caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_HEALING, rank), true, 0);
                 else
-                    caster->CastSpell(unitTarget, sSpellMgr.GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_DAMAGE, rank), true, 0);
+                    caster->CastSpell(unitTarget, sSpellMgr->GetSpellWithRank(PALADIN_SPELL_HOLY_SHOCK_R1_DAMAGE, rank), true, 0);
             }
         }
 
@@ -253,6 +329,7 @@ public:
 
 void AddSC_paladin_spell_scripts()
 {
+    new spell_pal_ardent_defender();
     new spell_pal_blessing_of_faith();
     new spell_pal_blessing_of_sanctuary();
     new spell_pal_guarded_by_the_light();

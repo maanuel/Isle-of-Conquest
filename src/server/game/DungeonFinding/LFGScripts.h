@@ -26,7 +26,7 @@
 class Player;
 class Group;
 
-class LFGScripts: public GroupScript, PlayerScript
+class LFGScripts: public GroupScript, public PlayerScript
 {
     public:
         LFGScripts();
@@ -42,4 +42,5 @@ class LFGScripts: public GroupScript, PlayerScript
         void OnLevelChanged(Player* player, uint8 newLevel);
         void OnLogout(Player* player);
         void OnLogin(Player* player);
+        void OnBindToInstance(Player* player, Difficulty difficulty, uint32 mapId, bool permanent);
 };

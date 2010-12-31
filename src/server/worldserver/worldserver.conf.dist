@@ -206,13 +206,6 @@ MaxOverspeedPings = 2
 GridUnload = 1
 
 #
-#    SocketSelectTime
-#        Description: Time (in milliseconds) for socket selection.
-#        Default:     10000 - (10 seconds)
-
-SocketSelectTime = 10000
-
-#
 #    SocketTimeOutTime
 #        Description: Time (in milliseconds) after which a connection being idle on the character
 #                     selection screen is disconnected.
@@ -384,6 +377,17 @@ MapUpdate.Threads = 1
 #                     1 - (Enable)
 
 CleanCharacterDB = 0
+
+#
+#    PersistentCharacterCleanFlags
+#        Description: Determines the character clean flags that remain set after cleanups.
+#                     This is a bitmask value, check /doc/CharacterDBCleanup.txt for more
+#                     information.
+#        Example:     14 - (Cleaning up skills, talents and spells will remain enabled after the
+#                           next cleanup)
+#        Default:     0  - (All cleanup methods will be disabled after the next cleanup)
+
+PersistentCharacterCleanFlags = 0
 
 #
 ###################################################################################################

@@ -160,7 +160,7 @@ public:
 
             events.Update(diff);
 
-            if (me->hasUnitState(UNIT_STAT_CASTING))
+            if (me->HasUnitState(UNIT_STAT_CASTING))
                 return;
 
             while (uint32 eventId = events.ExecuteEvent())
@@ -237,7 +237,7 @@ public:
 
             events.Update(diff);
 
-            if (me->hasUnitState(UNIT_STAT_CASTING))
+            if (me->HasUnitState(UNIT_STAT_CASTING))
                 return;
 
             while (uint32 eventId = events.ExecuteEvent())
@@ -314,26 +314,26 @@ class spell_tyrannus_overlord_brand : public SpellScriptLoader
         {
             PrepareAuraScript(spell_tyrannus_overlord_brand_AuraScript);
 
-            void OnApply(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (aurApp->GetTarget()->GetTypeId() != TYPEID_PLAYER)
+                if (GetTarget()->GetTypeId() != TYPEID_PLAYER)
                     return;
 
-                oldAI = aurApp->GetTarget()->GetAI();
-                aurApp->GetTarget()->SetAI(new player_overlord_brandAI(aurApp->GetTarget()->ToPlayer()));
-                aurApp->GetTarget()->GetAI()->SetGUID(GetCasterGUID());
-                oldAIState = aurApp->GetTarget()->IsAIEnabled;
-                aurApp->GetTarget()->IsAIEnabled = true;
+                oldAI = GetTarget()->GetAI();
+                GetTarget()->SetAI(new player_overlord_brandAI(GetTarget()->ToPlayer()));
+                GetTarget()->GetAI()->SetGUID(GetCasterGUID());
+                oldAIState = GetTarget()->IsAIEnabled;
+                GetTarget()->IsAIEnabled = true;
             }
 
-            void OnRemove(AuraEffect const* /*aurEff*/, AuraApplication const* aurApp, AuraEffectHandleModes /*mode*/)
+            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
-                if (aurApp->GetTarget()->GetTypeId() != TYPEID_PLAYER)
+                if (GetTarget()->GetTypeId() != TYPEID_PLAYER)
                     return;
 
-                delete aurApp->GetTarget()->GetAI();
-                aurApp->GetTarget()->SetAI(oldAI);
-                aurApp->GetTarget()->IsAIEnabled = oldAIState;
+                delete GetTarget()->GetAI();
+                GetTarget()->SetAI(oldAI);
+                GetTarget()->IsAIEnabled = oldAIState;
             }
 
             void Register()
