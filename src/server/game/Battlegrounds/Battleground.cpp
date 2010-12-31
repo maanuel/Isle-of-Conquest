@@ -618,7 +618,7 @@ void Battleground::RemoveAuraOnTeam(uint32 SpellID, uint32 TeamID)
     {
         if (itr->second.OfflineRemoveTime)
             continue;
-        Player *plr = sObjectMgr.GetPlayer(itr->first);
+        Player *plr = sObjectMgr->GetPlayer(itr->first);
 
         if (!plr)
         {

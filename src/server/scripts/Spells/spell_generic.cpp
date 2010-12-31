@@ -642,9 +642,9 @@ class spell_gen_parachute_ic : public SpellScriptLoader
         {
             PrepareAuraScript(spell_gen_parachute_icAuraScript)
 
-            void HandleTriggerSpell(AuraEffect const * /*aurEff*/, AuraApplication const * aurApp)
+            void HandleTriggerSpell(AuraEffect const * /*aurEff*/)
             {
-                Unit* target = aurApp->GetTarget();
+                Unit* target = GetTarget();
 
                 if (!target->ToPlayer())
                     return;

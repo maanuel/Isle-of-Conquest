@@ -2385,11 +2385,8 @@ void Player::ResetAllPowers()
         case POWER_RUNIC_POWER:
             SetPower(POWER_RUNIC_POWER, 0);
             break;
-<<<<<<< HEAD
-=======
         default:
             break;
->>>>>>> 1b18a0ac65f4f7a1aff21970fa3f14bb55ebce0b
     }
 }
 
@@ -3761,11 +3758,7 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
     else
     {
         // not ranked skills
-<<<<<<< HEAD
-        SkillLineAbilityMapBounds bounds = sSpellMgr.GetSkillLineAbilityMapBounds(spell_id);
-=======
         SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spell_id);
->>>>>>> 1b18a0ac65f4f7a1aff21970fa3f14bb55ebce0b
 
         for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
         {
@@ -15594,11 +15587,7 @@ void Player::CastedCreatureOrGO(uint32 entry, uint64 guid, uint32 spell_id)
                             reqTarget = qInfo->ReqCreatureOrGOId[j];
                             if (reqTarget != entry) // if entry doesn't match, check for killcredits referenced in template
                             {
-<<<<<<< HEAD
-                                CreatureInfo const *cinfo = sObjectMgr.GetCreatureTemplate(entry);
-=======
                                 CreatureInfo const *cinfo = ObjectMgr::GetCreatureTemplate(entry);
->>>>>>> 1b18a0ac65f4f7a1aff21970fa3f14bb55ebce0b
                                 for (uint8 i = 0; i < MAX_KILL_CREDIT; ++i)
                                     if (cinfo->KillCredit[i] == reqTarget)
                                         entry = cinfo->KillCredit[i];
