@@ -1434,7 +1434,7 @@ bool Battleground::AddObject(uint32 type, uint32 entry, float x, float y, float 
         {
             // should we use an assert?
             sLog->outError("Battleground::AddObject: Failed spawning gameobject (type %u). The vector needs more capacity, you must resize it!");
-            return NULL;
+            return false;
         }
     }
 
