@@ -213,6 +213,8 @@ void BattlegroundIC::Update(uint32 diff)
                 UpdateNodeWorldState(&nodePoint[i]);
                 HandleCapturedNodes(&nodePoint[i],false); 
 
+                SendMessage2ToAll(LANG_BG_IC_TEAM_HAS_TAKEN_NODE,CHAT_MSG_BG_SYSTEM_NEUTRAL,NULL,(nodePoint[i].faction == TEAM_ALLIANCE ? LANG_BG_IC_ALLIANCE : LANG_BG_IC_HORDE),nodePoint[i].string);
+                
                 nodePoint[i].needChange = false;
                 nodePoint[i].timer = 60000;
             } else nodePoint[i].timer -= diff;
@@ -417,11 +419,13 @@ void BattlegroundIC::HandleKillPlayer(Player* player, Player* killer)
 
     // we must end the battleground
     if (factionReinforcements[player->GetTeamId()] < 1)
-        EndBattleground(killer->GetTeamId());
+        EndBattleground(killer->GetTeam());
 }
 
 void BattlegroundIC::EndBattleground(uint32 winner)
 {
+    SendMessage2ToAll(LANG_BG_IC_TEAM_WINS,CHAT_MSG_BG_SYSTEM_NEUTRAL,NULL, (winner == ALLIANCE ? LANG_BG_IC_ALLIANCE : LANG_BG_IC_HORDE));
+
     Battleground::EndBattleground(winner);
 }
 
@@ -491,10 +495,14 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                         DelObject(u);
                 }
 
+                 SendMessage2ToAll(LANG_BG_IC_TEAM_ASSAULTED_NODE_1,CHAT_MSG_BG_SYSTEM_NEUTRAL,player,nodePoint->string);
+                 SendMessage2ToAll(LANG_BG_IC_TEAM_ASSAULTED_NODE_2,CHAT_MSG_BG_SYSTEM_NEUTRAL,player,nodePoint->string, (player->GetTeamId() == TEAM_ALLIANCE ? LANG_BG_IC_ALLIANCE : LANG_BG_IC_HORDE));
+
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
                 nodePoint[i].needChange = false;
+                SendMessage2ToAll(LANG_BG_IC_TEAM_DEFENDED_NODE,CHAT_MSG_BG_SYSTEM_NEUTRAL,player,nodePoint->string);
                 HandleCapturedNodes(&nodePoint[i],true); 
             }
 
@@ -770,8 +778,30 @@ void BattlegroundIC::DestroyGate(Player* pl, GameObject* go, uint32 destroyedEve
         UpdateWorldState(uws_open, 1);
     }
     DoorOpen((pl->GetTeamId() == TEAM_ALLIANCE ? BG_IC_GO_HORDE_KEEP_PORTCULLIS : BG_IC_GO_DOODAD_PORTCULLISACTIVE02));
-}
 
+    uint32 lang_entry = 0;
+   
+    switch(go->GetEntry())
+    {
+        case GO_HORDE_GATE_1:
+            lang_entry = LANG_BG_IC_NORTH_GATE_DESTROYED;
+        case GO_HORDE_GATE_2:
+        case GO_ALLIANCE_GATE_1:
+            lang_entry = LANG_BG_IC_WEST_GATE_DESTROYED;
+            break;
+        case GO_HORDE_GATE_3:
+        case GO_ALLIANCE_GATE_2:
+            lang_entry = LANG_BG_IC_EAST_GATE_DESTROYED;
+            break;
+        case GO_ALLIANCE_GATE_3:
+            lang_entry = LANG_BG_IC_SOUTH_GATE_DESTROYED;
+            break;
+    default:
+        break;
+    }
+
+    SendMessage2ToAll(lang_entry,CHAT_MSG_BG_SYSTEM_NEUTRAL,NULL,(pl->GetTeamId() == ALLIANCE ? LANG_BG_IC_HORDE_KEEP : LANG_BG_IC_ALLIANCE_KEEP));
+}
 
 void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)
 {
