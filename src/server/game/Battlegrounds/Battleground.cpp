@@ -1433,7 +1433,7 @@ bool Battleground::AddObject(uint32 type, uint32 entry, float x, float y, float 
         if (m_BgObjects.size()+1 > m_BgObjects.capacity())
         {
             // should we use an assert?
-            sLog->outError("Battleground::AddObject: Failed spawning gameobject (type %u). The vector needs more capacity, you must resize it!");
+            sLog->outError("Battleground::AddObject: Failed spawning gameobject (type %u). The vector needs more capacity, you must resize it!",type);
             return false;
         }
     }
@@ -1570,7 +1570,7 @@ Creature* Battleground::AddCreature(uint32 entry, uint32 type, uint32 teamval, f
         if (m_BgCreatures.size()+1 > m_BgCreatures.capacity())
         {
             // should we use an assert?
-            sLog->outError("Battleground::AddCreature: Failed spawning creature (type %u). The vector needs more capacity, you must resize it!");
+            sLog->outError("Battleground::AddCreature: Failed spawning creature (type %u). The vector needs more capacity, you must resize it!",type);
             return NULL;
         }
     }
