@@ -1427,6 +1427,17 @@ void Battleground::RemovePlayerFromResurrectQueue(uint64 player_guid)
 
 bool Battleground::AddObject(uint32 type, uint32 entry, float x, float y, float z, float o, float rotation0, float rotation1, float rotation2, float rotation3, uint32 /*respawnTime*/)
 {
+    // if it is something new
+    if (!m_BgObjects[type])
+    {
+        if (m_BgObjects.size()+1 > m_BgObjects.capacity())
+        {
+            // should we use an assert?
+            sLog->outError("Battleground::AddObject: Failed spawning gameobject (type %u). The vector needs more capacity, you must resize it!");
+            return NULL;
+        }
+    }
+
     Map *map = GetBgMap();
     if (!map)
         return false;
@@ -1553,6 +1564,17 @@ void Battleground::SpawnBGObject(uint32 type, uint32 respawntime)
 
 Creature* Battleground::AddCreature(uint32 entry, uint32 type, uint32 teamval, float x, float y, float z, float o, uint32 respawntime)
 {
+    // if it is something new
+    if (!m_BgCreatures[type])
+    {
+        if (m_BgCreatures.size()+1 > m_BgCreatures.capacity())
+        {
+            // should we use an assert?
+            sLog->outError("Battleground::AddCreature: Failed spawning creature (type %u). The vector needs more capacity, you must resize it!");
+            return NULL;
+        }
+    }
+
     Map * map = GetBgMap();
     if (!map)
         return NULL;
