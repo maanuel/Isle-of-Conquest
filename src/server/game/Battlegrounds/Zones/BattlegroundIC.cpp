@@ -800,7 +800,7 @@ void BattlegroundIC::DestroyGate(Player* pl, GameObject* go, uint32 destroyedEve
         break;
     }
 
-    SendMessage2ToAll(lang_entry,CHAT_MSG_BG_SYSTEM_NEUTRAL,NULL,(pl->GetTeamId() == ALLIANCE ? LANG_BG_IC_HORDE_KEEP : LANG_BG_IC_ALLIANCE_KEEP));
+    SendMessage2ToAll(lang_entry,CHAT_MSG_BG_SYSTEM_NEUTRAL,NULL,(pl->GetTeamId() == TEAM_ALLIANCE ? LANG_BG_IC_HORDE_KEEP : LANG_BG_IC_ALLIANCE_KEEP));
 }
 
 void BattlegroundIC::EventPlayerDamagedGO(Player* /*plr*/, GameObject* go, uint8 hitType, uint32 destroyedEvent)
