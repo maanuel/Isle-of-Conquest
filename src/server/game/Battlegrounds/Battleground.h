@@ -208,7 +208,10 @@ enum ScoreType
     SCORE_SECONDARY_OBJECTIVES  = 17,
     //SOTA
     SCORE_DESTROYED_DEMOLISHER  = 18,
-    SCORE_DESTROYED_WALL        = 19
+    SCORE_DESTROYED_WALL        = 19,
+    //IC
+    SCORE_BASE_ASSAULTED        = 20,
+    SCORE_BASE_DEFENDED         = 21
 };
 
 enum ArenaType

@@ -302,7 +302,18 @@ void BattlegroundIC::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
     if (itr == m_PlayerScores.end())                         // player not found...
         return;
 
-    Battleground::UpdatePlayerScore(Source,type,value, doAddHonor);
+    switch(type)
+    {
+        case SCORE_BASE_ASSAULTED:
+            ((BattlegroundICScore*)itr->second)->BasesAssaulted += value;
+            break;
+        case SCORE_BASE_DEFENDED:
+            ((BattlegroundICScore*)itr->second)->BasesDefended += value;
+            break;
+        default:
+            Battleground::UpdatePlayerScore(Source,type,value, doAddHonor);
+            break;
+    }
 }
 
 void BattlegroundIC::FillInitialWorldStates(WorldPacket& data)
@@ -490,12 +501,14 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                     for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_1; u++)
                         DelObject(u);
                 }
+                UpdatePlayerScore(player, SCORE_BASE_ASSAULTED, 1);
 
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
                 nodePoint[i].needChange = false;
                 HandleCapturedNodes(&nodePoint[i],true); 
+                UpdatePlayerScore(player, SCORE_BASE_DEFENDED, 1);
             }
 
             GameObject* banner = GetBGObject(nodePoint[i].gameobject_type);

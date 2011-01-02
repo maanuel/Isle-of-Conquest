@@ -798,8 +798,10 @@ const ICNodePoint nodePointInitial[7] =
 class BattlegroundICScore : public BattlegroundScore
 {
     public:
-        BattlegroundICScore() {};
+        BattlegroundICScore() : BasesAssaulted(0), BasesDefended(0) {};
         virtual ~BattlegroundICScore() {};
+        uint32 BasesAssaulted;
+        uint32 BasesDefended;
 };
 
 class BattlegroundIC : public Battleground
