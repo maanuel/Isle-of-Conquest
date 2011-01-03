@@ -131,6 +131,23 @@ class achievement_bg_ic_resource_glut : public AchievementCriteriaScript
         }
 };
 
+class achievement_bg_ic_glaive_grave : public AchievementCriteriaScript
+{
+    public:
+        achievement_bg_ic_glaive_grave() : AchievementCriteriaScript("achievement_bg_ic_glaive_grave") { }
+
+        bool OnCheck(Player* source, Unit* target)
+        {
+            if (Creature* vehicle = source->GetVehicleCreatureBase())
+            {
+                if (vehicle->GetEntry() == 35273 || vehicle->GetEntry() == 34802)
+                    return true;
+            }
+
+            return false;
+        }
+};
+
 void AddSC_achievement_scripts()
 {
     new achievement_school_of_hard_knocks();
@@ -139,4 +156,5 @@ void AddSC_achievement_scripts()
     new achievement_bg_control_all_nodes();
     new achievement_save_the_day();
     new achievement_bg_ic_resource_glut();
+    new achievement_bg_ic_glaive_grave();
 }
