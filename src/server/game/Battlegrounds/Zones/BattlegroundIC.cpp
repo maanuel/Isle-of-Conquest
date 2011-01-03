@@ -276,6 +276,19 @@ void BattlegroundIC::StartingEventOpenDoors()
     }
 }
 
+bool BattlegroundIC::IsAllNodesConrolledByTeam(uint32 team) const
+{
+    uint32 count = 0;
+    ICNodeState controlledState = team == ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H;
+    for (int i = 0; i < NODE_TYPE_WORKSHOP; ++i)
+    {
+        if (nodePoint[i].nodeState == controlledState)
+            count++;
+    }
+
+    return count == NODE_TYPE_WORKSHOP;
+}
+
 void BattlegroundIC::AddPlayer(Player *plr)
 {
     Battleground::AddPlayer(plr);

@@ -843,6 +843,8 @@ class BattlegroundIC : public Battleground
         virtual void HandlePlayerResurrect(Player* player);
 
         uint32 GetNodeState(uint8 nodeType) { return (uint8)nodePoint[nodeType].nodeState; }
+
+        bool IsAllNodesConrolledByTeam(uint32 team) const;  // overwrited
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;
