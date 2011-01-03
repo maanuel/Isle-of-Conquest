@@ -287,7 +287,7 @@ void BattlegroundIC::AddPlayer(Player *plr)
     if (nodePoint[NODE_TYPE_QUARRY].nodeState == (plr->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
         plr->CastSpell(plr,SPELL_QUARRY,true);
 
-    if (nodePoint[NODE_TYPE_REFINERY].faction == (plr->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
+    if (nodePoint[NODE_TYPE_REFINERY].nodeState == (plr->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
         plr->CastSpell(plr,SPELL_OIL_REFINERY,true);
 
     SendTransportInit(plr);
