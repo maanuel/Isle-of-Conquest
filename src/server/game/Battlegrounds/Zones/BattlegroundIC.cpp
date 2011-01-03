@@ -60,6 +60,15 @@ BattlegroundIC::~BattlegroundIC()
 
 }
 
+void BattlegroundIC::HandlePlayerResurrect(Player* player)
+{
+    if (nodePoint[NODE_TYPE_QUARRY].nodeState == (player->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
+        player->CastSpell(player,SPELL_QUARRY,true);
+
+    if (nodePoint[NODE_TYPE_REFINERY].nodeState == (player->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
+        player->CastSpell(player,SPELL_OIL_REFINERY,true);
+}
+
 void BattlegroundIC::SendTransportInit(Player* player)
 {
     if (!gunshipAlliance || !gunshipHorde)
@@ -275,10 +284,10 @@ void BattlegroundIC::AddPlayer(Player *plr)
 
     m_PlayerScores[plr->GetGUID()] = sc;
 
-    if (nodePoint[NODE_TYPE_QUARRY].faction == plr->GetTeamId())
+    if (nodePoint[NODE_TYPE_QUARRY].nodeState == (plr->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
         plr->CastSpell(plr,SPELL_QUARRY,true);
 
-    if (nodePoint[NODE_TYPE_REFINERY].faction == plr->GetTeamId())
+    if (nodePoint[NODE_TYPE_REFINERY].faction == (plr->GetTeamId() == TEAM_ALLIANCE ? NODE_STATE_CONTROLLED_A : NODE_STATE_CONTROLLED_H))
         plr->CastSpell(plr,SPELL_OIL_REFINERY,true);
 
     SendTransportInit(plr);

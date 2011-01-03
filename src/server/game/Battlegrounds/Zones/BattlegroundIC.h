@@ -839,6 +839,10 @@ class BattlegroundIC : public Battleground
         void FillInitialWorldStates(WorldPacket& data);
 
         virtual void DoAction(uint32 action, uint64 var);
+
+        virtual void HandlePlayerResurrect(Player* player);
+
+        uint32 GetNodeState(uint8 nodeType) { return (uint8)nodePoint[nodeType].nodeState; }
     private:
         uint32 closeFortressDoors;
         bool doorsClosed;

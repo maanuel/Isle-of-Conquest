@@ -4809,6 +4809,12 @@ void Player::ResurrectPlayer(float restore_percent, bool applySickness)
     UpdateZone(newzone,newarea);
     sOutdoorPvPMgr->HandlePlayerResurrects(this, newzone);
 
+    if (InBattleground())
+    {
+        if (Battleground* bg = GetBattleground())
+            bg->HandlePlayerResurrect(this);
+    }
+
     // update visibility
     UpdateObjectVisibility();
 
