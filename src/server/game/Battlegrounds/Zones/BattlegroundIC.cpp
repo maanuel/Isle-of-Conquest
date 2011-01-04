@@ -421,7 +421,7 @@ bool BattlegroundIC::SetupBattleground()
     return true;
 }
 
-void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
+void BattlegroundIC::HandleKillUnit(Creature *unit, Player* killer)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
        return;
@@ -437,6 +437,10 @@ void BattlegroundIC::HandleKillUnit(Creature *unit, Player * /*killer*/)
         RewardHonorToTeam(500,ALLIANCE);
         EndBattleground(ALLIANCE);
     }
+
+    //Achievement Mowed Down
+    if (unit->IsVehicle())
+        killer->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, 68357);
 }
 
 void BattlegroundIC::HandleKillPlayer(Player* player, Player* killer)
