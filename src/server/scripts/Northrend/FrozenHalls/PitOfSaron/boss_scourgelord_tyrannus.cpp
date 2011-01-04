@@ -166,10 +166,10 @@ class boss_tyrannus : public CreatureScript
                 if (Creature* rimefang = GetRimefang())
                     rimefang->AI()->EnterEvadeMode();
 
-                me->ForcedDespawn();
+                me->DespawnOrUnsummon();
             }
 
-            void KilledUnit(Unit * victim)
+            void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
                     DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2), me);
@@ -204,7 +204,7 @@ class boss_tyrannus : public CreatureScript
 
                 while (uint32 eventId = events.ExecuteEvent())
                 {
-                    switch(eventId)
+                    switch (eventId)
                     {
                         case EVENT_INTRO_1:
                             //DoScriptText(SAY_GORKUN_INTRO_2, pGorkunOrVictus);
@@ -219,12 +219,11 @@ class boss_tyrannus : public CreatureScript
                         case EVENT_COMBAT_START:
                             if (Creature* rimefang = me->GetCreature(*me, instance->GetData64(DATA_RIMEFANG)))
                                 rimefang->AI()->DoAction(ACTION_START_RIMEFANG);    //set rimefang also infight
-
                             events.SetPhase(PHASE_COMBAT);
                             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             me->SetReactState(REACT_AGGRESSIVE);
                             DoCast(me, SPELL_FULL_HEAL);
-                            me->SetInCombatWithZone();
+                            DoZoneInCombat();
                             events.ScheduleEvent(EVENT_OVERLORD_BRAND, urand(5000, 7000));
                             events.ScheduleEvent(EVENT_FORCEFUL_SMASH, urand(14000, 16000));
                             events.ScheduleEvent(EVENT_MARK_OF_RIMEFANG, urand(25000, 27000));
@@ -246,9 +245,11 @@ class boss_tyrannus : public CreatureScript
                             break;
                         case EVENT_MARK_OF_RIMEFANG:
                             DoScriptText(SAY_MARK_RIMEFANG_1, me);
-                            DoScriptText(SAY_MARK_RIMEFANG_2, me);
-                            if (Unit* target = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 0.0f, true))
+                            {
+                                DoScriptText(SAY_MARK_RIMEFANG_2, me, target);
                                 DoCast(target, SPELL_MARK_OF_RIMEFANG);
+                            }
                             events.ScheduleEvent(EVENT_MARK_OF_RIMEFANG, urand(24000, 26000));
                             break;
                     }
@@ -297,7 +298,7 @@ class boss_rimefang : public CreatureScript
                 if (actionId == ACTION_START_RIMEFANG)
                 {
                     _events.SetPhase(PHASE_COMBAT);
-                    me->SetInCombatWithZone();
+                    DoZoneInCombat();
                     _events.ScheduleEvent(EVENT_MOVE_NEXT, 500, 0, PHASE_COMBAT);
                     _events.ScheduleEvent(EVENT_ICY_BLAST, 15000, 0, PHASE_COMBAT);
                 }
@@ -483,7 +484,7 @@ class at_tyrannus_event_starter : public AreaTriggerScript
                 return false;
 
             if (instance->GetBossState(DATA_TYRANNUS) != IN_PROGRESS || instance->GetBossState(DATA_TYRANNUS) != DONE)
-                if (Creature* tyrannus = Unit::GetCreature(*player, instance->GetData64(DATA_TYRANNUS)))
+                if (Creature* tyrannus = ObjectAccessor::GetCreature(*player, instance->GetData64(DATA_TYRANNUS)))
                 {
                     tyrannus->AI()->DoAction(ACTION_START_INTRO);
                     return true;

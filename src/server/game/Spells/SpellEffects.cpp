@@ -879,7 +879,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                     m_caster->SummonGameObject(179644, creatureTarget->GetPositionX(), creatureTarget->GetPositionY(), creatureTarget->GetPositionZ(), creatureTarget->GetOrientation(), 0, 0, 0, 0, uint32(creatureTarget->GetRespawnTime()-time(NULL)));
                     sLog->outDebug("SummonGameObject at SpellEfects.cpp EffectDummy for Spell 23019");
 
-                    creatureTarget->ForcedDespawn();
+                    creatureTarget->DespawnOrUnsummon();
 
                     return;
                 }
@@ -1044,7 +1044,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
                     if (!unitTarget || unitTarget->GetTypeId() != TYPEID_UNIT)
                         return;
 
-                    unitTarget->ToCreature()->ForcedDespawn();
+                    unitTarget->ToCreature()->DespawnOrUnsummon();
 
                     //cast spell Raptor Capture Credit
                     m_caster->CastSpell(m_caster, 42337, true, NULL);
@@ -3151,6 +3151,10 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
         if (!aurApp)
             continue;
 
+        // don't try to remove passive auras
+        if (aura->IsPassive())
+            continue;
+
         if ((1<<aura->GetSpellProto()->Dispel) & dispelMask)
         {
             if (aura->GetSpellProto()->Dispel == DISPEL_MAGIC)
@@ -3674,7 +3678,7 @@ void Spell::EffectTameCreature(SpellEffIndex /*effIndex*/)
         return;
 
     // "kill" original creature
-    creatureTarget->ForcedDespawn();
+    creatureTarget->DespawnOrUnsummon();
 
     uint8 level = (creatureTarget->getLevel() < (m_caster->getLevel() - 5)) ? (m_caster->getLevel() - 5) : creatureTarget->getLevel();
 
