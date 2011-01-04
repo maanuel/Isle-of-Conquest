@@ -95,8 +95,8 @@ void BattlegroundIC::DoAction(uint32 action, uint64 var)
     if (!plr || !gunshipAlliance || !gunshipHorde)
         return;
 
-    plr->AddAura(SPELL_PARACHUTE,plr);
-    plr->AddAura(SPELL_SLOW_FALL,plr);
+    plr->CastSpell(plr,SPELL_PARACHUTE,true);
+    plr->CastSpell(plr,SPELL_SLOW_FALL,true);
 
     plr->SetTransport(plr->GetTeamId() == TEAM_ALLIANCE ? gunshipAlliance : gunshipHorde);
     plr->m_movementInfo.t_pos.m_positionX = 7.305609f;
