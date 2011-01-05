@@ -11657,6 +11657,10 @@ void Unit::Unmount()
     SetUInt32Value(UNIT_FIELD_MOUNTDISPLAYID, 0);
     RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT);
 
+    WorldPacket data(SMSG_DISMOUNT, 8);
+    data.appendPackGUID(GetGUID());
+    SendMessageToSet(&data, true);
+
     // only resummon old pet if the player is already added to a map
     // this prevents adding a pet to a not created map which would otherwise cause a crash
     // (it could probably happen when logging in after a previous crash)
@@ -13301,6 +13305,9 @@ void Unit::RemoveFromWorld()
 
 void Unit::CleanupsBeforeDelete(bool finalCleanup)
 {
+    // This needs to be before RemoveFromWorld to make GetCaster() return a valid pointer on aura removal
+    InterruptNonMeleeSpells(true);
+
     if (IsInWorld())
         RemoveFromWorld();
 
@@ -13313,7 +13320,6 @@ void Unit::CleanupsBeforeDelete(bool finalCleanup)
     if (finalCleanup)
         m_cleanupDone = true;
 
-    InterruptNonMeleeSpells(true);
     m_Events.KillAllEvents(false);                      // non-delatable (currently casted spells) will not deleted now but it will deleted at call in Map::RemoveAllObjectsInRemoveList
     CombatStop();
     ClearComboPointHolders();
