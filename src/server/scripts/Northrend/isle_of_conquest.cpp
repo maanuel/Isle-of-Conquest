@@ -16,7 +16,6 @@
  */
 
 #include "ScriptPCH.h"
-#include "BattlegroundIC.h"
 
 // TO-DO: This should be done with SmartAI, but yet it does not correctly support vehicles's AIs.
 //        Even adding ReactState Passive we still have issues using SmartAI.
