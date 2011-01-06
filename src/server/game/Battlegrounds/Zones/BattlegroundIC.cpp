@@ -524,19 +524,11 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
                     if (m_BgCreatures[BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2])
                         DelCreature(BG_IC_NPC_SPIRIT_GUIDE_1+(nodePoint[i].nodeType)-2);
 
-                if (nodePoint[i].nodeType == NODE_TYPE_HANGAR)
-                {
-                    if (gunshipAlliance && gunshipHorde)
-                        (nodePoint[i].faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
-
-                    for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_1; u++)
-                        DelObject(u);
-                }
                 UpdatePlayerScore(player, SCORE_BASE_ASSAULTED, 1);
 
                 SendMessage2ToAll(LANG_BG_IC_TEAM_ASSAULTED_NODE_1,CHAT_MSG_BG_SYSTEM_NEUTRAL,player,nodePoint[i].string);
                 SendMessage2ToAll(LANG_BG_IC_TEAM_ASSAULTED_NODE_2,CHAT_MSG_BG_SYSTEM_NEUTRAL,player,nodePoint[i].string, (player->GetTeamId() == TEAM_ALLIANCE ? LANG_BG_IC_ALLIANCE : LANG_BG_IC_HORDE));
-
+                HandleContestedNodes(&nodePoint[i]);
             } else if (nextBanner == nodePoint[i].banners[0] || nextBanner == nodePoint[i].banners[2]) // if we are going to spawn the definitve faction banner, we dont need the timer anymore
             {
                 nodePoint[i].timer = 60000;
@@ -614,6 +606,18 @@ uint32 BattlegroundIC::GetNextBanner(ICNodePoint* nodePoint, uint32 team, bool r
     // we should never be here...
     sLog->outError("Isle Of Conquest: Unexpected return in GetNextBanner function");
     return 0;
+}
+
+void BattlegroundIC::HandleContestedNodes(ICNodePoint* nodePoint)
+{
+    if (nodePoint->nodeType == NODE_TYPE_HANGAR)
+    {
+        if (gunshipAlliance && gunshipHorde)
+            (nodePoint->faction == TEAM_ALLIANCE ? gunshipHorde : gunshipAlliance)->BuildStopMovePacket(GetBgMap());
+
+        for (uint8 u = BG_IC_GO_HANGAR_TELEPORTER_1; u < BG_IC_GO_HANGAR_TELEPORTER_3; u++)
+            DelObject(u);
+    }
 }
 
 void BattlegroundIC::HandleCapturedNodes(ICNodePoint* nodePoint, bool recapture)
