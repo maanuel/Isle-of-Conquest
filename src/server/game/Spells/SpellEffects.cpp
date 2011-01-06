@@ -1620,7 +1620,7 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
         sLog->outError("EffectForceCast of spell %u: triggering unknown spell id %i", m_spellInfo->Id,triggered_spell_id);
         return;
     }
-    
+
     if (damage)
     {
         switch(m_spellInfo->Id)
@@ -1639,8 +1639,16 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
                 break;
         }
     }
-    Unit * caster = GetTriggeredSpellCaster(spellInfo, m_caster, unitTarget);
 
+    switch (triggered_spell_id)
+    {
+        case 62056: case 63985:         // Stone Grip Forcecast (10m, 25m)
+            unitTarget->CastSpell(unitTarget, spellInfo, true);     // Don't send m_originalCasterGUID param here or underlying
+            return;                                                 // AureEffect::HandleAuraControlVehicle will fail on caster == target
+    }
+
+    Unit * caster = GetTriggeredSpellCaster(spellInfo, m_caster, unitTarget);
+ 
     caster->CastSpell(unitTarget, spellInfo, true, NULL, NULL, m_originalCasterGUID);
 }
 
@@ -2379,7 +2387,7 @@ void Spell::DoCreateItem(uint32 /*i*/, uint32 itemtype)
     Player* player = (Player*)unitTarget;
 
     uint32 newitemid = itemtype;
-    ItemPrototype const *pProto = sObjectMgr->GetItemPrototype(newitemid);
+    ItemPrototype const *pProto = ObjectMgr::GetItemPrototype(newitemid);
     if (!pProto)
     {
         player->SendEquipError(EQUIP_ERR_ITEM_NOT_FOUND, NULL, NULL);
@@ -2476,7 +2484,7 @@ void Spell::DoCreateItem(uint32 /*i*/, uint32 itemtype)
     // for battleground marks send by mail if not add all expected
     if (no_space > 0 && bgType)
     {
-        if (Battleground* bg = sBattlegroundMgr.GetBattlegroundTemplate(BattlegroundTypeId(bgType)))
+        if (Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(BattlegroundTypeId(bgType)))
             bg->SendRewardMarkByMail(player, newitemid, no_space);
     }
 */
@@ -2689,12 +2697,19 @@ void Spell::EffectEnergizePct(SpellEffIndex effIndex)
 
 void Spell::SendLoot(uint64 guid, LootType loottype)
 {
-    Player* player = (Player*)m_caster;
+    Player* player = m_caster->ToPlayer();
     if (!player)
         return;
 
     if (gameObjTarget)
     {
+        // special case, already has GossipHello inside so return and avoid calling twice
+        if (gameObjTarget->GetGoType() == GAMEOBJECT_TYPE_GOOBER)
+        {
+            gameObjTarget->Use(m_caster);
+            return;
+        }
+
         if (sScriptMgr->OnGossipHello(player, gameObjTarget))
             return;
 
@@ -2718,10 +2733,6 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
                 // triggering linked GO
                 if (uint32 trapEntry = gameObjTarget->GetGOInfo()->spellFocus.linkedTrapId)
                     gameObjTarget->TriggeringLinkedGameObject(trapEntry,m_caster);
-                return;
-
-            case GAMEOBJECT_TYPE_GOOBER:
-                gameObjTarget->Use(m_caster);
                 return;
 
             case GAMEOBJECT_TYPE_CHEST:
@@ -2748,7 +2759,7 @@ void Spell::SendLoot(uint64 guid, LootType loottype)
 
 void Spell::EffectOpenLock(SpellEffIndex effIndex)
 {
-    if (!m_caster || m_caster->GetTypeId() != TYPEID_PLAYER)
+    if (m_caster->GetTypeId() != TYPEID_PLAYER)
     {
         sLog->outDebug("WORLD: Open Lock - No Player Caster!");
         return;
@@ -3291,6 +3302,10 @@ void Spell::EffectDispel(SpellEffIndex effIndex)
     {
         int32 heal_amount = SpellMgr::CalculateSpellEffectAmount(m_spellInfo, 1);
         m_caster->CastCustomSpell(m_caster, 19658, &heal_amount, NULL, NULL, true);
+        // Glyph of Felhunter
+        if (Unit * pOwner = m_caster->GetOwner())
+            if (pOwner->GetAura(56249))
+                pOwner->CastCustomSpell(pOwner, 19658, &heal_amount, NULL, NULL, true);
     }
 }
 
@@ -3301,10 +3316,10 @@ void Spell::EffectDualWield(SpellEffIndex /*effIndex*/)
         unitTarget->ToCreature()->UpdateDamagePhysical(OFF_ATTACK);
 }
 
-void Spell::EffectPull(SpellEffIndex /*effIndex*/)
+void Spell::EffectPull(SpellEffIndex effIndex)
 {
     // TODO: create a proper pull towards distract spell center for distract
-    sLog->outDebug("WORLD: Spell Effect DUMMY");
+    EffectNULL(effIndex);
 }
 
 void Spell::EffectDistract(SpellEffIndex /*effIndex*/)
@@ -3374,6 +3389,15 @@ void Spell::EffectAddFarsight(SpellEffIndex effIndex)
     // Need to update visibility of object for client to accept farsight guid
     m_caster->ToPlayer()->SetViewpoint(dynObj, true);
     //m_caster->ToPlayer()->UpdateVisibilityOf(dynObj);
+}
+
+void Spell::EffectUntrainTalents(SpellEffIndex /*effIndex*/)
+{
+    if (!unitTarget || m_caster->GetTypeId() == TYPEID_PLAYER)
+        return;
+
+    if (uint64 guid = m_caster->GetGUID()) // the trainer is the caster
+        unitTarget->ToPlayer()->SendTalentWipeConfirm(guid);
 }
 
 void Spell::EffectTeleUnitsFaceCaster(SpellEffIndex effIndex)
@@ -4766,7 +4790,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                 // Retribution by Sevenfold Retribution
                 case 51854:
                 {
-                    if (!m_caster || !unitTarget)
+                    if (!unitTarget)
                         return;
                     if (unitTarget->HasAura(51845))
                         unitTarget->CastSpell(m_caster, 51856, true);
@@ -5119,10 +5143,16 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                             if (Creature *oldContainer = dynamic_cast<Creature*>(seat->GetPassenger(1)))
                                 oldContainer->DisappearAndDie();
                             // TODO: a hack, range = 11, should after some time cast, otherwise too far
-                            unitTarget->CastSpell(seat->GetBase(), 62496, true);
+                            m_caster->CastSpell(seat->GetBase(), 62496, true);
                             unitTarget->EnterVehicle(seat, 1);
                         }
                     }
+                    return;
+                }
+                case 65594: // Cancel Stone Grip
+                {
+                    uint32 spellToRemove = unitTarget->GetMap()->GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL ? 62166 : 63981;
+                    unitTarget->RemoveAurasDueToSpell(spellToRemove);
                     return;
                 }
                 case 60123: // Lightwell
@@ -5449,7 +5479,7 @@ void Spell::EffectAddComboPoints(SpellEffIndex /*effIndex*/)
 
 void Spell::EffectDuel(SpellEffIndex effIndex)
 {
-    if (!m_caster || !unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER || unitTarget->GetTypeId() != TYPEID_PLAYER)
+    if (!unitTarget || m_caster->GetTypeId() != TYPEID_PLAYER || unitTarget->GetTypeId() != TYPEID_PLAYER)
         return;
 
     Player *caster = (Player*)m_caster;
@@ -6028,7 +6058,7 @@ void Spell::EffectSkinning(SpellEffIndex /*effIndex*/)
 {
     if (unitTarget->GetTypeId() != TYPEID_UNIT)
         return;
-    if (!m_caster || m_caster->GetTypeId() != TYPEID_PLAYER)
+    if (m_caster->GetTypeId() != TYPEID_PLAYER)
         return;
 
     Creature* creature = unitTarget->ToCreature();
@@ -6353,7 +6383,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
 {
     uint32 name_id = m_spellInfo->EffectMiscValue[effIndex];
 
-    GameObjectInfo const* goinfo = sObjectMgr->GetGameObjectInfo(name_id);
+    GameObjectInfo const* goinfo = ObjectMgr::GetGameObjectInfo(name_id);
 
     if (!goinfo)
     {
