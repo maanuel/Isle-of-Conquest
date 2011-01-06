@@ -548,6 +548,8 @@ void BattlegroundIC::EventPlayerClickedOnFlag(Player* player, GameObject* target
             DelObject(nodePoint[i].gameobject_type);
             AddObject(nodePoint[i].gameobject_type,nodePoint[i].gameobject_entry,cords[0],cords[1],cords[2],cords[3],0,0,0,0,RESPAWN_ONE_DAY);
 
+            GetBGObject(nodePoint[i].gameobject_type)->SetUInt32Value(GAMEOBJECT_FACTION, nodePoint[i].faction == TEAM_ALLIANCE ? 1732 : 1735);
+
             if (nodePoint[i].nodeType == NODE_TYPE_WORKSHOP)
             {
                 DelObject(BG_IC_GO_SEAFORIUM_BOMBS_1);
